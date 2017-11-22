@@ -7,7 +7,7 @@
 int test_lib() {
     printf("Testing Lib\n");
     const int k = 3;
-    double l_values[k] = {1.0, 2.0, 3.0};
+    double l_values[3] = {1.0, 2.0, 3.0};
     gsl_vector *l = gsl_vector_alloc(k);
     for (size_t i=0; i < k; i++) {
         gsl_vector_set(l, i, l_values[i]);
@@ -19,7 +19,7 @@ int test_lib() {
     printf("PDF %f = %f \n", expected, val);
 
     e_moments(l, mu, 1e-8);
-    double e_moments[2*k] = {0.10852667, 0.02472456, 0.00943313, 0.004684, 0.0027421, 0.0017955};
+    double e_moments[6] = {0.10852667, 0.02472456, 0.00943313, 0.004684, 0.0027421, 0.0017955};
     printf("Moments: ");
     for (size_t i=0; i < mu->size; i++) {
         printf("%f=%f,", e_moments[i], gsl_vector_get(mu, i));
