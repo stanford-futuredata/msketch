@@ -1,0 +1,1 @@
+python3 main.py mix.csv x --percentiles 0.001 0.01 0.05 0.1 0.5 0.9 0.95 0.99 0.999

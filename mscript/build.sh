@@ -1,0 +1,3 @@
+cd mlib && \
+cmake . && \
+make

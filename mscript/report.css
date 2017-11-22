@@ -1,0 +1,6 @@
+.dataframe * {border-color: #c0c0c0 !important;}
+.dataframe th{background: #eee;}
+.dataframe td{text-align: right; min-width:5em;}
+table {
+    border-collapse: collapse;
+}

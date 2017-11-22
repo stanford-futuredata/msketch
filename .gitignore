@@ -5,6 +5,8 @@ CMakeFiles/
 *.dylib
 main
 CMakeCache.txt
+*.pdf
+*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
