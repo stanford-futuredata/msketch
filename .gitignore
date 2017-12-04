@@ -7,6 +7,9 @@ main
 CMakeCache.txt
 *.pdf
 *.csv
+*.lyx~
+mscript/mlib/Makefile
+mscript/results/report.html
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

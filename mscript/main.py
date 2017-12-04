@@ -1,6 +1,7 @@
 import argparse
 import numpy as np
 import pandas as pd
+import os
 
 import msketch.mcalc as mc
 import msketch.msketch as ms
@@ -16,6 +17,8 @@ import reportgen
 def main():
     args = parser.parse_args()
     data = pd.read_csv(args.file)[args.column]
+    os.makedirs("results/", exist_ok=True)
+
     print("Loaded {} rows".format(len(data)))
     name = args.file.split("/")[-1]
     results = []
@@ -30,12 +33,13 @@ def main():
         ["data", "percentile", "method"]
     )[["percentile", "method", "estimate", "size", "param"]]
     r_df.reset_index(drop=True)
-    r_df.to_csv("results.csv", index=False)
+    r_df.to_csv("results/results.csv", index=False)
     print("Wrote results to results.csv")
 
     rg = reportgen.ReportGen(
         data,
         r_df,
+        "results/",
         "report.html"
     )
     rg.gen_report()

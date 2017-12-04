@@ -1,0 +1,207 @@
+#LyX 2.2 created this file. For more info see http://www.lyx.org/
+\lyxformat 508
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Section
+Regularized Range Queries
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+L & =\int_{0}^{1}-f\left(x\right)\ln f\left(x\right)+cf(x)H_{t}(x)dx-\sum_{i}\lambda_{i}\left[\int_{0}^{1}x^{i}f(x)dx-\mu_{i}\right]\\
+\frac{\partial L}{\partial f} & =-\left[\ln f\left(x\right)+1\right]+cH_{t}(x)-\sum_{i}\lambda_{i}x^{i}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+\ln f\left(x\right) & =-\sum_{i}\lambda_{i}x^{i}+cH_{t}\left(x\right)\\
+f\left(x\right) & =\exp\left[-\sum_{i}\lambda_{i}x^{i}+cH_{t}\left(x\right)\right]
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+P=\int f(x)dx-1+\sum_{i}\mu_{i}\lambda_{i}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\frac{\partial P}{\partial\lambda_{i}}=-\int x^{i}f\left(x\right)dx+\mu_{i}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Point Range Derivation
+\end_layout
+
+\begin_layout Standard
+Extreme 1: 
+\begin_inset Formula $w_{i}x_{i}$
+\end_inset
+
+ for 
+\begin_inset Formula $i=0\dots\frac{k}{2}$
+\end_inset
+
+ and 
+\begin_inset Formula $x_{i}=a$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+f_{j}=\sum w_{i}p_{j}\left(x_{i}\right) & -\mu_{j}=0
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+\frac{\partial f_{j}}{\partial w_{i}} & =p_{j}\left(x_{i}\right)\\
+\frac{\partial f_{j}}{\partial x_{i}} & =w_{i}p_{j}^{'}\left(x_{i}\right)
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Chebyshev
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+L & =\int_{0}^{1}-f\left(x\right)\ln f\left(x\right)-\sum_{i}\lambda_{i}\left[\int_{0}^{1}T_{i}\left(x\right)f\left(x\right)dx-\mu_{i}\right]
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f\left(x\right)=\exp\left[-\sum_{i}\lambda_{i}T_{i}\left(x\right)\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+P & =\int f\left(x\right)dx+\sum_{i}\mu_{i}\lambda_{i}\\
+\frac{\partial P}{\partial\lambda_{i}} & =-\int T_{i}\left(x\right)f\left(x\right)dx+\mu_{i}\\
+\frac{\partial^{2}P}{\partial\lambda_{i}\partial\lambda_{j}} & =\int T_{i}\left(x\right)T_{j}\left(x\right)f\left(x\right)dx\\
+ & =\int\frac{1}{2}\left[T_{i+j}\left(x\right)+T_{\left|i-j\right|}\left(x\right)\right]f\left(x\right)dx
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document

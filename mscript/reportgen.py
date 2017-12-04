@@ -10,10 +10,12 @@ class ReportGen:
             self,
             raw_data,
             results_df,
+            base_dir="results/",
             filename="report.html"
     ):
         self.raw_data = raw_data
         self.results_df = results_df
+        self.base_dir = base_dir
         self.filename = "report.html"
 
     def gen_images(self):
@@ -22,7 +24,7 @@ class ReportGen:
         plt.grid(axis="both")
         plt.title("Data Histogram")
         plt.tight_layout()
-        plt.savefig("hist.svg")
+        plt.savefig(self.base_dir+"hist.svg")
         plt.close()
 
         df = self.results_df
@@ -66,7 +68,7 @@ class ReportGen:
                 ax.set_ylabel("value")
             ax.set_xlabel("method @ size")
             fig.tight_layout()
-            fig.savefig("report_{}.svg".format(i))
+            fig.savefig(self.base_dir+"report_{}.svg".format(i))
             plt.close()
 
     def gen_report(self):
@@ -93,7 +95,7 @@ class ReportGen:
             chart_strs = "\n".join([self.gen_chart_str(i) for i in range(self.n_charts)]),
             table_str = self.results_df.to_html()
         )
-        with open(self.filename, "w") as f:
+        with open(self.base_dir+self.filename, "w") as f:
             f.write(html_str)
 
     def gen_chart_str(self, i, last=False):
