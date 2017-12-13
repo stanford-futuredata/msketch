@@ -1,7 +1,7 @@
 package msketch;
 
 public interface FunctionWithHessian {
-    void computeAll(double[] point);
+    void computeAll(double[] point, double tol);
     int dim();
     double getValue();
     double[] getGradient();

@@ -2,7 +2,6 @@ package msketch;
 
 public class MaxEntPotential implements FunctionWithHessian {
     protected double[] d_mus;
-    protected double tol;
 
     private int numFuncEvals = 0;
     protected double[] lambd;
@@ -11,11 +10,9 @@ public class MaxEntPotential implements FunctionWithHessian {
     protected double[][] hess;
 
     public MaxEntPotential(
-            double[] d_mus,
-            double tol
+            double[] d_mus
     ) {
         this.d_mus = d_mus;
-        this.tol = tol;
 
         this.numFuncEvals = 0;
 
@@ -31,7 +28,7 @@ public class MaxEntPotential implements FunctionWithHessian {
     }
 
     @Override
-    public void computeAll(double[] lambd) {
+    public void computeAll(double[] lambd, double tol) {
         this.lambd = lambd;
         int k = lambd.length;
         MaxEntFunction f = new MaxEntFunction(lambd);

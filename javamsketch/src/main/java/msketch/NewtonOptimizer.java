@@ -1,6 +1,7 @@
 package msketch;
 
 import org.apache.commons.math3.linear.*;
+import org.apache.commons.math3.util.FastMath;
 
 import java.util.Arrays;
 
@@ -18,10 +19,13 @@ public class NewtonOptimizer {
 
     public NewtonOptimizer(FunctionWithHessian P) {
         this.P = P;
-        this.maxIter = 100;
+        this.maxIter = 200;
         this.stepCount = 0;
         this.dampedStepCount = 0;
         this.converged = false;
+    }
+    public void setVerbose(boolean flag) {
+        this.verbose = flag;
     }
     public void setMaxIter(int maxIter) {
         this.maxIter = maxIter;
@@ -50,7 +54,7 @@ public class NewtonOptimizer {
         double[] x = start.clone();
 
         int step;
-        P.computeAll(x);
+        P.computeAll(x, gradTol/4);
 
         double gradTol2 = gradTol * gradTol;
         for (step = 0; step < maxIter; step++) {
@@ -82,8 +86,13 @@ public class NewtonOptimizer {
             for (int i = 0; i < k; i++) {
                 newX[i] = x[i] + stepScaleFactor * stepVector.getEntry(i);
             }
+            // we need just enough precision to perform relevant comparisons
+            double requiredPrecision = FastMath.max(
+                    gradTol,
+                    FastMath.abs(alpha*stepScaleFactor*dfdx)
+            ) / 4;
             // Warning: this overwrites grad and hess
-            P.computeAll(newX);
+            P.computeAll(newX, requiredPrecision);
 
             // do not look for damped steps if we are near stationary point
             if (dfdx*dfdx > gradTol2) {
@@ -97,11 +106,19 @@ public class NewtonOptimizer {
                     for (int i = 0; i < k; i++) {
                         newX[i] = x[i] + stepScaleFactor * stepVector.getEntry(i);
                     }
-                    P.computeAll(newX);
+                    requiredPrecision = FastMath.max(
+                            gradTol / 4,
+                            FastMath.abs(alpha*stepScaleFactor*dfdx/2)
+                    );
+                    P.computeAll(newX, requiredPrecision);
                 }
             }
             if (stepScaleFactor < 1.0) {
                 dampedStepCount++;
+            }
+            if (verbose) {
+                System.out.println("dfdx: "+dfdx);
+                System.out.println("Step Size: "+stepScaleFactor);
             }
             System.arraycopy(newX, 0, x, 0, k);
         }

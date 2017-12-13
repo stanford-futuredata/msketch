@@ -73,8 +73,7 @@ public class ChebyshevPolynomial implements UnivariateFunction {
             double e3 = 2*FastMath.abs(cs[cs.length-5]);
             if (e3 > error) {error = e3;}
 
-            // HACK: just stop trying if the error gets worse and hope
-            // newton damping will save us
+            // HACK: just stop trying if the error gets worse
             if (error < tol || error > oldError) {
                 break;
             } else {
