@@ -1,3 +1,6 @@
+package msketch;
+
+import msketch.ChebyshevPolynomial;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

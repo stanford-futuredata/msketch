@@ -1,4 +1,6 @@
-import org.apache.commons.math3.util.FastMath;
+package msketch;
+
+import msketch.MaxEntFunction;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -19,18 +21,5 @@ public class MaxEntFunctionTest {
             assertEquals(expectedMoments[i], moments[i], 1e-10);
         }
         assertTrue(f.getFuncEvals() < 1000);
-    }
-
-    @Test
-    public void testSolve() {
-        double m_values[] = {1.0, 0, -1.0/3, 0, -1.0/15, 0, -1.0/35};
-        double l_values[] = {0.0, 0, 0, 0, 0, 0, 0};
-        MaxEntFunction f = new MaxEntFunction(l_values);
-        f.solve(m_values, 1e-8);
-        double[] coeffs = f.coeffs();
-        assertEquals(FastMath.log(2), coeffs[0], 1e-10);
-        for (int i = 1; i < coeffs.length; i++) {
-            assertEquals(0.0, coeffs[i], 1e-10);
-        }
     }
 }

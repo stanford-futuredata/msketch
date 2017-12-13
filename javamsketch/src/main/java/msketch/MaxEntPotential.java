@@ -1,0 +1,79 @@
+package msketch;
+
+public class MaxEntPotential implements FunctionWithHessian {
+    protected double[] d_mus;
+    protected double tol;
+
+    private int numFuncEvals = 0;
+    protected double[] lambd;
+    protected double[] mus;
+    protected double[] grad;
+    protected double[][] hess;
+
+    public MaxEntPotential(
+            double[] d_mus,
+            double tol
+    ) {
+        this.d_mus = d_mus;
+        this.tol = tol;
+
+        this.numFuncEvals = 0;
+
+        int k = d_mus.length;
+        this.mus = new double[k];
+        this.grad = new double[k];
+        this.hess = new double[k][k];
+    }
+
+    @Override
+    public int dim() {
+        return d_mus.length;
+    }
+
+    @Override
+    public void computeAll(double[] lambd) {
+        this.lambd = lambd;
+        int k = lambd.length;
+        MaxEntFunction f = new MaxEntFunction(lambd);
+        this.mus = f.moments(k*2, tol);
+        this.numFuncEvals += f.getFuncEvals();
+
+        for (int i = 0; i < k; i++) {
+            this.grad[i] = d_mus[i] - mus[i];
+        }
+        for (int i=0; i < k; i++) {
+            for (int j=0; j <= i; j++) {
+                this.hess[i][j] = (mus[i+j] + mus[i-j])/2;
+            }
+        }
+        for (int i=0; i < k; i++) {
+            for (int j=i+1; j < k; j++) {
+                this.hess[i][j] = hess[j][i];
+            }
+        }
+    }
+
+    @Override
+    public double getValue() {
+        double sum = 0.0;
+        int k = d_mus.length;
+        for (int i = 0; i < k; i++) {
+            sum += lambd[i] * d_mus[i];
+        }
+        return this.mus[0] + sum;
+    }
+
+    @Override
+    public double[] getGradient() {
+        return grad;
+    }
+
+    @Override
+    public double[][] getHessian() {
+        return hess;
+    }
+
+    public int getNumFuncEvals() {
+        return numFuncEvals;
+    }
+}

@@ -1,3 +1,5 @@
+package msketch;
+
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.transform.DctNormalization;
 import org.apache.commons.math3.transform.FastCosineTransformer;
@@ -34,11 +36,27 @@ public class ChebyshevPolynomial implements UnivariateFunction {
     ) {
         int N = 32;
         double[] cs;
+        int numEvals = 0;
+        double[] oldFVals = null;
+        double oldError = Double.MAX_VALUE;
         while(true) {
             double[] fvals = new double[N+1];
-            for (int i = 0; i <= N; i++) {
-                fvals[i] = f.value(FastMath.cos(Math.PI*i/N));
+            if (oldFVals == null) {
+                for (int i = 0; i <= N; i++) {
+                    fvals[i] = f.value(FastMath.cos(Math.PI * i / N));
+                }
+                numEvals += (N+1);
+            } else {
+                for (int i = 0; i <= N; i++) {
+                    if (i % 2 == 1) {
+                        fvals[i] = f.value(FastMath.cos(Math.PI * i / N));
+                    } else {
+                        fvals[i] = oldFVals[i/2];
+                    }
+                }
+                numEvals += N/2;
             }
+            oldFVals = fvals;
             FastCosineTransformer t = new FastCosineTransformer(
                     DctNormalization.STANDARD_DCT_I
             );
@@ -47,15 +65,26 @@ public class ChebyshevPolynomial implements UnivariateFunction {
                 cs[i] *= 2.0/N;
             }
 
-            if (cs[cs.length - 1] < tol) {
+            double error = 0.0;
+            double e1 = FastMath.abs(cs[cs.length-1]);
+            if (e1 > error) {error = e1;}
+            double e2 = 2*FastMath.abs(cs[cs.length-3]);
+            if (e2 > error) {error = e2;}
+            double e3 = 2*FastMath.abs(cs[cs.length-5]);
+            if (e3 > error) {error = e3;}
+
+            // HACK: just stop trying if the error gets worse and hope
+            // newton damping will save us
+            if (error < tol || error > oldError) {
                 break;
             } else {
                 N *= 2;
+                oldError = error;
             }
         }
         cs[0] /= 2;
         ChebyshevPolynomial result = new ChebyshevPolynomial(cs);
-        result.numFitEvals = N;
+        result.numFitEvals = numEvals;
         return result;
     }
 
