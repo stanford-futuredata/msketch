@@ -1,5 +1,8 @@
-package msketch;
+package msketch.optimizer;
 
+/**
+ * Simple quadratic function for use in tests.
+ */
 public class QuadraticPotential implements FunctionWithHessian {
     private int k;
     private double Pval;

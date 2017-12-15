@@ -1,18 +1,33 @@
 package msketch;
 
+import msketch.optimizer.NewtonOptimizer;
+import org.apache.commons.math3.analysis.UnivariateFunction;
+import org.apache.commons.math3.analysis.solvers.BrentSolver;
+import org.apache.commons.math3.analysis.solvers.UnivariateSolver;
+
 public class ChebyshevMomentSolver {
     private double[] d_mus;
-    private double[] lambdas;
-    private double[] momentDeltas;
-
     private boolean verbose = false;
-    private int stepCount;
-    private int dampedStepCount;
-    private int numFunctionEvals;
+
+    private double[] lambdas;
+    private ChebyshevPolynomial approxCDF;
+
+    private NewtonOptimizer optimizer;
+    private int cumFuncEvals;
 
     public ChebyshevMomentSolver(double[] chebyshev_moments) {
         d_mus = chebyshev_moments;
     }
+
+    public static ChebyshevMomentSolver fromPowerSums(
+            double min, double max, double[] powerSums
+    ) {
+        double[] scaledChebyMoments = MathUtil.powerSumsToChebyMoments(
+                min, max, powerSums
+        );
+        return new ChebyshevMomentSolver(scaledChebyMoments);
+    }
+
     public void setVerbose(boolean flag) {
         this.verbose = flag;
     }
@@ -23,36 +38,41 @@ public class ChebyshevMomentSolver {
     }
 
     public int solve(double[] l_initial, double tol) {
-        double[] x = l_initial;
-        MaxEntPotential P = new MaxEntPotential(d_mus);
-        NewtonOptimizer opt = new NewtonOptimizer(P);
-        opt.setVerbose(verbose);
-        lambdas = opt.solve(x, tol);
-        momentDeltas = P.getGradient();
+        MaxEntPotential potential = new MaxEntPotential(d_mus);
+        optimizer = new NewtonOptimizer(potential);
+        optimizer.setVerbose(verbose);
+        lambdas = optimizer.solve(l_initial, tol);
+        cumFuncEvals = potential.getCumFuncEvals();
 
-        stepCount = opt.getStepCount();
-        dampedStepCount = opt.getDampedStepCount();
-        numFunctionEvals = P.getNumFuncEvals();
-        return opt.getStepCount();
+        approxCDF = ChebyshevPolynomial.fit(new MaxEntFunction(lambdas), tol).integralPoly();
+        return optimizer.getStepCount();
+    }
+
+    public double estimateQuantile(double p, double min, double max) {
+        UnivariateSolver bSolver = new BrentSolver(1e-6);
+        double q = bSolver.solve(
+                100,
+                (x) -> approxCDF.value(x) - p,
+                -1,
+                1,
+                0
+        );
+        double c = (max + min) / 2;
+        double r = (max - min) / 2;
+        return q*r+c;
+    }
+    public double estimateCDF(double x) {
+        return approxCDF.value(x);
     }
 
     public double[] getLambdas() {
         return lambdas;
     }
 
-    public double[] getMomentDeltas() {
-        return momentDeltas;
+    public NewtonOptimizer getOptimizer() {
+        return optimizer;
     }
-
-    public int getStepCount() {
-        return stepCount;
-    }
-
-    public int getDampedStepCount() {
-        return dampedStepCount;
-    }
-
-    public int getNumFunctionEvals() {
-        return numFunctionEvals;
+    public int getCumFuncEvals() {
+        return cumFuncEvals;
     }
 }

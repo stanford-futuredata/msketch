@@ -3,6 +3,10 @@ package msketch;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.util.FastMath;
 
+/**
+ * Solutions to the maximum entropy moment problem have the form exp(-poly(x)).
+ * It is useful to express the polynomial in a chebyshev basis for better conditioning.
+ */
 public class MaxEntFunction implements UnivariateFunction{
     private ChebyshevPolynomial p;
     private ChebyshevPolynomial p_approx;

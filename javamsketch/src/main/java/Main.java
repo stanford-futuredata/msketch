@@ -1,6 +1,6 @@
 import msketch.ChebyshevMomentSolver;
-import msketch.data.RetailMoments;
 import msketch.data.ShuttleMoments;
+import msketch.optimizer.NewtonOptimizer;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -11,7 +11,7 @@ public class Main {
 //            d_mus[i] = RetailMoments.moments[i];
         }
 
-//        System.in.read();
+        System.in.read();
         long startTime = System.nanoTime();
         int numIters = 10000;
         int numFunctionEvals = 0;
@@ -22,9 +22,10 @@ public class Main {
             ChebyshevMomentSolver solver = new ChebyshevMomentSolver(d_mus);
 //            solver.setVerbose(true);
             solver.solve(tol);
-            numSteps = solver.getStepCount();
-            numDampedSteps = solver.getDampedStepCount();
-            numFunctionEvals = solver.getNumFunctionEvals();
+            NewtonOptimizer opt = solver.getOptimizer();
+            numSteps = opt.getStepCount();
+            numDampedSteps = opt.getDampedStepCount();
+            numFunctionEvals = solver.getCumFuncEvals();
         }
         long elapsed = System.nanoTime() - startTime;
         double secondsPer = elapsed / (1.0e9 * numIters);

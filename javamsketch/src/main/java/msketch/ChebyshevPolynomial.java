@@ -8,6 +8,14 @@ import org.apache.commons.math3.util.FastMath;
 
 import java.util.Arrays;
 
+/**
+ * Utility class to fit polynomials to arbitrary functions and then
+ * compute integrals (effectively clenshaw-curtis integration). See
+ * the chebfun library for inspiration.
+ *
+ * Notably: by fitting a chebyshev polynomial to a function once can then
+ * compute all of its chebyshev moments without re-evaluating the function.
+ */
 public class ChebyshevPolynomial implements UnivariateFunction {
     private double[] coeffs;
     private int numFitEvals;
@@ -107,6 +115,26 @@ public class ChebyshevPolynomial implements UnivariateFunction {
             sum -= coeffs[i2]/((i2+1)*(i2-1));
         }
         return 2*sum;
+    }
+
+    public ChebyshevPolynomial integralPoly() {
+        int k = coeffs.length;
+        double[] integCoeffs = new double[k+1];
+        integCoeffs[1] = coeffs[0];
+        integCoeffs[2] = coeffs[1] / 4;
+        for (int i = 2; i < k; i++) {
+            integCoeffs[i+1] += coeffs[i] / (2*(i+1));
+            integCoeffs[i-1] -= coeffs[i] / (2*(i-1));
+        }
+        // normalize so that integral(-1) = 0
+        for (int i = 1; i < k+1; i++) {
+            if (i % 2 == 0) {
+                integCoeffs[0] -= integCoeffs[i];
+            } else {
+                integCoeffs[0] += integCoeffs[i];
+            }
+        }
+        return new ChebyshevPolynomial(integCoeffs);
     }
 
     public double value(double x) {

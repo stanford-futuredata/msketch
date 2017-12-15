@@ -1,7 +1,5 @@
-package msketch;
+package msketch.optimizer;
 
-import msketch.NewtonOptimizer;
-import msketch.QuadraticPotential;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -18,6 +16,6 @@ public class NewtonOptimizerTest {
         }
         assertEquals(1, opt.getStepCount());
         assertEquals(0, opt.getDampedStepCount());
-        assertTrue(opt.converged());
+        assertTrue(opt.isConverged());
     }
 }

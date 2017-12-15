@@ -1,10 +1,13 @@
-package msketch;
+package msketch.optimizer;
 
 import org.apache.commons.math3.linear.*;
 import org.apache.commons.math3.util.FastMath;
 
 import java.util.Arrays;
 
+/**
+ * Minimizes a convex function using damped Newton's method.
+ */
 public class NewtonOptimizer {
     protected FunctionWithHessian P;
     protected int maxIter;
@@ -33,7 +36,7 @@ public class NewtonOptimizer {
     public int getStepCount() {
         return stepCount;
     }
-    public boolean converged() {
+    public boolean isConverged() {
         return converged;
     }
     public int getDampedStepCount() {

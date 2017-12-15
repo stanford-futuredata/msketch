@@ -121,49 +121,6 @@ P=\int f(x)dx-1+\sum_{i}\mu_{i}\lambda_{i}
 \end_layout
 
 \begin_layout Section
-Point Range Derivation
-\end_layout
-
-\begin_layout Standard
-Extreme 1: 
-\begin_inset Formula $w_{i}x_{i}$
-\end_inset
-
- for 
-\begin_inset Formula $i=0\dots\frac{k}{2}$
-\end_inset
-
- and 
-\begin_inset Formula $x_{i}=a$
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\begin{align*}
-f_{j}=\sum w_{i}p_{j}\left(x_{i}\right) & -\mu_{j}=0
-\end{align*}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\begin{align*}
-\frac{\partial f_{j}}{\partial w_{i}} & =p_{j}\left(x_{i}\right)\\
-\frac{\partial f_{j}}{\partial x_{i}} & =w_{i}p_{j}^{'}\left(x_{i}\right)
-\end{align*}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Section
 Chebyshev
 \end_layout
 
@@ -196,6 +153,61 @@ P & =\int f\left(x\right)dx+\sum_{i}\mu_{i}\lambda_{i}\\
 \frac{\partial P}{\partial\lambda_{i}} & =-\int T_{i}\left(x\right)f\left(x\right)dx+\mu_{i}\\
 \frac{\partial^{2}P}{\partial\lambda_{i}\partial\lambda_{j}} & =\int T_{i}\left(x\right)T_{j}\left(x\right)f\left(x\right)dx\\
  & =\int\frac{1}{2}\left[T_{i+j}\left(x\right)+T_{\left|i-j\right|}\left(x\right)\right]f\left(x\right)dx
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Moment Conversion
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+s_{m}=\sum x^{m}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We would like to rescale the x to between -1,1.
+ Let 
+\begin_inset Formula $S_{m}$
+\end_inset
+
+ describe the power sums of the rescaled 
+\begin_inset Formula $x$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $r=\left(x_{max}-x_{min}\right)/2$
+\end_inset
+
+, 
+\begin_inset Formula $x_{c}=\left(x_{min}+x_{max}\right)/2$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+S_{m} & =\sum\left(\frac{x-x_{c}}{r}\right)^{m}\\
+ & =r^{-m}\sum_{i}\sum_{j=0}^{m}{m \choose j}x_{i}^{j}\left(-x_{c}\right)^{m-j}\\
+ & =r^{-m}\sum_{j=0}^{m}{m \choose j}\left(-x_{c}\right)^{m-j}s_{j}
 \end{align*}
 
 \end_inset

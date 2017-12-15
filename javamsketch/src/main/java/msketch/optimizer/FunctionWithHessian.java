@@ -1,5 +1,8 @@
-package msketch;
+package msketch.optimizer;
 
+/**
+ * Describes a function which can be optimized using Newton's method.
+ */
 public interface FunctionWithHessian {
     void computeAll(double[] point, double tol);
     int dim();

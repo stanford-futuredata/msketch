@@ -1,9 +1,16 @@
 package msketch;
 
+import msketch.optimizer.FunctionWithHessian;
+
+/**
+ * Minimizing this function yields a maxent pdf which matches the the empirical
+ * moments of a dataset. The function is convex with symmetric positive definite
+ * hessian and has a global stationary minimum (gradient = 0) at the solution.
+ */
 public class MaxEntPotential implements FunctionWithHessian {
     protected double[] d_mus;
 
-    private int numFuncEvals = 0;
+    private int cumFuncEvals = 0;
     protected double[] lambd;
     protected double[] mus;
     protected double[] grad;
@@ -14,7 +21,7 @@ public class MaxEntPotential implements FunctionWithHessian {
     ) {
         this.d_mus = d_mus;
 
-        this.numFuncEvals = 0;
+        this.cumFuncEvals = 0;
 
         int k = d_mus.length;
         this.mus = new double[k];
@@ -33,7 +40,7 @@ public class MaxEntPotential implements FunctionWithHessian {
         int k = lambd.length;
         MaxEntFunction f = new MaxEntFunction(lambd);
         this.mus = f.moments(k*2, tol);
-        this.numFuncEvals += f.getFuncEvals();
+        this.cumFuncEvals += f.getFuncEvals();
 
         for (int i = 0; i < k; i++) {
             this.grad[i] = d_mus[i] - mus[i];
@@ -70,7 +77,7 @@ public class MaxEntPotential implements FunctionWithHessian {
         return hess;
     }
 
-    public int getNumFuncEvals() {
-        return numFuncEvals;
+    public int getCumFuncEvals() {
+        return cumFuncEvals;
     }
 }

@@ -32,4 +32,11 @@ public class ChebyshevPolynomialTest {
             assertEquals(coeff[i], cfit.coeffs()[i], 1e-10);
         }
     }
+
+    @Test
+    public void testIntegrate() {
+        double[] coeff = {2.0, 1.0, 3.0};
+        ChebyshevPolynomial cp = new ChebyshevPolynomial(coeff);
+        assertEquals(cp.integrate(), cp.integralPoly().value(1), 1e-10);
+    }
 }
