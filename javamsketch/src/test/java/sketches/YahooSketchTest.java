@@ -20,7 +20,7 @@ public class YahooSketchTest {
 
         List<Double> ps = Arrays.asList(.1, .5, .9);
         double[] qs = s.getQuantiles(ps);
-        double[] expectedQs = TestSketchUtil.getTrueQuantiles(ps, data);
+        double[] expectedQs = QuantileUtil.getTrueQuantiles(ps, data);
         assertArrayEquals(expectedQs, qs, 10.0);
     }
 }

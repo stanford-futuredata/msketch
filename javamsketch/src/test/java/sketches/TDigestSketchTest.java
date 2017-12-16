@@ -20,7 +20,7 @@ public class TDigestSketchTest {
 
         List<Double> ps = Arrays.asList(.1, .5, .9);
         double[] qs = ts.getQuantiles(ps);
-        double[] expectedQs = TestSketchUtil.getTrueQuantiles(ps, data);
+        double[] expectedQs = QuantileUtil.getTrueQuantiles(ps, data);
         assertArrayEquals(expectedQs, qs, 1.0);
     }
 }

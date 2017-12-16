@@ -1,8 +1,8 @@
 import io.CSVOutput;
 import io.DataSource;
 import io.SimpleCSVDataSource;
-import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import sketches.QuantileSketch;
+import sketches.QuantileUtil;
 import sketches.SketchLoader;
 
 import java.io.IOException;
@@ -42,13 +42,7 @@ public class AccuracyBench {
         List<Map<String, String>> results = new ArrayList<>();
 
         int m = quantiles.size();
-        double[] trueQuantiles = new double[m];
-        Percentile truePercentileCalc = new Percentile()
-                .withEstimationType(Percentile.EstimationType.R_1);
-        truePercentileCalc.setData(data);
-        for (int i = 0; i < m; i++) {
-            trueQuantiles[i] = truePercentileCalc.evaluate(quantiles.get(i)*100);
-        }
+        double[] trueQuantiles = QuantileUtil.getTrueQuantiles(quantiles, data);
 
         for (String sketchName : methods.keySet()) {
             System.out.println("Benchmarking: "+sketchName);

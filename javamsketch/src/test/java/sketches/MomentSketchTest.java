@@ -1,7 +1,6 @@
 package sketches;
 
 import data.TestDataSource;
-import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -21,7 +20,7 @@ public class MomentSketchTest {
 
         List<Double> ps = Arrays.asList(.1, .5, .9);
         double[] qs = ms.getQuantiles(ps);
-        double[] expectedQs = TestSketchUtil.getTrueQuantiles(ps, data);
+        double[] expectedQs = QuantileUtil.getTrueQuantiles(ps, data);
         assertArrayEquals(expectedQs, qs, 1.0);
     }
 
