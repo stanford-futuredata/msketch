@@ -15,12 +15,6 @@ public class MaxEntFunction implements UnivariateFunction{
     public int getFuncEvals() {
         return funcEvals;
     }
-    public double[] coeffs() {
-        return p.coeffs();
-    }
-    public int size() {
-        return p.size();
-    }
 
     public MaxEntFunction(double[] coeffs) {
         this.p = new ChebyshevPolynomial(coeffs);

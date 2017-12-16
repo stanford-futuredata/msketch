@@ -2,7 +2,7 @@ import msketch.ChebyshevMomentSolver;
 import msketch.data.ShuttleMoments;
 import msketch.optimizer.NewtonOptimizer;
 
-public class Main {
+public class MSKetchBench {
     public static void main(String[] args) throws Exception {
         int k = 11;
         double[] d_mus = new double[k];
@@ -11,9 +11,9 @@ public class Main {
 //            d_mus[i] = RetailMoments.moments[i];
         }
 
-        System.in.read();
+//        System.in.read();
         long startTime = System.nanoTime();
-        int numIters = 10000;
+        int numIters = 5000;
         int numFunctionEvals = 0;
         int numSteps = 0;
         int numDampedSteps = 0;

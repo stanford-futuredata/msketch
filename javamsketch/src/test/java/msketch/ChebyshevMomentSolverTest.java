@@ -1,5 +1,6 @@
 package msketch;
 
+import msketch.data.RetailMoments;
 import msketch.data.ShuttleMoments;
 import msketch.optimizer.NewtonOptimizer;
 import org.apache.commons.math3.util.FastMath;
@@ -25,6 +26,7 @@ public class ChebyshevMomentSolverTest {
         assertTrue(opt.getStepCount() < 20);
         assertEquals(0, opt.getDampedStepCount());
     }
+
     @Test
     public void testShuttle() {
         int k = 11;
@@ -53,6 +55,29 @@ public class ChebyshevMomentSolverTest {
 
         double scaledQuantile = solver.estimateQuantile(.5, 27, 126);
         assertEquals(45, scaledQuantile, 5.0);
+    }
+
+    @Test
+    public void testRetail() {
+        int k = 11;
+        double[] m_values = new double[k];
+        for (int i = 0; i < k; i++) {
+            m_values[i] = RetailMoments.moments[i];
+        }
+        double tol = 1e-10;
+        ChebyshevMomentSolver solver = new ChebyshevMomentSolver(m_values);
+        solver.solve(tol);
+
+        double[] coeffs = solver.getLambdas();
+        MaxEntFunction f = new MaxEntFunction(coeffs);
+        double[] f_mus = f.moments(k, tol);
+        for (int i = 0; i < k; i++) {
+            assertEquals(m_values[i], f_mus[i], 10*tol);
+        }
+
+        NewtonOptimizer opt = solver.getOptimizer();
+        assertTrue(opt.getStepCount() < 100);
+        assertTrue(opt.getDampedStepCount() > 0);
     }
 
 }
