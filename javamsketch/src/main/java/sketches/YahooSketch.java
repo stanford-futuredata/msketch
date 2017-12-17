@@ -55,19 +55,18 @@ public class YahooSketch implements QuantileSketch {
         for (double x : data) {
             sketch.update(x);
         }
-        sketch.compact();
     }
 
     @Override
     public QuantileSketch merge(QuantileSketch[] sketches) {
-        YahooSketch[] ySketches = (YahooSketch[]) sketches;
-        int k = ySketches[0].k;
         DoublesUnion union = DoublesUnion.builder().setMaxK(k).build();
-        for (YahooSketch ys : ySketches) {
+        union.update(this.sketch);
+        for (QuantileSketch s : sketches) {
+            YahooSketch ys = (YahooSketch)s;
             union.update(ys.sketch);
         }
-        UpdateDoublesSketch res = union.getResult();
-        return new YahooSketch(res);
+        this.sketch = union.getResult();
+        return this;
     }
 
     @Override

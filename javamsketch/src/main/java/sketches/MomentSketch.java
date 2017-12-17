@@ -60,22 +60,22 @@ public class MomentSketch implements QuantileSketch {
             }
             this.powerSums[0]++;
             double curPow = 1.0;
-            for (int i = 1; i < k; i++) {
+            int numPows = k;
+            double[] localPowerSums = this.powerSums;
+            for (int i = 1; i < numPows; i++) {
                 curPow *= x;
-                this.powerSums[i] += curPow;
+                localPowerSums[i] += curPow;
             }
         }
     }
 
     @Override
     public QuantileSketch merge(QuantileSketch[] sketches) {
-        MomentSketch firstSketch = (MomentSketch)sketches[0];
         double mMin = Double.MAX_VALUE;
         double mMax = -Double.MAX_VALUE;
-        int k = firstSketch.k;
-        double[] mPowerSums = new double[k];
-        MomentSketch[] mSketches = (MomentSketch[])sketches;
-        for (MomentSketch ms : mSketches) {
+        double[] mPowerSums = this.powerSums;
+        for (QuantileSketch s : sketches) {
+            MomentSketch ms = (MomentSketch)s;
             if (ms.min < mMin) {
                 mMin = ms.min;
             }
@@ -86,12 +86,9 @@ public class MomentSketch implements QuantileSketch {
                 mPowerSums[i] += ms.powerSums[i];
             }
         }
-        MomentSketch m = new MomentSketch(firstSketch.tolerance);
-        m.setSizeParam(k);
-        m.min = mMin;
-        m.max = mMax;
-        m.powerSums = mPowerSums;
-        return m;
+        this.min = mMin;
+        this.max = mMax;
+        return this;
     }
 
     @Override

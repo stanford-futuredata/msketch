@@ -5,6 +5,7 @@ CMakeFiles/
 *.dylib
 mlib/main
 mlib/rtest
+javamsketch/cp.txt
 CMakeCache.txt
 *.pdf
 *.csv
@@ -13,6 +14,7 @@ mlib/Makefile
 mscript/results/report.html
 *.iml
 *.cbp
+*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

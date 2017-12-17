@@ -2,6 +2,7 @@ package sketches;
 
 import com.tdunning.math.stats.Centroid;
 import com.tdunning.math.stats.TDigest;
+import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,23 +56,21 @@ public class TDigestSketch implements QuantileSketch {
         for (double x : data) {
             this.td.add(x);
         }
-        td.compress();
     }
 
     @Override
     public QuantileSketch merge(QuantileSketch[] sketches) {
-        TDigestSketch firstSketch = (TDigestSketch)sketches[0];
-        TDigest newTD = TDigest.createDigest(firstSketch.compression);
+        TDigest newTD = this.td;
         for (QuantileSketch s : sketches) {
             TDigestSketch ts = (TDigestSketch)s;
             newTD.add(ts.td);
         }
-        newTD.compress();
-        return new TDigestSketch(firstSketch.compression, newTD);
+        return this;
     }
 
     @Override
     public double[] getQuantiles(List<Double> ps) throws Exception {
+        this.td.compress();
         int m = ps.size();
         double[] quantiles = new double[m];
         for (int i = 0; i < m; i++) {

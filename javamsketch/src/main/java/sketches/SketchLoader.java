@@ -12,6 +12,10 @@ public class SketchLoader {
             return new TDigestSketch();
         } else if (sketchName.contains("yahoo")) {
             return new YahooSketch();
+        } else if (sketchName.contains("spark_gk")) {
+            return new SparkGKSketch();
+        } else if (sketchName.contains("sampling")) {
+            return new SamplingSketch();
         }
         throw new IOException("Invalid Sketch");
     }

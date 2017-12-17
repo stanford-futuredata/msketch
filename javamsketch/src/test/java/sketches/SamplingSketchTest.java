@@ -8,24 +8,21 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class SparkGKSketchTest {
+public class SamplingSketchTest {
     @Test
     public void testSimple() throws Exception {
-        SparkGKSketch sketch = new SparkGKSketch();
-        int size = 100;
-        sketch.setSizeParam(100);
+        SamplingSketch sketch = new SamplingSketch();
+        sketch.setSizeParam(1000);
         sketch.initialize();
 
-        int n = 20000;
-        double[] data = TestDataSource.getUniform(n+1);
+        double[] data = TestDataSource.getUniform(10001);
         sketch.add(data);
 
         List<Double> ps = Arrays.asList(.1, .5, .9);
         double[] qs = sketch.getQuantiles(ps);
 
         double[] expectedQs = QuantileUtil.getTrueQuantiles(ps, data);
-
-        assertArrayEquals(expectedQs, qs, n/size);
+        assertArrayEquals(expectedQs, qs, 400.0);
     }
 
 }

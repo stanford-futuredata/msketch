@@ -50,9 +50,9 @@ public class AccuracyBench {
 //        double[] trueQuantiles = QuantileUtil.getTrueQuantiles(quantiles, data);
 
         for (String sketchName : methods.keySet()) {
-            System.out.println("Benchmarking: "+sketchName);
             List<Double> sizeParams = methods.get(sketchName);
             for (int curTrial = 0; curTrial < numTrials; curTrial++) {
+                System.out.println(sketchName+":"+curTrial);
                 for (double sParam : sizeParams) {
                     QuantileSketch curSketch = SketchLoader.load(sketchName);
                     curSketch.setCalcError(true);
