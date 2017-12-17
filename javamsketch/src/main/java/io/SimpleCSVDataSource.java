@@ -43,6 +43,7 @@ public class SimpleCSVDataSource implements DataSource{
                 nextIdx = curLine.indexOf(',', startIdx);
                 colCount++;
                 if (nextIdx == -1) {
+                    nextIdx = curLine.length();
                     break;
                 }
             }

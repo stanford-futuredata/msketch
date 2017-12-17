@@ -11,7 +11,7 @@ public class AccuracyBenchTest {
     public void testSimple() throws Exception {
         AccuracyBench bench = new AccuracyBench("src/test/resources/acc_bench.json");
         List<Map<String, String>> results = bench.run();
-        assertEquals(12, results.size());
+        assertEquals(12*2, results.size());
     }
 
 }
