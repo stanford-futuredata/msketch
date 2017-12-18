@@ -52,8 +52,9 @@ public class AccuracyBench {
         for (String sketchName : methods.keySet()) {
             List<Double> sizeParams = methods.get(sketchName);
             for (int curTrial = 0; curTrial < numTrials; curTrial++) {
-                System.out.println(sketchName+":"+curTrial);
                 for (double sParam : sizeParams) {
+                    System.gc();
+                    System.out.println(sketchName+":"+curTrial+"@"+(int)sParam);
                     QuantileSketch curSketch = SketchLoader.load(sketchName);
                     curSketch.setCalcError(true);
                     curSketch.setSizeParam(sParam);

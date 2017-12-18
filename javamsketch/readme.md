@@ -1,7 +1,7 @@
 To run the benchmark:
 
 ```
-mvn package
 ./genCP.sh
+mvn package
 ./accBench confs/shuttle_acc.json
 ```
