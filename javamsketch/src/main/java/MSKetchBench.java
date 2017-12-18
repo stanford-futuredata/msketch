@@ -2,7 +2,7 @@ import msketch.ChebyshevMomentSolver;
 import msketch.data.ShuttleMoments;
 import msketch.optimizer.NewtonOptimizer;
 
-public class MSKetchBench {
+public class MSketchBench {
     public static void main(String[] args) throws Exception {
         int k = 11;
         double[] d_mus = new double[k];
