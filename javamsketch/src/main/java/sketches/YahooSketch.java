@@ -4,6 +4,7 @@ import com.yahoo.sketches.quantiles.DoublesSketch;
 import com.yahoo.sketches.quantiles.DoublesUnion;
 import com.yahoo.sketches.quantiles.UpdateDoublesSketch;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class YahooSketch implements QuantileSketch {
@@ -58,7 +59,7 @@ public class YahooSketch implements QuantileSketch {
     }
 
     @Override
-    public QuantileSketch merge(QuantileSketch[] sketches) {
+    public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
         DoublesUnion union = DoublesUnion.builder().setMaxK(k).build();
         union.update(this.sketch);
         for (QuantileSketch s : sketches) {

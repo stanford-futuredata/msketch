@@ -18,6 +18,8 @@ public class AccuracyBench {
     private List<Double> quantiles;
     private int numTrials;
 
+    private boolean verbose = false;
+
     public AccuracyBench(String confFile) throws IOException{
         RunConfig conf = RunConfig.fromJsonFile(confFile);
         testName = conf.get("testName");
@@ -26,6 +28,8 @@ public class AccuracyBench {
         methods = conf.get("methods");
         quantiles = conf.get("quantiles");
         numTrials = conf.get("numTrials");
+
+        verbose = conf.get("verbose", false);
     }
 
     public static void main(String[] args) throws Exception {
@@ -54,7 +58,9 @@ public class AccuracyBench {
             for (int curTrial = 0; curTrial < numTrials; curTrial++) {
                 for (double sParam : sizeParams) {
                     System.gc();
-                    System.out.println(sketchName+":"+curTrial+"@"+(int)sParam);
+                    if (verbose) {
+                        System.out.println(sketchName + ":" + curTrial + "@" + (int) sParam);
+                    }
                     QuantileSketch curSketch = SketchLoader.load(sketchName);
                     curSketch.setCalcError(true);
                     curSketch.setSizeParam(sParam);

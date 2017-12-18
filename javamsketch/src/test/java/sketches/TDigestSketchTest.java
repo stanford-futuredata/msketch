@@ -1,8 +1,11 @@
 package sketches;
 
 import data.TestDataSource;
+import io.DataGrouper;
+import io.SeqDataGrouper;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -21,6 +24,19 @@ public class TDigestSketchTest {
         List<Double> ps = Arrays.asList(.1, .5, .9);
         double[] qs = ts.getQuantiles(ps);
         double[] expectedQs = QuantileUtil.getTrueQuantiles(ps, data);
-        assertArrayEquals(expectedQs, qs, 1.0);
+        assertArrayEquals(expectedQs, qs, 100.0);
+
+        DataGrouper grouper = new SeqDataGrouper(60);
+        ArrayList<double[]> cellData = grouper.group(data);
+        QuantileSketch mergedSketch = QuantileUtil.trainAndMerge(
+                () -> {
+                    QuantileSketch newSketch = new TDigestSketch();
+                    newSketch.setSizeParam(20);
+                    return newSketch;
+                },
+                cellData
+        );
+        double[] qs2 = mergedSketch.getQuantiles(ps);
+        assertArrayEquals(expectedQs, qs2, 100.0);
     }
 }

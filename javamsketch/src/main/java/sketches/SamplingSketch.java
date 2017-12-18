@@ -5,6 +5,7 @@ import com.yahoo.sketches.sampling.ReservoirItemsUnion;
 import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.commons.math3.util.FastMath;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SamplingSketch implements QuantileSketch {
@@ -53,7 +54,7 @@ public class SamplingSketch implements QuantileSketch {
 
 
     @Override
-    public QuantileSketch merge(QuantileSketch[] sketches) {
+    public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
         ReservoirItemsUnion<Double> newUnion = ReservoirItemsUnion.newInstance(this.size);
         newUnion.update(this.reservoir);
         for (QuantileSketch s :sketches) {

@@ -3,6 +3,7 @@ package sketches;
 import org.apache.spark.sql.catalyst.util.QuantileSummaries;
 import scala.Option;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SparkGKSketch implements QuantileSketch{
@@ -55,7 +56,7 @@ public class SparkGKSketch implements QuantileSketch{
     }
 
     @Override
-    public QuantileSketch merge(QuantileSketch[] sketches) {
+    public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
         QuantileSummaries newSumm = this.summary;
         for (QuantileSketch s : sketches) {
             SparkGKSketch gks = (SparkGKSketch) s;

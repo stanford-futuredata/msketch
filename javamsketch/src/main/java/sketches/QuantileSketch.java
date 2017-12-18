@@ -1,5 +1,6 @@
 package sketches;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public interface QuantileSketch {
@@ -12,7 +13,7 @@ public interface QuantileSketch {
     void initialize();
 
     void add(double[] data);
-    QuantileSketch merge(QuantileSketch[] sketches);
+    QuantileSketch merge(ArrayList<QuantileSketch> sketches);
 
     double[] getQuantiles(List<Double> ps) throws Exception;
     double[] getErrors();

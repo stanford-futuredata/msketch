@@ -7,14 +7,15 @@ import java.util.ArrayList;
 
 import static org.junit.Assert.*;
 
-public class DataGrouperTest {
+public class SeqDataGrouperTest {
     @Test
     public void testSimple() {
-        double[] data = TestDataSource.getUniform(1000);
-        DataGrouper g = new DataGrouper(data);
-        ArrayList<double[]> cells = g.groupSequentially(90);
+        double[] data = TestDataSource.getUniform(-2, 3, 1000);
+        SeqDataGrouper g = new SeqDataGrouper(90);
+        ArrayList<double[]> cells = g.group(data);
         assertEquals(12, cells.size());
         assertEquals(10, cells.get(11).length);
+        assertEquals(3.0, cells.get(11)[9], 0.0);
     }
 
 }

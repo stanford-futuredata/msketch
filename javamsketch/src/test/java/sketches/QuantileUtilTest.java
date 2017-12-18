@@ -15,5 +15,4 @@ public class QuantileUtilTest {
         assertEquals(100.0, qs[0], 0.0);
         assertEquals(500.0, qs[1], 0.0);
     }
-
 }

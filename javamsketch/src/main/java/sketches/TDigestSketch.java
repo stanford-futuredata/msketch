@@ -2,7 +2,6 @@ package sketches;
 
 import com.tdunning.math.stats.Centroid;
 import com.tdunning.math.stats.TDigest;
-import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,7 +47,8 @@ public class TDigestSketch implements QuantileSketch {
 
     @Override
     public void initialize() {
-        this.td = TDigest.createDigest(compression);
+//        this.td = TDigest.createDigest(compression);
+        this.td = TDigest.createAvlTreeDigest(compression);
     }
 
     @Override
@@ -59,7 +59,7 @@ public class TDigestSketch implements QuantileSketch {
     }
 
     @Override
-    public QuantileSketch merge(QuantileSketch[] sketches) {
+    public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
         TDigest newTD = this.td;
         for (QuantileSketch s : sketches) {
             TDigestSketch ts = (TDigestSketch)s;

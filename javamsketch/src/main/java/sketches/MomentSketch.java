@@ -3,6 +3,7 @@ package sketches;
 import msketch.BoundSolver;
 import msketch.ChebyshevMomentSolver;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MomentSketch implements QuantileSketch {
@@ -13,6 +14,11 @@ public class MomentSketch implements QuantileSketch {
 
     private double min;
     private double max;
+
+    public double[] getPowerSums() {
+        return powerSums;
+    }
+
     private double[] powerSums;
 
     public MomentSketch(double tolerance) {
@@ -71,7 +77,7 @@ public class MomentSketch implements QuantileSketch {
     }
 
     @Override
-    public QuantileSketch merge(QuantileSketch[] sketches) {
+    public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
         double mMin = Double.MAX_VALUE;
         double mMax = -Double.MAX_VALUE;
         double[] mPowerSums = this.powerSums;
