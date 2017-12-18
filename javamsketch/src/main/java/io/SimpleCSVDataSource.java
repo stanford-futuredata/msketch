@@ -2,6 +2,7 @@ package io;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class SimpleCSVDataSource implements DataSource{
@@ -24,7 +25,7 @@ public class SimpleCSVDataSource implements DataSource{
     }
 
     @Override
-    public double[] get() throws Exception {
+    public double[] get() throws IOException {
         BufferedReader bf = new BufferedReader(new FileReader(fileName));
         if (hasHeader) {
             bf.readLine();

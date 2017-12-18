@@ -1,5 +1,6 @@
 First, generate and up-to-date classpath
 ```
+mvn install
 ./genCP.sh
 ```
 

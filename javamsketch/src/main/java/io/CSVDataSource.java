@@ -4,6 +4,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 
@@ -27,7 +28,7 @@ public class CSVDataSource implements DataSource {
     }
 
     @Override
-    public double[] get() throws Exception {
+    public double[] get() throws IOException {
         Reader in = new FileReader(fileName);
         CSVFormat format = CSVFormat.RFC4180;
         if (hasHeader) {
