@@ -1,5 +1,6 @@
 package sketches;
 
+import msketch.BoundSolver;
 import msketch.ChebyshevMomentSolver;
 
 import java.util.List;
@@ -97,13 +98,15 @@ public class MomentSketch implements QuantileSketch {
                 min, max, powerSums
         );
         solver.solve(tolerance);
+        BoundSolver boundSolver = new BoundSolver(powerSums);
         int m = ps.size();
         double[] estQuantiles = new double[m];
+        errors = new double[m];
         for (int i = 0; i < m; i++) {
             estQuantiles[i] = solver.estimateQuantile(ps.get(i), min, max);
+            errors[i] = boundSolver.quantileError(estQuantiles[i], ps.get(i));
         }
 
-        errors = new double[m];
         return estQuantiles;
     }
 

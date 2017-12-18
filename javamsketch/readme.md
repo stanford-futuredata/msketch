@@ -7,5 +7,5 @@ To run the benchmark:
 
 ```
 mvn package
-./accBench confs/shuttle_acc.json
+./accBench.sh confs/shuttle_acc.json
 ```
