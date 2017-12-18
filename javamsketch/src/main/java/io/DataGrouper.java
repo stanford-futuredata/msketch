@@ -10,7 +10,7 @@ public class DataGrouper {
 
     public ArrayList<double[]> groupSequentially(int cellSize) {
         int n = data.length;
-        int numCells = (int)Math.ceil(n/cellSize);
+        int numCells = (int)Math.ceil(n*1.0/cellSize);
         ArrayList<double[]> cells = new ArrayList<>(numCells);
         for (int i = 0; i < numCells; i++) {
             int startIdx = i*cellSize;

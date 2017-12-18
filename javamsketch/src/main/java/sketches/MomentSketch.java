@@ -83,7 +83,7 @@ public class MomentSketch implements QuantileSketch {
             if (ms.max > mMax) {
                 mMax = ms.max;
             }
-            for (int i = 0; i <= k; i++) {
+            for (int i = 0; i < k; i++) {
                 mPowerSums[i] += ms.powerSums[i];
             }
         }
