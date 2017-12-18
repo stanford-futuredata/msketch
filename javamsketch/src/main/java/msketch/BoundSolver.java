@@ -44,11 +44,11 @@ public class BoundSolver {
 
         // Special case where upper bound is 1
         if (n_positive_positions == n) {
-            return Math.max(1.0 - p, p - (1.0 - massAtZero));
+            return Math.max(massAtZero - p, p);
         }
         // Special case where lower bound is 0
         if (n_positive_positions == 0) {
-            return Math.max(massAtZero - p, p);
+            return Math.max(1.0 - p, p - (1.0 - massAtZero));
         }
 
         // Find weights
