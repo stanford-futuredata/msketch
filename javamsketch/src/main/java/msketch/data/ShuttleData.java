@@ -1,6 +1,6 @@
 package msketch.data;
 
-public class ShuttleMoments {
+public class ShuttleData {
     public static double[] moments = {
             1.0,
             -0.57071217926390339,
@@ -25,4 +25,21 @@ public class ShuttleMoments {
             0.026327570711651923,
             -0.13152321634595951
     };
+
+    public static double[] powerSums = {
+            43500.0,
+            2098864.0,
+            107800016.0,
+            6005831428.0,
+            369924186368.0,
+            25475420299084.0,
+            1954803892405976.0,
+            1.6430830896853082e+17,
+            1.4790926986227182e+19,
+            1.3971091486866444e+21,
+            1.3638448459556252e+23
+    };
+
+    public static double min = 27;
+    public static double max = 126;
 }

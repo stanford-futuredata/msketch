@@ -1,14 +1,11 @@
 import msketch.BoundSolver;
 import msketch.ChebyshevMomentSolver;
-import msketch.data.RetailPowerSums;
-import msketch.data.ShuttleMoments;
-import msketch.data.ShuttlePowerSums;
+import msketch.data.ShuttleData;
 import msketch.optimizer.NewtonOptimizer;
 
 public class MSketchBench {
     public static void main(String[] args) throws Exception {
-        boundsBench(ShuttlePowerSums.powerSums, 11);
-        boundsBench(RetailPowerSums.powerSums, 11);
+        boundsBench();
         estimateBench();
     }
 
@@ -16,7 +13,7 @@ public class MSketchBench {
         int k = 11;
         double[] d_mus = new double[k];
         for (int i = 0; i < d_mus.length; i++) {
-            d_mus[i] = ShuttleMoments.moments[i];
+            d_mus[i] = ShuttleData.moments[i];
 //            d_mus[i] = RetailMoments.moments[i];
         }
 
@@ -44,24 +41,25 @@ public class MSketchBench {
         System.out.println("Function Evals: "+numFunctionEvals);
     }
 
-    public static void boundsBench(double[] ps, int k) {
+    public static void boundsBench() {
+        int k = 11;
         double[] powerSums = new double[k];
         for (int i = 0; i < powerSums.length; i++) {
-            powerSums[i] = ps[i];
+            powerSums[i] = ShuttleData.powerSums[i];
         }
 
         long startTime = System.nanoTime();
         int numIters = 5000;
         for (int i = 0; i < numIters; i++) {
-            BoundSolver boundSolver = new BoundSolver(powerSums);
+            BoundSolver boundSolver = new BoundSolver(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max);
             boundSolver.quantileError(45, 0.5);
         }
         for (int i = 0; i < numIters; i++) {
-            BoundSolver boundSolver = new BoundSolver(powerSums);
+            BoundSolver boundSolver = new BoundSolver(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max);
             boundSolver.quantileError(80, 0.95);
         }
         for (int i = 0; i < numIters; i++) {
-            BoundSolver boundSolver = new BoundSolver(powerSums);
+            BoundSolver boundSolver = new BoundSolver(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max);
             boundSolver.quantileError(120, 0.99);
         }
         long elapsed = System.nanoTime() - startTime;

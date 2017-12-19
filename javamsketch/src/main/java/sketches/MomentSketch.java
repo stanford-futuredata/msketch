@@ -104,7 +104,7 @@ public class MomentSketch implements QuantileSketch {
                 min, max, powerSums
         );
         solver.solve(tolerance);
-        BoundSolver boundSolver = new BoundSolver(powerSums);
+        BoundSolver boundSolver = new BoundSolver(powerSums, min, max);
         int m = ps.size();
         double[] estQuantiles = new double[m];
         errors = new double[m];

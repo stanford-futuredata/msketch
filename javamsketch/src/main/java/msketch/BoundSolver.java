@@ -9,12 +9,22 @@ import java.util.Arrays;
 // http://www.sciencedirect.com/science/article/pii/S0895717705004863#fd16
 public class BoundSolver {
     private double[] powerSums;
+    private double min;
+    private double max;
 
-    public BoundSolver(double[] powerSums) {
+    public BoundSolver(double[] powerSums, double min, double max) {
         this.powerSums = powerSums;
+        this.min = min;
+        this.max = max;
     }
 
     public double quantileError(double est, double p) {
+        if (powerSums.length <= 1) {
+            return Math.max(p, 1.0-p);
+        } else if (powerSums.length == 2) {
+            return markovBoundError(est, p);
+        }
+
         double[] shiftedPowerSums = MathUtil.shiftPowerSum(powerSums, 1.0, est);
         double count = shiftedPowerSums[0];
         for (int i = 0; i < shiftedPowerSums.length; i++) {
@@ -75,13 +85,7 @@ public class BoundSolver {
         double upperBound = lowerBound + massAtZero;
 
         // Return the larger one-sided error
-        double e1 = upperBound - p;
-        double e2 = p - lowerBound;
-        if (e1 > e2) {
-            return e1;
-        } else {
-            return e2;
-        }
+        return Math.max(upperBound - p, p - lowerBound);
     }
 
     private double maxMassAtZero(double[] shiftedPowerSums, int n) {
@@ -117,5 +121,12 @@ public class BoundSolver {
             sign *= -1;
         }
         return coefs;
+    }
+
+    private double markovBoundError(double estimate, double p) {
+        double mean = powerSums[1] / powerSums[0];
+        double lowerBound = Math.max(0.0, 1 - (mean - min) / (estimate - min));
+        double upperBound = Math.min(1.0, (max - mean) / (max - estimate));
+        return Math.max(upperBound - p, p - lowerBound);
     }
 }

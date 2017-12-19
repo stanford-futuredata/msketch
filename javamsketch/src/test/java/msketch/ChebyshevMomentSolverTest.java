@@ -1,7 +1,7 @@
 package msketch;
 
-import msketch.data.RetailMoments;
-import msketch.data.ShuttleMoments;
+import msketch.data.RetailData;
+import msketch.data.ShuttleData;
 import msketch.optimizer.NewtonOptimizer;
 import org.apache.commons.math3.util.FastMath;
 import org.junit.Test;
@@ -32,7 +32,7 @@ public class ChebyshevMomentSolverTest {
         int k = 11;
         double[] m_values = new double[k];
         for (int i = 0; i < k; i++) {
-            m_values[i] = ShuttleMoments.moments[i];
+            m_values[i] = ShuttleData.moments[i];
         }
         double tol = 1e-10;
         ChebyshevMomentSolver solver = new ChebyshevMomentSolver(m_values);
@@ -62,7 +62,7 @@ public class ChebyshevMomentSolverTest {
         int k = 11;
         double[] m_values = new double[k];
         for (int i = 0; i < k; i++) {
-            m_values[i] = RetailMoments.moments[i];
+            m_values[i] = RetailData.moments[i];
         }
         double tol = 1e-10;
         ChebyshevMomentSolver solver = new ChebyshevMomentSolver(m_values);

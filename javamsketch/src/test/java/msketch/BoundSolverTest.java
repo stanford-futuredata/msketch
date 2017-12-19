@@ -1,10 +1,10 @@
 package msketch;
 
-import msketch.data.RetailPowerSums;
-import msketch.data.ShuttlePowerSums;
+import msketch.data.RetailData;
+import msketch.data.ShuttleData;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class BoundSolverTest {
     @Test
@@ -25,7 +25,7 @@ public class BoundSolverTest {
             m_values[i] = moment;
         }
 
-        BoundSolver solver = new BoundSolver(m_values);
+        BoundSolver solver = new BoundSolver(m_values, 0, 100);
         double error = solver.quantileError(0.5, 0.5);
         assertEquals(error, 0.22, 0.01);
     }
@@ -35,11 +35,40 @@ public class BoundSolverTest {
         int k = 11;
         double[] m_values = new double[k];
         for (int i = 0; i < k; i++) {
-            m_values[i] = ShuttlePowerSums.powerSums[i];
+            m_values[i] = ShuttleData.powerSums[i];
         }
 
-        BoundSolver solver = new BoundSolver(m_values);
+        BoundSolver solver = new BoundSolver(m_values, ShuttleData.min, ShuttleData.max);
         double error = solver.quantileError(45, 0.5);
+        assertEquals(error, 0.2, 0.01);
+    }
+
+    @Test
+    public void testBoundsDecrease() {
+        double prevQError = 1.0;
+        for (int k = 3; k <= 11; k++) {
+            double[] m_values = new double[k];
+            for (int i = 0; i < k; i++) {
+                m_values[i] = ShuttleData.powerSums[i];
+            }
+
+            BoundSolver solver = new BoundSolver(m_values, ShuttleData.min, ShuttleData.max);
+            double error = solver.quantileError(45, 0.5);
+            assertTrue(error <= prevQError);
+            prevQError = error;
+        }
+    }
+
+    @Test
+    public void testMarkov() {
+        int k = 2;
+        double[] m_values = new double[k];
+        for (int i = 0; i < k; i++) {
+            m_values[i] = ShuttleData.powerSums[i];
+        }
+
+        BoundSolver solver = new BoundSolver(m_values, ShuttleData.min, ShuttleData.max);
+        double error = solver.quantileError(100, 0.8);
         assertEquals(error, 0.2, 0.01);
     }
 
@@ -48,10 +77,10 @@ public class BoundSolverTest {
         int k = 11;
         double[] m_values = new double[k];
         for (int i = 0; i < k; i++) {
-            m_values[i] = RetailPowerSums.powerSums[i];
+            m_values[i] = RetailData.powerSums[i];
         }
 
-        BoundSolver solver = new BoundSolver(m_values);
+        BoundSolver solver = new BoundSolver(m_values, RetailData.min, RetailData.max);
         double error = solver.quantileError(45, 0.9);
         assertEquals(error, 0.14, 0.01);
     }
