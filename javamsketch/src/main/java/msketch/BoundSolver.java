@@ -11,11 +11,60 @@ public class BoundSolver {
     private double[] powerSums;
     private double min;
     private double max;
+    private double midpoint;
+    private double scalingFactor;
+    private int n;  // We use up to the order 2n power sum
+    private RealMatrix inverseMomentMatrix;
 
     public BoundSolver(double[] powerSums, double min, double max) {
         this.powerSums = powerSums;
         this.min = min;
         this.max = max;
+        this.midpoint = (max + min) / 2;
+        this.scalingFactor = (max - min) / 2;
+        this.n = (powerSums.length - 1) / 2;
+    }
+
+    // http://www.personal.psu.edu/faculty/f/k/fkv/2000-06-moment-as.pdf
+    public double boundSizeLindsay(double est) {
+        if (inverseMomentMatrix == null) {
+            double[] scaledPowerSums = MathUtil.shiftPowerSum(powerSums, scalingFactor, midpoint);
+            double count = scaledPowerSums[0];
+            for (int i = 0; i < scaledPowerSums.length; i++) {
+                scaledPowerSums[i] /= count;
+            }
+            double[][] matrixData = new double[n + 1][n + 1];
+            for (int r = 0; r <= n; r++) {
+                System.arraycopy(scaledPowerSums, r, matrixData[r], 0, n + 1);
+            }
+            RealMatrix momentMatrix = new Array2DRowRealMatrix(matrixData);
+            inverseMomentMatrix = new LUDecomposition(momentMatrix).getSolver().getInverse();
+        }
+        double[] vectorData = new double[n+1];
+        double curPow = 1.0;
+        vectorData[0] = 1.0;
+        est = (est - midpoint) / scalingFactor;
+        for (int i = 1; i <= n; i++) {
+            curPow *= est;
+            vectorData[i] = curPow;
+        }
+//        RealVector vector = new ArrayRealVector(vectorData);
+//        return 1.0 / inverseMomentMatrix.preMultiply(vector).dotProduct(vector);
+        double[] vector2Data = inverseMomentMatrix.preMultiply(vectorData);
+        double dotProduct = 0.0;
+        for (int i = 0; i < vectorData.length; i++) {
+            dotProduct += vectorData[i] * vector2Data[i];
+        }
+        return 1.0 / dotProduct;
+    }
+
+    public double boundSizeRacz(double est) {
+        double[] shiftedPowerSums = MathUtil.shiftPowerSum(powerSums, scalingFactor, est);
+        double count = shiftedPowerSums[0];
+        for (int i = 0; i < shiftedPowerSums.length; i++) {
+            shiftedPowerSums[i] /= count;
+        }
+        return maxMassAtZero(shiftedPowerSums, n);
     }
 
     public double quantileError(double est, double p) {
@@ -25,12 +74,11 @@ public class BoundSolver {
             return markovBoundError(est, p);
         }
 
-        double[] shiftedPowerSums = MathUtil.shiftPowerSum(powerSums, 1.0, est);
+        double[] shiftedPowerSums = MathUtil.shiftPowerSum(powerSums, scalingFactor, est);
         double count = shiftedPowerSums[0];
         for (int i = 0; i < shiftedPowerSums.length; i++) {
             shiftedPowerSums[i] /= count;
         }
-        int n = (powerSums.length - 1) / 2;
         double massAtZero = maxMassAtZero(shiftedPowerSums, n);
         shiftedPowerSums[0] -= massAtZero;
 

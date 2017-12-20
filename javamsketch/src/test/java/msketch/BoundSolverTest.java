@@ -25,7 +25,7 @@ public class BoundSolverTest {
             m_values[i] = moment;
         }
 
-        BoundSolver solver = new BoundSolver(m_values, 0, 100);
+        BoundSolver solver = new BoundSolver(m_values, 0, 1);
         double error = solver.quantileError(0.5, 0.5);
         assertEquals(error, 0.22, 0.01);
     }
@@ -41,6 +41,10 @@ public class BoundSolverTest {
         BoundSolver solver = new BoundSolver(m_values, ShuttleData.min, ShuttleData.max);
         double error = solver.quantileError(45, 0.5);
         assertEquals(error, 0.2, 0.01);
+
+        double boundSizeRacz = solver.boundSizeRacz(45);
+        double boundSizeLindsay = solver.boundSizeLindsay(45);
+        assertEquals(boundSizeRacz, boundSizeLindsay, 1e-4);
     }
 
     @Test

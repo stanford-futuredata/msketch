@@ -5,7 +5,8 @@ import msketch.optimizer.NewtonOptimizer;
 
 public class MSketchBench {
     public static void main(String[] args) throws Exception {
-        boundsBench();
+        quantileErrorBench();
+        boundSizeBench();
         estimateBench();
     }
 
@@ -41,7 +42,7 @@ public class MSketchBench {
         System.out.println("Function Evals: "+numFunctionEvals);
     }
 
-    public static void boundsBench() {
+    public static void quantileErrorBench() {
         int k = 11;
         double[] powerSums = new double[k];
         for (int i = 0; i < powerSums.length; i++) {
@@ -54,16 +55,26 @@ public class MSketchBench {
             BoundSolver boundSolver = new BoundSolver(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max);
             boundSolver.quantileError(45, 0.5);
         }
-        for (int i = 0; i < numIters; i++) {
-            BoundSolver boundSolver = new BoundSolver(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max);
-            boundSolver.quantileError(80, 0.95);
+        long elapsed = System.nanoTime() - startTime;
+        double secondsPer = elapsed / (1.0e9 * numIters);
+        System.out.println("Quantile Error Time Per Solve: "+secondsPer);
+    }
+
+    public static void boundSizeBench() {
+        int k = 11;
+        double[] powerSums = new double[k];
+        for (int i = 0; i < powerSums.length; i++) {
+            powerSums[i] = ShuttleData.powerSums[i];
         }
+
+        long startTime = System.nanoTime();
+        int numIters = 5000;
         for (int i = 0; i < numIters; i++) {
             BoundSolver boundSolver = new BoundSolver(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max);
-            boundSolver.quantileError(120, 0.99);
+            boundSolver.boundSizeRacz(45);
         }
         long elapsed = System.nanoTime() - startTime;
         double secondsPer = elapsed / (1.0e9 * numIters);
-        System.out.println("Bounds Time Per Solve: "+secondsPer);
+        System.out.println("Bound Size Time Per Solve: "+secondsPer);
     }
 }
