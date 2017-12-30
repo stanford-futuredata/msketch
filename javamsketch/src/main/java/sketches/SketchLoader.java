@@ -16,6 +16,8 @@ public class SketchLoader {
             return new SparkGKSketch();
         } else if (sketchName.contains("sampling")) {
             return new SamplingSketch();
+        } else if (sketchName.contains("histogram")) {
+            return new HistogramSketch();
         }
         throw new IOException("Invalid Sketch");
     }
