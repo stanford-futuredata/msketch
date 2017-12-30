@@ -110,7 +110,9 @@ public class MomentSketch implements QuantileSketch {
         errors = new double[m];
         for (int i = 0; i < m; i++) {
             estQuantiles[i] = solver.estimateQuantile(ps.get(i), min, max);
-            errors[i] = boundSolver.quantileError(estQuantiles[i], ps.get(i));
+            if (errorBounds) {
+                errors[i] = boundSolver.quantileError(estQuantiles[i], ps.get(i));
+            }
         }
 
         return estQuantiles;

@@ -19,6 +19,7 @@ public class MergeBench {
     private int numTrials;
 
     private boolean verbose;
+    private boolean calcError;
 
     public MergeBench(String confFile) throws IOException{
         RunConfig conf = RunConfig.fromJsonFile(confFile);
@@ -32,6 +33,7 @@ public class MergeBench {
         numTrials = conf.get("numTrials");
 
         verbose = conf.get("verbose", false);
+        calcError = conf.get("calcError", false);
     }
 
     public static void main(String[] args) throws Exception {
@@ -62,7 +64,6 @@ public class MergeBench {
         List<Map<String, String>> results = new ArrayList<>();
 
         int m = quantiles.size();
-//        double[] trueQuantiles = QuantileUtil.getTrueQuantiles(quantiles, data);
 
         for (String sketchName : methods.keySet()) {
             List<Double> sizeParams = methods.get(sketchName);
@@ -73,7 +74,7 @@ public class MergeBench {
                 for (int i = 0; i < numCells; i++) {
                     double[] cellData = cells.get(i);
                     QuantileSketch curSketch = SketchLoader.load(sketchName);
-                    curSketch.setCalcError(true);
+                    curSketch.setCalcError(calcError);
                     curSketch.setSizeParam(sParam);
                     curSketch.initialize();
                     curSketch.add(cellData);
@@ -88,7 +89,7 @@ public class MergeBench {
 
                     startTime = System.nanoTime();
                     QuantileSketch mergedSketch = SketchLoader.load(sketchName);
-                    mergedSketch.setCalcError(true);
+                    mergedSketch.setCalcError(calcError);
                     mergedSketch.setSizeParam(sParam);
                     mergedSketch.initialize();
                     mergedSketch.merge(cellSketches);
@@ -113,7 +114,6 @@ public class MergeBench {
                         curResults.put("sketch", mergedSketch.getName());
                         curResults.put("trial", String.format("%d",curTrial));
                         curResults.put("q", String.format("%f", curP));
-                        //                    curResults.put("quantile_true", String.format("%f", trueQuantiles[i]));
                         curResults.put("quantile_estimate", String.format("%f", curQ));
                         curResults.put("bound_size", String.format("%f", curError));
                         curResults.put("space", String.format("%d", mergedSketch.getSize()));

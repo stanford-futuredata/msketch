@@ -77,8 +77,8 @@ public class TDigestSketch implements QuantileSketch {
             quantiles[i] = td.quantile(ps.get(i));
         }
 
+        errors = new double[m];
         if (enableErrors) {
-            errors = new double[m];
             for (int i = 0; i < m; i++) {
                 errors[i] = quantileError(ps.get(i));
             }
