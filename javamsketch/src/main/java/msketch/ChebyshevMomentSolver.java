@@ -74,4 +74,5 @@ public class ChebyshevMomentSolver {
     public int getCumFuncEvals() {
         return cumFuncEvals;
     }
+    public double[] getChebyshevMoments() { return d_mus; }
 }

@@ -50,7 +50,7 @@ public class MSketchBench {
         }
 
         long startTime = System.nanoTime();
-        int numIters = 5000;
+        int numIters = 50000;
         for (int i = 0; i < numIters; i++) {
             BoundSolver boundSolver = new BoundSolver(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max);
             boundSolver.quantileError(45, 0.5);
@@ -68,7 +68,7 @@ public class MSketchBench {
         }
 
         long startTime = System.nanoTime();
-        int numIters = 5000;
+        int numIters = 500000;
         for (int i = 0; i < numIters; i++) {
             BoundSolver boundSolver = new BoundSolver(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max);
             boundSolver.boundSizeRacz(45);

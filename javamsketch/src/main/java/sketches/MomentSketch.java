@@ -14,12 +14,13 @@ public class MomentSketch implements QuantileSketch {
 
     private double min;
     private double max;
+    private double[] powerSums;
 
     public double[] getPowerSums() {
         return powerSums;
     }
-
-    private double[] powerSums;
+    public double getMin() { return min; }
+    public double getMax() { return max; }
 
     public MomentSketch(double tolerance) {
         this.tolerance = tolerance;
