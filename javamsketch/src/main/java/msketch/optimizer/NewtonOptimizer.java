@@ -75,6 +75,7 @@ public class NewtonOptimizer {
             }
             RealMatrix hhMat = new Array2DRowRealMatrix(hess, false);
             CholeskyDecomposition d = new CholeskyDecomposition(hhMat, 0, 0);
+//            SingularValueDecomposition d = new SingularValueDecomposition(hhMat);
             RealVector stepVector = d.getSolver().solve(new ArrayRealVector(grad));
             stepVector.mapMultiplyToSelf(-1.0);
 

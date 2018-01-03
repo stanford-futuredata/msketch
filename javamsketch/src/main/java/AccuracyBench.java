@@ -19,6 +19,7 @@ public class AccuracyBench {
     private int numTrials;
 
     private boolean verbose = false;
+    private boolean calcError = false;
 
     public AccuracyBench(String confFile) throws IOException{
         RunConfig conf = RunConfig.fromJsonFile(confFile);
@@ -30,6 +31,7 @@ public class AccuracyBench {
         numTrials = conf.get("numTrials");
 
         verbose = conf.get("verbose", false);
+        calcError = conf.get("calcError", false);
     }
 
     public static void main(String[] args) throws Exception {
@@ -51,7 +53,6 @@ public class AccuracyBench {
         List<Map<String, String>> results = new ArrayList<>();
 
         int m = quantiles.size();
-//        double[] trueQuantiles = QuantileUtil.getTrueQuantiles(quantiles, data);
 
         for (String sketchName : methods.keySet()) {
             List<Double> sizeParams = methods.get(sketchName);
@@ -62,7 +63,7 @@ public class AccuracyBench {
                         System.out.println(sketchName + ":" + curTrial + "@" + (int) sParam);
                     }
                     QuantileSketch curSketch = SketchLoader.load(sketchName);
-                    curSketch.setCalcError(true);
+                    curSketch.setCalcError(calcError);
                     curSketch.setSizeParam(sParam);
                     curSketch.initialize();
 
@@ -87,7 +88,6 @@ public class AccuracyBench {
                         curResults.put("sketch", curSketch.getName());
                         curResults.put("trial", String.format("%d",curTrial));
                         curResults.put("q", String.format("%f", curP));
-//                    curResults.put("quantile_true", String.format("%f", trueQuantiles[i]));
                         curResults.put("quantile_estimate", String.format("%f", curQ));
                         curResults.put("bound_size", String.format("%f", curError));
                         curResults.put("space", String.format("%d", curSketch.getSize()));
