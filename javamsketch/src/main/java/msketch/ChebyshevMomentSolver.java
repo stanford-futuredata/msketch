@@ -4,6 +4,8 @@ import msketch.optimizer.NewtonOptimizer;
 import org.apache.commons.math3.analysis.solvers.BrentSolver;
 import org.apache.commons.math3.analysis.solvers.UnivariateSolver;
 
+import java.util.Arrays;
+
 public class ChebyshevMomentSolver {
     private double[] d_mus;
     private boolean verbose = false;
@@ -41,6 +43,9 @@ public class ChebyshevMomentSolver {
         optimizer = new NewtonOptimizer(potential);
         optimizer.setVerbose(verbose);
         lambdas = optimizer.solve(l_initial, tol);
+        if (verbose) {
+            System.out.println("Final Polynomial: " + Arrays.toString(lambdas));
+        }
         cumFuncEvals = potential.getCumFuncEvals();
 
         approxCDF = ChebyshevPolynomial.fit(new MaxEntFunction(lambdas), tol).integralPoly();

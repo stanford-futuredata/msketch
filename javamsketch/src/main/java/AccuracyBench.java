@@ -20,6 +20,7 @@ public class AccuracyBench {
 
     private boolean verbose = false;
     private boolean calcError = false;
+    private boolean appendTimeStamp = true;
 
     public AccuracyBench(String confFile) throws IOException{
         RunConfig conf = RunConfig.fromJsonFile(confFile);
@@ -32,6 +33,7 @@ public class AccuracyBench {
 
         verbose = conf.get("verbose", false);
         calcError = conf.get("calcError", false);
+        appendTimeStamp = conf.get("appendTimeStamp", false);
     }
 
     public static void main(String[] args) throws Exception {
@@ -40,6 +42,7 @@ public class AccuracyBench {
 
         List<Map<String, String>> results = bench.run();
         CSVOutput output = new CSVOutput();
+        output.setAddTimeStamp(bench.appendTimeStamp);
         output.writeAllResults(results, bench.testName);
     }
 
@@ -52,8 +55,6 @@ public class AccuracyBench {
         System.out.println("Loaded Data in: "+loadTime);
         List<Map<String, String>> results = new ArrayList<>();
 
-        int m = quantiles.size();
-
         for (String sketchName : methods.keySet()) {
             List<Double> sizeParams = methods.get(sketchName);
             for (int curTrial = 0; curTrial < numTrials; curTrial++) {
@@ -63,6 +64,7 @@ public class AccuracyBench {
                         System.out.println(sketchName + ":" + curTrial + "@" + (int) sParam);
                     }
                     QuantileSketch curSketch = SketchLoader.load(sketchName);
+                    curSketch.setVerbose(verbose);
                     curSketch.setCalcError(calcError);
                     curSketch.setSizeParam(sParam);
                     curSketch.initialize();

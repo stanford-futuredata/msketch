@@ -10,6 +10,7 @@ public interface QuantileSketch {
 
     void setSizeParam(double sizeParam);
     void setCalcError(boolean flag);
+    default void setVerbose(boolean flag) {return;}
     void initialize();
 
     void add(double[] data);

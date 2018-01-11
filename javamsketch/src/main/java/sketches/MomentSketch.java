@@ -10,6 +10,8 @@ public class MomentSketch implements QuantileSketch {
     private int k = 5;
     private boolean errorBounds = false;
     private double tolerance = 1e-10;
+    private boolean verbose = false;
+
     private double[] errors;
 
     private double min;
@@ -44,6 +46,11 @@ public class MomentSketch implements QuantileSketch {
     @Override
     public void setSizeParam(double sizeParam) {
         this.k = (int)sizeParam;
+    }
+
+    @Override
+    public void setVerbose(boolean flag) {
+        verbose = flag;
     }
 
     @Override
@@ -104,6 +111,7 @@ public class MomentSketch implements QuantileSketch {
         ChebyshevMomentSolver solver = ChebyshevMomentSolver.fromPowerSums(
                 min, max, powerSums
         );
+        solver.setVerbose(verbose);
         solver.solve(tolerance);
         BoundSolver boundSolver = new BoundSolver(powerSums, min, max);
         int m = ps.size();
