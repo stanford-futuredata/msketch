@@ -66,8 +66,7 @@ public class NewtonOptimizer {
             double[][] hess = P.getHessian();
             double mse = getMSE(grad);
             if (verbose) {
-                System.out.println("Step: " + step);
-                System.out.println("Grad: " + Arrays.toString(grad));
+                System.out.println(String.format("Step: %3d GradRMSE: %10.5g", step, Math.sqrt(mse)));
             }
             if (mse < gradTol2) {
                 converged = true;
@@ -120,8 +119,9 @@ public class NewtonOptimizer {
                 dampedStepCount++;
             }
             if (verbose) {
-                System.out.println("dfdx: "+dfdx);
-                System.out.println("Step Size: "+stepScaleFactor);
+                if (stepScaleFactor > 1.0) {
+                    System.out.println("Step Size: " + stepScaleFactor);
+                }
             }
             System.arraycopy(newX, 0, x, 0, k);
         }
