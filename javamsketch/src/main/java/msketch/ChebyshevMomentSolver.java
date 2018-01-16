@@ -12,6 +12,7 @@ public class ChebyshevMomentSolver {
 
     private double[] lambdas;
     private ChebyshevPolynomial approxCDF;
+    private boolean isConverged;
 
     private NewtonOptimizer optimizer;
     private int cumFuncEvals;
@@ -43,6 +44,7 @@ public class ChebyshevMomentSolver {
         optimizer = new NewtonOptimizer(potential);
         optimizer.setVerbose(verbose);
         lambdas = optimizer.solve(l_initial, tol);
+        isConverged = optimizer.isConverged();
         if (verbose) {
             System.out.println("Final Polynomial: " + Arrays.toString(lambdas));
         }
@@ -80,4 +82,8 @@ public class ChebyshevMomentSolver {
         return cumFuncEvals;
     }
     public double[] getChebyshevMoments() { return d_mus; }
+
+    public boolean isConverged() {
+        return isConverged;
+    }
 }

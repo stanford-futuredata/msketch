@@ -22,7 +22,7 @@ public class NewtonOptimizer {
 
     public NewtonOptimizer(FunctionWithHessian P) {
         this.P = P;
-        this.maxIter = 200;
+        this.maxIter = 100;
         this.stepCount = 0;
         this.dampedStepCount = 0;
         this.converged = false;
@@ -60,6 +60,7 @@ public class NewtonOptimizer {
         P.computeAll(x, gradTol/4);
 
         double gradTol2 = gradTol * gradTol;
+        converged = false;
         for (step = 0; step < maxIter; step++) {
             double PVal = P.getValue();
             double[] grad = P.getGradient();
@@ -73,9 +74,19 @@ public class NewtonOptimizer {
                 break;
             }
             RealMatrix hhMat = new Array2DRowRealMatrix(hess, false);
-            CholeskyDecomposition d = new CholeskyDecomposition(hhMat, 0, 0);
-//            SingularValueDecomposition d = new SingularValueDecomposition(hhMat);
-            RealVector stepVector = d.getSolver().solve(new ArrayRealVector(grad));
+            RealVector stepVector;
+            try {
+                CholeskyDecomposition d = new CholeskyDecomposition(
+                        hhMat,
+                        0,
+                        0
+                );
+                stepVector = d.getSolver().solve(new ArrayRealVector(grad));
+            } catch (NonPositiveDefiniteMatrixException e) {
+//                SingularValueDecomposition d = new SingularValueDecomposition(hhMat);
+//                stepVector = d.getSolver().solve(new ArrayRealVector(grad));
+                break;
+            }
             stepVector.mapMultiplyToSelf(-1.0);
 
             double dfdx = 0.0;

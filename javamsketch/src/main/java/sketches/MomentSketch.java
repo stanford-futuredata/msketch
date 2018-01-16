@@ -86,8 +86,8 @@ public class MomentSketch implements QuantileSketch {
 
     @Override
     public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
-        double mMin = Double.MAX_VALUE;
-        double mMax = -Double.MAX_VALUE;
+        double mMin = this.min;
+        double mMax = this.max;
         double[] mPowerSums = this.powerSums;
         for (QuantileSketch s : sketches) {
             MomentSketch ms = (MomentSketch)s;
@@ -118,9 +118,18 @@ public class MomentSketch implements QuantileSketch {
         double[] estQuantiles = new double[m];
         errors = new double[m];
         for (int i = 0; i < m; i++) {
-            estQuantiles[i] = solver.estimateQuantile(ps.get(i), min, max);
-            if (errorBounds) {
-                errors[i] = boundSolver.quantileError(estQuantiles[i], ps.get(i));
+            double p = ps.get(i);
+            if (p <= 0.0) {
+                estQuantiles[i] = min;
+                errors[i] = 0.0;
+            } else if (p >= 1.0) {
+                estQuantiles[i] = max;
+                errors[i] = 0.0;
+            } else {
+                estQuantiles[i] = solver.estimateQuantile(p, min, max);
+                if (errorBounds) {
+                    errors[i] = boundSolver.quantileError(estQuantiles[i], p);
+                }
             }
         }
 

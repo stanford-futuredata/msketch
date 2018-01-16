@@ -2,12 +2,45 @@ import msketch.BoundSolver;
 import msketch.ChebyshevMomentSolver;
 import msketch.data.ShuttleData;
 import msketch.optimizer.NewtonOptimizer;
+import sketches.HybridMomentSketch;
+import sketches.MomentSketch;
+import sketches.QuantileSketch;
+
+import java.util.ArrayList;
 
 public class MSketchBench {
     public static void main(String[] args) throws Exception {
-        quantileErrorBench();
-        boundSizeBench();
-        estimateBench();
+//        quantileErrorBench();
+//        boundSizeBench();
+//        estimateBench();
+        mergeBench();
+    }
+
+    public static void mergeBench() {
+        int k = 11;
+        int numMerges = 100000000;
+        int numIters = 10;
+
+        HybridMomentSketch ms = new HybridMomentSketch(1e-9);
+        ms.setSizeParam(k);
+        ms.initialize();
+        ArrayList<QuantileSketch> sketches = new ArrayList<>(numMerges);
+        for (int i = 0; i < numMerges; i++) {
+            sketches.add(ms);
+        }
+        System.out.println("Initialized");
+
+        long startTime = System.nanoTime();
+        for (int i = 0; i < numIters; i++) {
+            HybridMomentSketch merged = new HybridMomentSketch(1e-9);
+            merged.setSizeParam(11);
+            merged.initialize();
+
+            merged.merge(sketches);
+        }
+        long elapsed = System.nanoTime() - startTime;
+        double secondsPer = elapsed / (1.0e9 * numIters * numMerges);
+        System.out.println("Time Per Merge: "+secondsPer);
     }
 
     public static void estimateBench() {

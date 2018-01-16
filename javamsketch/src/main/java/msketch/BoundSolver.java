@@ -16,7 +16,6 @@ public class BoundSolver {
     private double midpoint;
     private double scalingFactor;
     private int n;  // We use up to the order 2n power sum
-    private RealMatrix inverseMomentMatrix;
     private LUDecomposition momentMatrixDecomp;
     private RealMatrix smallMatrix;
     private RealMatrix largeMatrix;
@@ -162,7 +161,10 @@ public class BoundSolver {
         double upperBound = lowerBound + massAtZero;
 
         // Return the larger one-sided error
-        return Math.max(upperBound - p, p - lowerBound);
+        return Math.max(
+                Math.abs(upperBound - p),
+                Math.abs(p - lowerBound)
+        );
     }
 
     // Solve for polynomial roots using the companion matrix
