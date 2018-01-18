@@ -3,24 +3,15 @@ package msketch;
 import org.apache.commons.math3.linear.*;
 
 import java.util.Arrays;
-import java.util.List;
 
 // http://www.sciencedirect.com/science/article/pii/S0895717705004863#fd16
 public class SimpleBoundSolver {
-    private double[] moments;
-    private double min;
-    private double max;
     private int n;  // moments from 0..2n
-
     private double[][] momentArray;
     private double[][] smallArray;
 
-    private List<Double> xs;
-    private double[] boundSizes;
-
     public SimpleBoundSolver(int numMoments) {
         this.n = (numMoments - 1) / 2;
-        this.moments = new double[numMoments];
         this.momentArray = new double[n+1][n+1];
         this.smallArray = new double[n][n];
     }
@@ -30,13 +21,7 @@ public class SimpleBoundSolver {
      * @return total size of the error bounds provided by moments
      * http://www.personal.psu.edu/faculty/f/k/fkv/2000-06-moment-as.pdf
      */
-    public double[] solveBounds(double[] powerSums, double min, double max, List<Double> xs) {
-        this.min = min;
-        this.max = max;
-        this.xs = xs;
-        for (int i = 0; i < moments.length; i++) {
-            this.moments[i] = powerSums[i] / powerSums[0];
-        }
+    public double[] solveBounds(double[] moments, double[] xs) {
         for (int i = 0; i <= n; i++) {
             System.arraycopy(moments, i, momentArray[i], 0, n+1);
         }
@@ -45,10 +30,10 @@ public class SimpleBoundSolver {
         double[] vectorData = new double[n+1];
         CholeskyDecomposition momentMatrixDecomp = new CholeskyDecomposition(momentMatrix);
 
-        int numPoints = xs.size();
-        boundSizes = new double[numPoints];
+        int numPoints = xs.length;
+        double[] boundSizes = new double[numPoints];
         for (int i = 0; i < numPoints; i++) {
-            double x = xs.get(i);
+            double x = xs[i];
             MathUtil.calcPowers(x, vectorData);
             ArrayRealVector vec = new ArrayRealVector(vectorData, false);
             double boundSize = 1.0 / vec.dotProduct(momentMatrixDecomp.getSolver().solve(vec));
@@ -58,7 +43,7 @@ public class SimpleBoundSolver {
         return boundSizes;
     }
 
-    public double[] getMaxErrors(List<Double> ps) {
+    public double[] getMaxErrors(double[] moments, double[] xs, double[] ps, double[] boundSizes) {
         if (boundSizes == null) {
             throw new RuntimeException("Solve Bounds First");
         }
@@ -67,29 +52,22 @@ public class SimpleBoundSolver {
         double[] maxErrors = new double[numPoints];
         int n2 = moments.length;
         for (int qIdx = 0; qIdx < numPoints; qIdx++) {
-            double x = xs.get(qIdx);
-            double p = ps.get(qIdx);
+            double x = xs[qIdx];
+            double p = ps[qIdx];
             double maxMass = boundSizes[qIdx];
-            if (n2 <= 1) {
+            if (n2 <= 2) {
                 maxErrors[qIdx] = Math.max(p, 1.0-p);
-            } else if (n2 == 2) {
-                maxErrors[qIdx] = markovBoundError(x, p);
             } else {
-                double scale = (max - min);
-                double[] shiftedMoments = MathUtil.shiftPowerSum(moments, scale, x);
+                double[] shiftedMoments = MathUtil.shiftPowerSum(moments, 1.0, x);
                 shiftedMoments[0] -= maxMass;
 
                 // Find Positions
-                double[] coefs = orthogonalPolynomialCoefficients(shiftedMoments, n);
-                boolean coefsAllZeros = true;
-                for (double c : coefs) {
-                    coefsAllZeros &= (c == 0);
-                }
-                if (coefsAllZeros) {
-                    maxErrors[qIdx] = maxMass / 2.0;  // TODO: does coefs all 0 imply symmetric error?
+                double[] positions = solvePositions(shiftedMoments);
+                // TODO: why do we divide by two when coeffs are all 0?
+                if (positions == null) {
+                    maxErrors[qIdx] = maxMass / 2;
                     break;
                 }
-                double[] positions = polynomialRoots(coefs);
                 int n_positive_positions = 0;
                 for (int j = 0; j < n; j++) {
                     if (positions[j] > 0) n_positive_positions++;
@@ -100,21 +78,7 @@ public class SimpleBoundSolver {
                 } else if (n_positive_positions == 0) {
                     maxErrors[qIdx] = Math.max(1.0 - p, p - (1.0 - maxMass));
                 } else {
-
-                    // Find weights
-                    for (int c = 0; c < positions.length; c++) {
-                        double curPow = 1.0;
-                        smallArray[0][c] = 1.0;
-                        for (int r = 1; r < positions.length; r++) {
-                            curPow *= positions[c];
-                            smallArray[r][c] = curPow;
-                        }
-                    }
-                    RealMatrix matrix = new Array2DRowRealMatrix(smallArray, false);
-                    RealVector shiftedMomentVector = new ArrayRealVector(
-                            Arrays.copyOf(shiftedMoments, n), false
-                    );
-                    double[] weights = (new LUDecomposition(matrix)).getSolver().solve(shiftedMomentVector).toArray();
+                    double[] weights = solveWeights(shiftedMoments, positions);
 
                     // Compute bounds
                     double lowerBound = 0.0;
@@ -134,10 +98,62 @@ public class SimpleBoundSolver {
 
             }
         }
-
         return maxErrors;
     }
 
+    /**
+     * The principle distributions are minimal point-sets that match the moments.
+     * @return entropies of principle distributions
+     */
+    public double[] getPrincipleEntropies(double[] moments, double min, double max) {
+        double[] endPoints = new double[2];
+        endPoints[0] = min;
+        endPoints[1] = max;
+        double[] maxWeights = solveBounds(moments, endPoints);
+        double[] entropies = new double[2];
+        for (int i = 0; i < 2; i++) {
+            double[] shiftedMoments = MathUtil.shiftPowerSum(moments, 1.0, endPoints[i]);
+            double p0 = maxWeights[i];
+            shiftedMoments[0] -= p0;
+            double[] pos = solvePositions(shiftedMoments);
+            double[] weights = solveWeights(shiftedMoments, pos);
+            entropies[i] = MathUtil.entropy(weights) - p0*Math.log(p0);
+        }
+        return entropies;
+    }
+
+    private double[] solvePositions(double[] moments) {
+        double[] coefs = orthogonalPolynomialCoefficients(moments, n);
+        boolean hasNonzero = false;
+        for (double c : coefs) {
+            if (c != 0.0) {
+                hasNonzero = true;
+                break;
+            }
+        }
+        if (!hasNonzero) {
+            return null;
+        }
+        double[] positions = polynomialRoots(coefs);
+        return positions;
+    }
+
+    private double[] solveWeights(double[] moments, double[] positions) {
+        for (int c = 0; c < positions.length; c++) {
+            double curPow = 1.0;
+            smallArray[0][c] = 1.0;
+            for (int r = 1; r < positions.length; r++) {
+                curPow *= positions[c];
+                smallArray[r][c] = curPow;
+            }
+        }
+        RealMatrix matrix = new Array2DRowRealMatrix(smallArray, false);
+        RealVector shiftedMomentVector = new ArrayRealVector(
+                Arrays.copyOf(moments, n), false
+        );
+        double[] weights = (new LUDecomposition(matrix)).getSolver().solve(shiftedMomentVector).toArray();
+        return weights;
+    }
 
     // Solve for polynomial roots using the companion matrix
     private double[] polynomialRoots(double[] coefs) {
@@ -157,9 +173,9 @@ public class SimpleBoundSolver {
         return (new EigenDecomposition(companionMatrix)).getRealEigenvalues();
     }
 
-    private double[] orthogonalPolynomialCoefficients(double[] shiftedPowerSums, int n) {
+    private double[] orthogonalPolynomialCoefficients(double[] moments, int n) {
         for (int r = 0; r < n; r++) {
-            System.arraycopy(shiftedPowerSums, r+1, smallArray[r], 0, n);
+            System.arraycopy(moments, r+1, smallArray[r], 0, n);
         }
 
         double[] coefs = new double[n+1];
@@ -170,18 +186,11 @@ public class SimpleBoundSolver {
             coefs[i] = sign * (new LUDecomposition(matrix)).getDeterminant();
             if (i == n) break;
             for (int r = 0; r < n; r++) {
-                matrix.setEntry(r, i, shiftedPowerSums[r+i]);
+                matrix.setEntry(r, i, moments[r+i]);
             }
             sign *= -1;
         }
         return coefs;
-    }
-
-    private double markovBoundError(double estimate, double p) {
-        double mean = moments[1];
-        double lowerBound = Math.max(0.0, 1 - (mean - min) / (estimate - min));
-        double upperBound = Math.min(1.0, (max - mean) / (max - estimate));
-        return Math.max(upperBound - p, p - lowerBound);
     }
 
 }

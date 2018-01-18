@@ -6,6 +6,9 @@ import msketch.optimizer.NewtonOptimizer;
 import org.apache.commons.math3.util.FastMath;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.junit.Assert.*;
 
 public class ChebyshevMomentSolverTest {
@@ -47,14 +50,20 @@ public class ChebyshevMomentSolverTest {
         NewtonOptimizer opt = solver.getOptimizer();
         assertTrue(opt.getStepCount() < 20);
 
-        assertEquals(
-                -0.602,
-                solver.estimateQuantile(.5, -1, 1),
+        double[] ps = {.5};
+        double[] expectedQs = {-0.602};
+        assertArrayEquals(
+                expectedQs,
+                solver.estimateQuantiles(ps, -1, 1),
                 1e-3
         );
 
-        double scaledQuantile = solver.estimateQuantile(.5, 27, 126);
-        assertEquals(45, scaledQuantile, 5.0);
+        expectedQs[0] = 45.0;
+        assertArrayEquals(
+                expectedQs,
+                solver.estimateQuantiles(ps, 27, 126),
+                5.0
+        );
     }
 
     @Test

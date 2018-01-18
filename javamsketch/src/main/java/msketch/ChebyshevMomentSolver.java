@@ -5,6 +5,7 @@ import org.apache.commons.math3.analysis.solvers.BrentSolver;
 import org.apache.commons.math3.analysis.solvers.UnivariateSolver;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class ChebyshevMomentSolver {
     private double[] d_mus;
@@ -54,19 +55,34 @@ public class ChebyshevMomentSolver {
         return optimizer.getStepCount();
     }
 
-    public double estimateQuantile(double p, double min, double max) {
+    public double[] estimateQuantiles(double[] ps, double min, double max) {
         UnivariateSolver bSolver = new BrentSolver(1e-6);
-        double q = bSolver.solve(
-                100,
-                (x) -> approxCDF.value(x) - p,
-                -1,
-                1,
-                0
-        );
+        int n = ps.length;
         double c = (max + min) / 2;
         double r = (max - min) / 2;
-        return q*r+c;
+        double[] quantiles = new double[n];
+
+        for (int i = 0; i < n; i++) {
+            double p = ps[i];
+            double q;
+            if (p <= 0.0) {
+                q = -1;
+            } else if (p >= 1.0) {
+                q = 1;
+            } else {
+                q = bSolver.solve(
+                        100,
+                        (x) -> approxCDF.value(x) - p,
+                        -1,
+                        1,
+                        0
+                );
+            }
+            quantiles[i] = q*r+c;
+        }
+        return quantiles;
     }
+
     public double estimateCDF(double x) {
         return approxCDF.value(x);
     }

@@ -1,9 +1,7 @@
 package sketches;
 
-import msketch.BoundSolver;
-import msketch.ChebyshevMomentSolver;
-import msketch.MathUtil;
-import msketch.MnatSolver;
+import msketch.*;
+import org.apache.avro.generic.GenericData;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,6 +67,26 @@ public class HybridMomentSketch implements QuantileSketch{
     @Override
     public void setCalcError(boolean flag) {
         return;
+    }
+
+    public void setStats(
+            double[] powerSums,
+            double[] logSums,
+            double min,
+            double max,
+            double logMin,
+            double logMax
+    ) {
+        k = powerSums.length;
+        totalSums = new double[2*k];
+        for (int i = 0; i < k; i++) {
+            totalSums[i] = powerSums[i];
+            totalSums[k+i] = logSums[i];
+        }
+        this.min = min;
+        this.max = max;
+        this.logMin = logMin;
+        this.logMax = logMax;
     }
 
     @Override
@@ -140,52 +158,41 @@ public class HybridMomentSketch implements QuantileSketch{
     }
 
     @Override
-    public double[] getQuantiles(List<Double> ps) throws Exception {
+    public double[] getQuantiles(List<Double> pList) throws Exception {
         double[] powerSums = Arrays.copyOfRange(totalSums, 0, k);
+        double[] powMoments = MathUtil.powerSumsToMoments(powerSums);
         double[] logSums = Arrays.copyOfRange(totalSums, k, 2*k);
-        int m = ps.size();
+        double[] logMoments = MathUtil.powerSumsToMoments(logSums);
+        double totalCount = powerSums[0];
+        double logCount = logSums[0];
+        int m = pList.size();
+        double[] ps = new double[m];
+        for (int i = 0; i < m; i++) {
+            ps[i] = pList.get(i);
+        }
 
         ChebyshevMomentSolver solver = ChebyshevMomentSolver.fromPowerSums(
                 min, max, powerSums
         );
         solver.setVerbose(verbose);
+        double[] powQuantiles = new double[m];
+        double[] powBoundSizes = new double[m];
+        double powAvgBoundSize = 1;
+        SimpleBoundSolver powBoundSolver = new SimpleBoundSolver(k);
+
         solver.solve(tolerance);
         boolean powConverged = solver.isConverged();
-        double[] powQuantiles = new double[m];
-        double[] powErrors = new double[m];
-        double powAvgError = 1;
         if (powConverged) {
-            for (int i = 0; i < m; i++) {
-                double p = ps.get(i);
-                if (p <= 0.0) {
-                    powQuantiles[i] = min;
-                } else if (p >= 1.0) {
-                    powQuantiles[i] = max;
-                } else {
-                    powQuantiles[i] = solver.estimateQuantile(p, min, max);
-                }
-            }
+            powQuantiles = solver.estimateQuantiles(ps, min, max);
             if (verbose) {
                 System.out.println("==Power==");
                 System.out.println("Quantiles: "+Arrays.toString(powQuantiles));
             }
-            System.out.println(min);
-            System.out.println(max);
-            BoundSolver powBoundSolver = new BoundSolver(powerSums, min, max);
-            for (int i = 0; i < m; i++) {
-                double p = ps.get(i);
-                if (p <= 0.0) {
-                    powErrors[i] = 0.0;
-                } else if (p >= 1.0) {
-                    powErrors[i] = 0.0;
-                } else {
-                    powErrors[i] = powBoundSolver.quantileError(powQuantiles[i], p);
-                }
-            }
-            powAvgError = MathUtil.arrayMean(powErrors);
+            powBoundSizes = powBoundSolver.solveBounds(powMoments, powQuantiles);
+            powAvgBoundSize = MathUtil.arrayMean(powBoundSizes);
             if (verbose) {
-                System.out.println("Avg Error: "+ powAvgError);
-                System.out.println(Arrays.toString(powErrors));
+                System.out.println("Avg Bound Size: " + powAvgBoundSize);
+                System.out.println("Bounds: "+Arrays.toString(powBoundSizes));
             }
         }
 
@@ -194,46 +201,42 @@ public class HybridMomentSketch implements QuantileSketch{
                 logMin, logMax, logSums
         );
         solver.setVerbose(verbose);
+        double[] logQuantiles = new double[m];
+        double[] logBoundSizes = new double[m];
+        double logAvgBoundSize = 1;
+        double logMissingFrac = (totalCount - logCount) / totalCount;
+
+        int numNegPs = 0;
+        double[] shiftedPs = new double[m];
+        for (int i = 0; i < m; i++) {
+            shiftedPs[i] = ps[i] - logMissingFrac;
+            if (ps[i] < logMissingFrac) {
+                numNegPs++;
+            }
+        }
+        SimpleBoundSolver logBoundSolver = new SimpleBoundSolver(k);
+
         solver.solve(tolerance);
         boolean logConverged = solver.isConverged();
-        double[] logQuantiles = new double[m];
-        double[] logErrors = new double[m];
-        double logAvgError = 1;
         if (logConverged) {
+            logQuantiles = solver.estimateQuantiles(shiftedPs, logMin, logMax);
             if (verbose) {
                 System.out.println("==Log==");
                 System.out.println("Quantiles: "+Arrays.toString(logQuantiles));
             }
-            double totalCount = powerSums[0];
-            double logCount = logSums[0];
-            double logMissingFrac = (totalCount - logCount) / totalCount;
-
-            BoundSolver logBoundSolver = new BoundSolver(logSums, logMin, logMax);
-
-            for (int i = 0; i < m; i++) {
-                double p = ps.get(i) - logMissingFrac;
-                if (p <= 0.0) {
-                    logQuantiles[i] = Math.exp(logMin);
-                    logErrors[i] = Math.abs(p);
-                } else if (p >= 1.0) {
-                    logQuantiles[i] = max;
-                    logErrors[i] = 0.0;
-                } else {
-                    double curLogQuantile = solver.estimateQuantile(p, logMin, logMax);
-                    logQuantiles[i] = Math.exp(curLogQuantile);
-                    logErrors[i] = logBoundSolver.quantileError(curLogQuantile, p);
-                }
+            logBoundSizes = logBoundSolver.solveBounds(logMoments, logQuantiles);
+            for (int i = 0; i < numNegPs; i++) {
+                logBoundSizes[i] = Math.abs(logMissingFrac);
             }
-
-            logAvgError = MathUtil.arrayMean(logErrors);
+            logAvgBoundSize = MathUtil.arrayMean(logBoundSizes);
             if (verbose) {
-                System.out.println("Avg Error: " + logAvgError + " Omitted: "+logMissingFrac);
-                System.out.println(Arrays.toString(logErrors));
+                System.out.println("Avg Bound Size: " + logAvgBoundSize + " Omitted: "+logMissingFrac);
+                System.out.println("Bounds: " + Arrays.toString(logBoundSizes));
             }
         }
 
         if (powConverged && logConverged) {
-            usedLog = (logAvgError < powAvgError);
+            usedLog = (logAvgBoundSize < powAvgBoundSize);
         } else if (!powConverged && logConverged) {
             usedLog = true;
         } else if (powConverged && !logConverged) {
@@ -244,10 +247,20 @@ public class HybridMomentSketch implements QuantileSketch{
         }
 
         if (usedLog) {
-            errors = logErrors;
+            errors = logBoundSolver.getMaxErrors(logMoments, logQuantiles, shiftedPs, logBoundSizes);
+            for (int i = 0; i < logMissingFrac; i++) {
+                errors[i] = logMissingFrac;
+            }
+            for (int i = 0; i < m; i++) {
+                if (i < numNegPs) {
+                    logQuantiles[i] = 0;
+                } else {
+                    logQuantiles[i] = Math.exp(logQuantiles[i]);
+                }
+            }
             return logQuantiles;
         } else {
-            errors = powErrors;
+            errors = powBoundSolver.getMaxErrors(powMoments, powQuantiles, ps, powBoundSizes);
             return powQuantiles;
         }
     }

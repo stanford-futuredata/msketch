@@ -1,6 +1,7 @@
 package msketch;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class MathUtil {
     public static long[][] getBinomials(int m) {
@@ -64,6 +65,17 @@ public class MathUtil {
         return scaledPowerSums;
     }
 
+    public static double[] powerSumsToMoments(
+            double[] powerSums
+    ) {
+        double[] moments = new double[powerSums.length];
+        double count = powerSums[0];
+        for (int i = 0; i < powerSums.length; i++) {
+            moments[i] = powerSums[i]/count;
+        }
+        return moments;
+    }
+
     public static double[] powerSumsToPosMoments(
             double[] powerSums,
             double min,
@@ -105,6 +117,15 @@ public class MathUtil {
         return scaledChebyMoments;
     }
 
+    public static double[] listToArray(List<Double> xList) {
+        int n = xList.size();
+        double[] xs = new double[n];
+        for (int i = 0; i < n; i++) {
+            xs[i] = xList.get(i);
+        }
+        return xs;
+    }
+
     public static double arrayMean(double[] xs) {
         double sum = 0.0;
         for (double x : xs) {
@@ -121,5 +142,13 @@ public class MathUtil {
             curPow *= x;
         }
         return;
+    }
+
+    public static double entropy(double[] ps) {
+        double h = 0.0;
+        for (double p : ps) {
+            h -= p * Math.log(p);
+        }
+        return h;
     }
 }

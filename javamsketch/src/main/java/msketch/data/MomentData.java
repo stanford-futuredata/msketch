@@ -1,5 +1,7 @@
 package msketch.data;
 
+import msketch.MathUtil;
+
 import java.util.Arrays;
 
 public abstract class MomentData {

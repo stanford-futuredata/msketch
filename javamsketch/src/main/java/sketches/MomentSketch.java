@@ -2,6 +2,8 @@ package sketches;
 
 import msketch.BoundSolver;
 import msketch.ChebyshevMomentSolver;
+import msketch.MathUtil;
+import msketch.SimpleBoundSolver;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +62,13 @@ public class MomentSketch implements QuantileSketch {
         this.powerSums = new double[k];
     }
 
+    public void setStats(double[] powerSums, double min, double max) {
+        this.k = powerSums.length;
+        this.powerSums = powerSums;
+        this.min = min;
+        this.max = max;
+    }
+
     @Override
     public void setCalcError(boolean flag) {
         this.errorBounds = flag;
@@ -107,33 +116,23 @@ public class MomentSketch implements QuantileSketch {
     }
 
     @Override
-    public double[] getQuantiles(List<Double> ps) throws Exception {
+    public double[] getQuantiles(List<Double> pList) throws Exception {
         ChebyshevMomentSolver solver = ChebyshevMomentSolver.fromPowerSums(
                 min, max, powerSums
         );
         solver.setVerbose(verbose);
         solver.solve(tolerance);
-        BoundSolver boundSolver = new BoundSolver(powerSums, min, max);
-        int m = ps.size();
-        double[] estQuantiles = new double[m];
-        errors = new double[m];
-        for (int i = 0; i < m; i++) {
-            double p = ps.get(i);
-            if (p <= 0.0) {
-                estQuantiles[i] = min;
-                errors[i] = 0.0;
-            } else if (p >= 1.0) {
-                estQuantiles[i] = max;
-                errors[i] = 0.0;
-            } else {
-                estQuantiles[i] = solver.estimateQuantile(p, min, max);
-                if (errorBounds) {
-                    errors[i] = boundSolver.quantileError(estQuantiles[i], p);
-                }
-            }
-        }
+        int m = pList.size();
+        double[] ps = MathUtil.listToArray(pList);
+        double[] quantiles = solver.estimateQuantiles(ps, min, max);
 
-        return estQuantiles;
+        if (errorBounds) {
+            double[] moments = MathUtil.powerSumsToMoments(powerSums);
+            SimpleBoundSolver boundSolver = new SimpleBoundSolver(k);
+            double[] boundSizes = boundSolver.solveBounds(moments, quantiles);
+            errors = boundSolver.getMaxErrors(moments, quantiles, ps, boundSizes);
+        }
+        return quantiles;
     }
 
     @Override

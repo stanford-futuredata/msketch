@@ -1,7 +1,9 @@
+import io.DataSource;
 import msketch.BoundSolver;
 import msketch.ChebyshevMomentSolver;
+import msketch.MathUtil;
 import msketch.SimpleBoundSolver;
-import msketch.data.ShuttleData;
+import msketch.data.*;
 import msketch.optimizer.NewtonOptimizer;
 import sketches.HybridMomentSketch;
 import sketches.MomentSketch;
@@ -9,13 +11,15 @@ import sketches.QuantileSketch;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class MSketchBench {
     public static void main(String[] args) throws Exception {
 //        quantileErrorBench();
-        boundSizeBench();
+//        boundSizeBench();
 //        estimateBench();
 //        mergeBench();
+        queryBench();
     }
 
     public static void mergeBench() {
@@ -43,6 +47,37 @@ public class MSketchBench {
         long elapsed = System.nanoTime() - startTime;
         double secondsPer = elapsed / (1.0e9 * numIters * numMerges);
         System.out.println("Time Per Merge: "+secondsPer);
+    }
+
+    public static void queryBench() throws Exception {
+        int k = 11;
+//        MomentData pData = new RetailQuantityData();
+//        MomentData lData = new RetailQuantityLogData();
+//        MomentData data = new UniformData();
+        MomentData data = new RetailQuantityLogData();
+//        HybridMomentSketch ms = new HybridMomentSketch(1e-9);
+        MomentSketch ms = new MomentSketch(1e-6);
+        ms.setVerbose(true);
+        ms.setCalcError(true);
+        ms.setStats(data.getPowerSums(k), data.getMin(), data.getMax());
+//        ms.setStats(
+//                pData.getPowerSums(k),
+//                lData.getPowerSums(k),
+//                pData.getMin(),
+//                pData.getMax(),
+//                lData.getMin(),
+//                lData.getMax()
+//        );
+        int numIters = 1;
+        ArrayList<Double> ps = new ArrayList<>();
+        ps.add(.5);
+        long startTime = System.nanoTime();
+        for (int i = 0; i < numIters; i++) {
+            ms.getQuantiles(ps);
+        }
+        long elapsed = System.nanoTime() - startTime;
+        double secondsPer = elapsed / (1.0e9 * numIters);
+        System.out.println("Time Per Solve: "+secondsPer);
     }
 
     public static void estimateBench() {
@@ -83,13 +118,16 @@ public class MSketchBench {
         for (int i = 0; i < powerSums.length; i++) {
             powerSums[i] = ShuttleData.powerSums[i];
         }
+        double[] moments = MathUtil.powerSumsToMoments(powerSums);
 
         long startTime = System.nanoTime();
         int numIters = 50000;
         SimpleBoundSolver boundSolver = new SimpleBoundSolver(k);
+        double[] xs = {45.0};
+        double[] ps = {.5};
         for (int i = 0; i < numIters; i++) {
-            boundSolver.solveBounds(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max, Arrays.asList(45.0));
-            boundSolver.getMaxErrors(Arrays.asList(.5));
+            double[] boundSizes = boundSolver.solveBounds(moments, xs);
+            boundSolver.getMaxErrors(moments, xs, ps, boundSizes);
 //            BoundSolver boundSolver = new BoundSolver(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max);
 //            boundSolver.quantileError(45, 0.5);
         }
@@ -104,12 +142,14 @@ public class MSketchBench {
         for (int i = 0; i < powerSums.length; i++) {
             powerSums[i] = ShuttleData.powerSums[i];
         }
+        double[] moments = MathUtil.powerSumsToMoments(powerSums);
 
         long startTime = System.nanoTime();
         int numIters = 500000;
         SimpleBoundSolver boundSolver = new SimpleBoundSolver(k);
+        double[] xs = {45.0};
         for (int i = 0; i < numIters; i++) {
-            boundSolver.solveBounds(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max, Arrays.asList(45.0));
+            boundSolver.solveBounds(moments, xs);
 //            BoundSolver boundSolver = new BoundSolver(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max);
 //            boundSolver.boundSizeRacz(45);
         }
