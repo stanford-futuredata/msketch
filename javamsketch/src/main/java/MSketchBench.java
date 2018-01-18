@@ -1,5 +1,6 @@
 import msketch.BoundSolver;
 import msketch.ChebyshevMomentSolver;
+import msketch.SimpleBoundSolver;
 import msketch.data.ShuttleData;
 import msketch.optimizer.NewtonOptimizer;
 import sketches.HybridMomentSketch;
@@ -7,13 +8,14 @@ import sketches.MomentSketch;
 import sketches.QuantileSketch;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class MSketchBench {
     public static void main(String[] args) throws Exception {
 //        quantileErrorBench();
-//        boundSizeBench();
+        boundSizeBench();
 //        estimateBench();
-        mergeBench();
+//        mergeBench();
     }
 
     public static void mergeBench() {
@@ -84,9 +86,12 @@ public class MSketchBench {
 
         long startTime = System.nanoTime();
         int numIters = 50000;
+        SimpleBoundSolver boundSolver = new SimpleBoundSolver(k);
         for (int i = 0; i < numIters; i++) {
-            BoundSolver boundSolver = new BoundSolver(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max);
-            boundSolver.quantileError(45, 0.5);
+            boundSolver.solveBounds(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max, Arrays.asList(45.0));
+            boundSolver.getMaxErrors(Arrays.asList(.5));
+//            BoundSolver boundSolver = new BoundSolver(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max);
+//            boundSolver.quantileError(45, 0.5);
         }
         long elapsed = System.nanoTime() - startTime;
         double secondsPer = elapsed / (1.0e9 * numIters);
@@ -102,9 +107,11 @@ public class MSketchBench {
 
         long startTime = System.nanoTime();
         int numIters = 500000;
+        SimpleBoundSolver boundSolver = new SimpleBoundSolver(k);
         for (int i = 0; i < numIters; i++) {
-            BoundSolver boundSolver = new BoundSolver(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max);
-            boundSolver.boundSizeRacz(45);
+            boundSolver.solveBounds(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max, Arrays.asList(45.0));
+//            BoundSolver boundSolver = new BoundSolver(ShuttleData.powerSums, ShuttleData.min, ShuttleData.max);
+//            boundSolver.boundSizeRacz(45);
         }
         long elapsed = System.nanoTime() - startTime;
         double secondsPer = elapsed / (1.0e9 * numIters);

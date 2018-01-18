@@ -3,6 +3,7 @@ package sketches;
 import msketch.BoundSolver;
 import msketch.ChebyshevMomentSolver;
 import msketch.MathUtil;
+import msketch.MnatSolver;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,8 +22,9 @@ public class HybridMomentSketch implements QuantileSketch{
     private double max;
     private double logMin;
     private double logMax;
-
+    // Stores the normal moments and the log moments
     private double[] totalSums;
+
     private boolean usedLog;
     private double[] errors;
 
@@ -141,78 +143,111 @@ public class HybridMomentSketch implements QuantileSketch{
     public double[] getQuantiles(List<Double> ps) throws Exception {
         double[] powerSums = Arrays.copyOfRange(totalSums, 0, k);
         double[] logSums = Arrays.copyOfRange(totalSums, k, 2*k);
+        int m = ps.size();
 
         ChebyshevMomentSolver solver = ChebyshevMomentSolver.fromPowerSums(
                 min, max, powerSums
         );
         solver.setVerbose(verbose);
         solver.solve(tolerance);
-        BoundSolver boundSolver = new BoundSolver(powerSums, min, max);
-        int m = ps.size();
+        boolean powConverged = solver.isConverged();
         double[] powQuantiles = new double[m];
         double[] powErrors = new double[m];
-        for (int i = 0; i < m; i++) {
-            double p = ps.get(i);
-            if (p <= 0.0) {
-                powQuantiles[i] = min;
-                powErrors[i] = 0.0;
-            } else if (p >= 1.0) {
-                powQuantiles[i] = max;
-                powErrors[i] = 0.0;
-            } else {
-                powQuantiles[i] = solver.estimateQuantile(p, min, max);
-                powErrors[i] = boundSolver.quantileError(powQuantiles[i], p);
+        double powAvgError = 1;
+        if (powConverged) {
+            for (int i = 0; i < m; i++) {
+                double p = ps.get(i);
+                if (p <= 0.0) {
+                    powQuantiles[i] = min;
+                } else if (p >= 1.0) {
+                    powQuantiles[i] = max;
+                } else {
+                    powQuantiles[i] = solver.estimateQuantile(p, min, max);
+                }
+            }
+            if (verbose) {
+                System.out.println("==Power==");
+                System.out.println("Quantiles: "+Arrays.toString(powQuantiles));
+            }
+            System.out.println(min);
+            System.out.println(max);
+            BoundSolver powBoundSolver = new BoundSolver(powerSums, min, max);
+            for (int i = 0; i < m; i++) {
+                double p = ps.get(i);
+                if (p <= 0.0) {
+                    powErrors[i] = 0.0;
+                } else if (p >= 1.0) {
+                    powErrors[i] = 0.0;
+                } else {
+                    powErrors[i] = powBoundSolver.quantileError(powQuantiles[i], p);
+                }
+            }
+            powAvgError = MathUtil.arrayMean(powErrors);
+            if (verbose) {
+                System.out.println("Avg Error: "+ powAvgError);
+                System.out.println(Arrays.toString(powErrors));
             }
         }
-        boolean normalConverged = solver.isConverged();
 
         // Deal with Logs
-        double totalCount = powerSums[0];
-        double logCount = logSums[0];
-        double logMissingFrac = (totalCount - logCount) / totalCount;
-
         solver = ChebyshevMomentSolver.fromPowerSums(
                 logMin, logMax, logSums
         );
         solver.setVerbose(verbose);
         solver.solve(tolerance);
-        boundSolver = new BoundSolver(logSums, logMin, logMax);
-
+        boolean logConverged = solver.isConverged();
         double[] logQuantiles = new double[m];
         double[] logErrors = new double[m];
-        for (int i = 0; i < m; i++) {
-            double p = ps.get(i) - logMissingFrac;
-            if (p <= 0.0) {
-                logQuantiles[i] = Math.exp(logMin);
-                logErrors[i] = Math.abs(p);
-            } else if (p >= 1.0) {
-                logQuantiles[i] = max;
-                logErrors[i] = 0.0;
-            } else {
-                double curLogQuantile = solver.estimateQuantile(p, logMin, logMax);
-                logQuantiles[i] = Math.exp(curLogQuantile);
-                logErrors[i] = boundSolver.quantileError(curLogQuantile, p);
+        double logAvgError = 1;
+        if (logConverged) {
+            if (verbose) {
+                System.out.println("==Log==");
+                System.out.println("Quantiles: "+Arrays.toString(logQuantiles));
+            }
+            double totalCount = powerSums[0];
+            double logCount = logSums[0];
+            double logMissingFrac = (totalCount - logCount) / totalCount;
+
+            BoundSolver logBoundSolver = new BoundSolver(logSums, logMin, logMax);
+
+            for (int i = 0; i < m; i++) {
+                double p = ps.get(i) - logMissingFrac;
+                if (p <= 0.0) {
+                    logQuantiles[i] = Math.exp(logMin);
+                    logErrors[i] = Math.abs(p);
+                } else if (p >= 1.0) {
+                    logQuantiles[i] = max;
+                    logErrors[i] = 0.0;
+                } else {
+                    double curLogQuantile = solver.estimateQuantile(p, logMin, logMax);
+                    logQuantiles[i] = Math.exp(curLogQuantile);
+                    logErrors[i] = logBoundSolver.quantileError(curLogQuantile, p);
+                }
+            }
+
+            logAvgError = MathUtil.arrayMean(logErrors);
+            if (verbose) {
+                System.out.println("Avg Error: " + logAvgError + " Omitted: "+logMissingFrac);
+                System.out.println(Arrays.toString(logErrors));
             }
         }
 
-        double stdAvgError = MathUtil.arrayMean(powErrors);
-        double logAvgError = MathUtil.arrayMean(logErrors);
-        if (verbose) {
-            System.out.println("Standard: "+ stdAvgError);
-            System.out.println(Arrays.toString(powQuantiles));
-            System.out.println(Arrays.toString(powErrors));
-            System.out.println("Log: " + logAvgError + " Omitted: "+logMissingFrac);
-            System.out.println(Arrays.toString(logQuantiles));
-            System.out.println(Arrays.toString(logErrors));
+        if (powConverged && logConverged) {
+            usedLog = (logAvgError < powAvgError);
+        } else if (!powConverged && logConverged) {
+            usedLog = true;
+        } else if (powConverged && !logConverged) {
+            usedLog = false;
+        } else {
+            usedLog = false;
+            throw new Exception("Did not converge");
         }
 
-        if (logAvgError < stdAvgError || !normalConverged) {
+        if (usedLog) {
             errors = logErrors;
-            usedLog = true;
             return logQuantiles;
         } else {
             errors = powErrors;
-            usedLog = false;
             return powQuantiles;
         }
     }

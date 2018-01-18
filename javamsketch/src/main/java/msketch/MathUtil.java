@@ -64,6 +64,19 @@ public class MathUtil {
         return scaledPowerSums;
     }
 
+    public static double[] powerSumsToPosMoments(
+            double[] powerSums,
+            double min,
+            double max
+    ) {
+        double[] shiftedPowerSums = MathUtil.shiftPowerSum(powerSums, max-min, min);
+        double count = shiftedPowerSums[0];
+        for (int i = 0; i < powerSums.length; i++) {
+            shiftedPowerSums[i] /= count;
+        }
+        return shiftedPowerSums;
+    }
+
     public static double[] powerSumsToChebyMoments(
             double min,
             double max,
@@ -98,5 +111,15 @@ public class MathUtil {
             sum += x;
         }
         return sum / xs.length;
+    }
+
+    public static void calcPowers(double x, double[] powers) {
+        int n = powers.length;
+        double curPow = 1.0;
+        for (int i = 0; i < n; i++) {
+            powers[i] = curPow;
+            curPow *= x;
+        }
+        return;
     }
 }

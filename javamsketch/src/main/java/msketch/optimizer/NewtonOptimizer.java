@@ -22,7 +22,7 @@ public class NewtonOptimizer {
 
     public NewtonOptimizer(FunctionWithHessian P) {
         this.P = P;
-        this.maxIter = 100;
+        this.maxIter = 200;
         this.stepCount = 0;
         this.dampedStepCount = 0;
         this.converged = false;
