@@ -1,5 +1,6 @@
 package msketch;
 
+import org.apache.commons.math3.fitting.leastsquares.GaussNewtonOptimizer;
 import org.apache.commons.math3.linear.*;
 
 import java.util.Arrays;
@@ -28,6 +29,7 @@ public class SimpleBoundSolver {
         RealMatrix momentMatrix = new Array2DRowRealMatrix(momentArray, false);
 
         double[] vectorData = new double[n+1];
+//        LUDecomposition momentMatrixDecomp = new LUDecomposition(momentMatrix);
         CholeskyDecomposition momentMatrixDecomp = new CholeskyDecomposition(momentMatrix);
 
         int numPoints = xs.length;
@@ -101,29 +103,62 @@ public class SimpleBoundSolver {
         return maxErrors;
     }
 
+    public class CanonicalDistribution {
+        public double[] positions;
+        public double[] weights;
+        public CanonicalDistribution(double[] positions, double[] weights) {
+            this.positions = positions;
+            this.weights = weights;
+        }
+        public double entropy() {
+            return MathUtil.entropy(weights);
+        }
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < positions.length; i++) {
+                builder.append(String.format("(%g : %g) ", positions[i], weights[i]));
+            }
+            return builder.toString();
+        }
+    }
+
     /**
-     * The principle distributions are minimal point-sets that match the moments.
-     * @return entropies of principle distributions
+     * The canonical distributions are minimal point-sets that match the moments.
      */
-    public double[] getPrincipleEntropies(double[] moments, double min, double max) {
-        double[] endPoints = new double[2];
-        endPoints[0] = min;
-        endPoints[1] = max;
-        double[] maxWeights = solveBounds(moments, endPoints);
-        double[] entropies = new double[2];
-        for (int i = 0; i < 2; i++) {
-            double[] shiftedMoments = MathUtil.shiftPowerSum(moments, 1.0, endPoints[i]);
+    public CanonicalDistribution[] getCanonicalDistributions(
+            double[] moments,
+            double[] xs
+    ) {
+        int n = xs.length;
+        CanonicalDistribution[] results = new CanonicalDistribution[n];
+
+        double[] maxWeights = solveBounds(moments, xs);
+        for (int i = 0; i < n; i++) {
+            double x = xs[i];
             double p0 = maxWeights[i];
+            double[] shiftedMoments = MathUtil.shiftPowerSum(moments, 1.0, x);
             shiftedMoments[0] -= p0;
+
             double[] pos = solvePositions(shiftedMoments);
             double[] weights = solveWeights(shiftedMoments, pos);
-            entropies[i] = MathUtil.entropy(weights) - p0*Math.log(p0);
+
+            double[] fullPos = new double[pos.length+1];
+            double[] fullWeights = new double[weights.length+1];
+            fullPos[0] = x;
+            fullWeights[0] = p0;
+            for (int j = 0; j < pos.length; j++) {
+                fullPos[j+1] = pos[j]+x;
+                fullWeights[j+1] = weights[j];
+            }
+            results[i] = new CanonicalDistribution(fullPos, fullWeights);
         }
-        return entropies;
+
+        return results;
     }
 
     private double[] solvePositions(double[] moments) {
         double[] coefs = orthogonalPolynomialCoefficients(moments, n);
+        int deg = coefs.length - 1;
         boolean hasNonzero = false;
         for (double c : coefs) {
             if (c != 0.0) {
@@ -133,6 +168,18 @@ public class SimpleBoundSolver {
         }
         if (!hasNonzero) {
             return null;
+        }
+        // fill in zeros if degree too low
+        while (coefs[deg] == 0.0) {
+            for (int i = deg; i >= 1; i--) {
+                coefs[i] = coefs[i-1];
+            }
+            coefs[0] = 0.0;
+        }
+        // rescale since the polynomial coefficients can get really small
+        double scaleFactor = coefs[deg];
+        for (int i = 0; i <= deg; i++) {
+            coefs[i] /= scaleFactor;
         }
         double[] positions = polynomialRoots(coefs);
         return positions;

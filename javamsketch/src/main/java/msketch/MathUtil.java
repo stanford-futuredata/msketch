@@ -147,7 +147,9 @@ public class MathUtil {
     public static double entropy(double[] ps) {
         double h = 0.0;
         for (double p : ps) {
-            h -= p * Math.log(p);
+            if (p > 0.0) {
+                h -= p * Math.log(p);
+            }
         }
         return h;
     }

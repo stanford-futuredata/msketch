@@ -3,7 +3,6 @@ package msketch;
 import msketch.data.*;
 import org.junit.Test;
 
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.List;
 
@@ -119,8 +118,9 @@ public class SimpleBoundSolverTest {
             double max = data.getMax();
             double[] moments = MathUtil.powerSumsToPosMoments(powerSums, min, max);
             SimpleBoundSolver solver = new SimpleBoundSolver(k);
-            double[] entropies = solver.getPrincipleEntropies(moments, 0, 1);
-            System.out.println(Arrays.toString(entropies));
+            double[] xs = {0, 1};
+            SimpleBoundSolver.CanonicalDistribution[] sols = solver.getCanonicalDistributions(moments, xs);
+            System.out.println(Arrays.toString(sols));
         }
     }
 }

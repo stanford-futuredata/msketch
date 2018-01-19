@@ -1,5 +1,3 @@
-import io.DataSource;
-import msketch.BoundSolver;
 import msketch.ChebyshevMomentSolver;
 import msketch.MathUtil;
 import msketch.SimpleBoundSolver;
@@ -9,9 +7,9 @@ import sketches.HybridMomentSketch;
 import sketches.MomentSketch;
 import sketches.QuantileSketch;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class MSketchBench {
     public static void main(String[] args) throws Exception {
@@ -19,7 +17,8 @@ public class MSketchBench {
 //        boundSizeBench();
 //        estimateBench();
 //        mergeBench();
-        queryBench();
+//        queryBench();
+        canonicalSolutionsBench();
     }
 
     public static void mergeBench() {
@@ -48,6 +47,29 @@ public class MSketchBench {
         double secondsPer = elapsed / (1.0e9 * numIters * numMerges);
         System.out.println("Time Per Merge: "+secondsPer);
     }
+
+    public static void canonicalSolutionsBench() throws IOException {
+        int k = 11;
+        MomentData data = new RetailQuantityLogData();
+        double[] moments = MathUtil.powerSumsToMoments(data.getPowerSums(k));
+
+        double[] limits = new double[2];
+        limits[0] = data.getMin();
+        limits[1] = data.getMax();
+        SimpleBoundSolver solver = new SimpleBoundSolver(k);
+
+        int numIters = 200000;
+        long startTime = System.nanoTime();
+        for (int i = 0; i < numIters; i++) {
+            SimpleBoundSolver.CanonicalDistribution[] sols = solver.getCanonicalDistributions(
+                    moments,
+                    limits
+            );
+        }
+        long elapsed = System.nanoTime() - startTime;
+        double secondsPer = elapsed / (1.0e9 * numIters);
+        System.out.println("Time Per Solve: "+secondsPer);
+   }
 
     public static void queryBench() throws Exception {
         int k = 11;
