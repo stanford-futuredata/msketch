@@ -20,6 +20,10 @@ public class SketchLoader {
             return new HistogramSketch();
         } else if (sketchName.startsWith("hmoment")) {
             return new HybridMomentSketch(1e-9);
+        } else if (sketchName.startsWith("bothmoment")) {
+            HybridMomentSketch m = new HybridMomentSketch(1e-9);
+            m.setTryBoth(true);
+            return m;
         }
         throw new IOException("Invalid Sketch");
     }

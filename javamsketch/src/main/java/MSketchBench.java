@@ -17,8 +17,8 @@ public class MSketchBench {
 //        boundSizeBench();
 //        estimateBench();
 //        mergeBench();
-//        queryBench();
-        canonicalSolutionsBench();
+        queryBench();
+//        canonicalSolutionsBench();
     }
 
     public static void mergeBench() {
@@ -49,13 +49,11 @@ public class MSketchBench {
     }
 
     public static void canonicalSolutionsBench() throws IOException {
-        int k = 11;
+        int k = 7;
         MomentData data = new RetailQuantityLogData();
-        double[] moments = MathUtil.powerSumsToMoments(data.getPowerSums(k));
+        double[] moments = MathUtil.powerSumsToPosMoments(data.getPowerSums(k), data.getMin(), data.getMax());
 
-        double[] limits = new double[2];
-        limits[0] = data.getMin();
-        limits[1] = data.getMax();
+        double[] limits = {0.0, 1.0};
         SimpleBoundSolver solver = new SimpleBoundSolver(k);
 
         int numIters = 200000;
@@ -79,7 +77,7 @@ public class MSketchBench {
         MomentData data = new RetailQuantityLogData();
 //        HybridMomentSketch ms = new HybridMomentSketch(1e-9);
         MomentSketch ms = new MomentSketch(1e-6);
-        ms.setVerbose(true);
+        ms.setVerbose(false);
         ms.setCalcError(true);
         ms.setStats(data.getPowerSums(k), data.getMin(), data.getMax());
 //        ms.setStats(
@@ -90,7 +88,7 @@ public class MSketchBench {
 //                lData.getMin(),
 //                lData.getMax()
 //        );
-        int numIters = 1;
+        int numIters = 500;
         ArrayList<Double> ps = new ArrayList<>();
         ps.add(.5);
         long startTime = System.nanoTime();

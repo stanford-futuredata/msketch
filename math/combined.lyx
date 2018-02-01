@@ -1,0 +1,370 @@
+#LyX 2.2 created this file. For more info see http://www.lyx.org/
+\lyxformat 508
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Section
+Problem Setup
+\end_layout
+
+\begin_layout Standard
+Given an empirical pdf 
+\begin_inset Formula $\hat{f}$
+\end_inset
+
+ we observe constraints of the form 
+\begin_inset Formula $E\left[g_{i}\left(x\right)\right]=\mu_{i}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This yields an exponential family of the form
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f\left(x\right)=\exp\left[\sum_{i=0}^{k}a_{i}g_{i}\left(x\right)\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We define a potential function 
+\begin_inset Formula $P\left(a\right)$
+\end_inset
+
+ to solve for the coefficients 
+\begin_inset Formula $a_{i}$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+P\left(\vec{a}\right) & =\int\exp\left[\sum_{i=0}^{k}a_{i}g_{i}\left(x\right)\right]dx-\sum_{i=0}^{k}a_{i}\mu_{i}\\
+\frac{\partial P}{\partial a_{i}} & =\int g_{i}\left(x\right)\exp\left[\sum_{i=0}^{k}a_{i}g_{i}\left(x\right)\right]dx-\mu_{i}\\
+\frac{\partial^{2}P}{\partial a_{i}\partial a_{j}} & =\int g_{i}\left(x\right)g_{j}\left(x\right)\exp\left[\sum_{i=0}^{k}a_{i}g_{i}\left(x\right)\right]dx
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Thus if we consider the hessian 
+\begin_inset Formula $H_{ij}=\frac{\partial^{2}f}{\partial a_{i}\partial a_{j}}$
+\end_inset
+
+ then
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+v^{T}Hv & =\sum_{i=0}^{k}\sum_{j=0}^{k}v_{i}v_{j}\int g_{i}\left(x\right)g_{j}\left(x\right)f(x)dx\\
+ & =\int\sum_{i=0}\sum_{j=0}v_{i}v_{j}g_{i}\left(x\right)g_{j}\left(x\right)f(x)dx\\
+ & =\int\left(\sum_{i=0}v_{i}g_{i}\left(x\right)\right)^{2}f(x)dx\\
+ & >0
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+So the function 
+\begin_inset Formula $P\left(\vec{a}\right)$
+\end_inset
+
+ is convex with a global minimum when 
+\begin_inset Formula $\nabla P=0$
+\end_inset
+
+ and the moments match.
+ TODO: prove existence of solution.
+\end_layout
+
+\begin_layout Section
+Chebyshev Bases
+\end_layout
+
+\begin_layout Standard
+Suppose we have a sequence of 
+\begin_inset Formula $g_{i}$
+\end_inset
+
+ such that 
+\begin_inset Formula $g_{i}=g\left(x\right)^{i}$
+\end_inset
+
+ for 
+\begin_inset Formula $i=0\dots k$
+\end_inset
+
+.
+ If we have 
+\begin_inset Formula $E\left[g\left(x\right)^{i}\right]$
+\end_inset
+
+ we can derive 
+\begin_inset Formula $E\left[s\left(g\left(x\right)\right)^{i}\right]$
+\end_inset
+
+ where 
+\begin_inset Formula $s\left(x\right)=\frac{x-x_{c}}{x_{r}}$
+\end_inset
+
+ maps 
+\begin_inset Formula $x$
+\end_inset
+
+ to 
+\begin_inset Formula $[-1,1]$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+From that we can derive 
+\begin_inset Formula $E\left[T_{i}\left(s\left(g\left(x\right)\right)\right)\right]$
+\end_inset
+
+ where 
+\begin_inset Formula $T_{i}$
+\end_inset
+
+ is the 
+\begin_inset Formula $i$
+\end_inset
+
+-th Chebyshev polynomial.
+ 
+\end_layout
+
+\begin_layout Standard
+In this case if we are storing the powers and log-powers, depending on whether
+ we let 
+\begin_inset Formula $x=\log y$
+\end_inset
+
+ or 
+\begin_inset Formula $x=y$
+\end_inset
+
+, we have either 
+\begin_inset Formula $g\left(x\right)=\log x$
+\end_inset
+
+ or 
+\begin_inset Formula $g\left(x\right)=e^{x}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Let the empirical moments be
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+\mu_{i}^{a} & =E\left[T_{i}\left(s_{a}\left(x\right)\right)\right]\\
+\mu_{i}^{b} & =E\left[T_{i}\left(s_{b}\left(g(x)\right)\right)\right]
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Thus we would like to solve for the exponential family:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f\left(x\right)=\exp\left[\sum a_{i}T_{i}\left(s_{a}\left(x\right)\right)+\sum b_{i}T_{i}\left(s_{b}\left(g\left(x\right)\right)\right)\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We make the change of variables 
+\begin_inset Formula $y=\frac{x-x_{c}}{x_{r}}=s_{a}\left(x\right)$
+\end_inset
+
+ so 
+\begin_inset Formula $x=yx_{r}+x_{c}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\boxed{f\left(y\right)=\exp\left[\sum a_{i}T_{i}\left(y\right)+\sum b_{i}T_{i}\left(s_{b}\left(g\left(s_{a}^{-1}\left(y\right)\right)\right)\right)\right]}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The reason for expressing 
+\begin_inset Formula $f$
+\end_inset
+
+ in this way is that it becomes much easier to optimize over the 
+\begin_inset Formula $a_{i}$
+\end_inset
+
+ and 
+\begin_inset Formula $b_{i}$
+\end_inset
+
+ when everything in the exponent is a chebyshev polynomial.
+\end_layout
+
+\begin_layout Standard
+Note that the cross-term in the Hessian looks like:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\frac{\partial^{2}P}{\partial a_{i}\partial b_{j}}=\int_{y}T_{i}\left(y\right)T_{j}\left(s_{b}\left(g\left(s_{a}^{-1}\left(y\right)\right)\right)\right)f\left(y\right)dy
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We could calculate each of the terms in the Hessian independently but one
+ trick to speed up computation is to approximate 
+\begin_inset Formula $T_{j}\left(s_{b}\left(g\left(s_{a}^{-1}\left(y\right)\right)\right)\right)f\left(y\right)$
+\end_inset
+
+ with a chebyshev polynomial:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f_{j}^{c}\left(y\right)\approx T_{i}\left(s_{b}\left(g\left(s_{a}^{-1}\left(y\right)\right)\right)\right)f\left(y\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+\frac{\partial^{2}P}{\partial a_{i}\partial b_{j}} & \approx\int_{y}T_{i}\left(y\right)f_{j}^{c}\left(y\right)dy
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Which can be evaluated symbolically for all 
+\begin_inset Formula $i$
+\end_inset
+
+.
+\end_layout
+
+\end_body
+\end_document

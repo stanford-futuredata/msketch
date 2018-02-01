@@ -2,6 +2,7 @@ package msketch.optimizer;
 
 import org.apache.commons.math3.linear.*;
 import org.apache.commons.math3.util.FastMath;
+import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
 
 import java.util.Arrays;
 
@@ -67,7 +68,7 @@ public class NewtonOptimizer {
             double[][] hess = P.getHessian();
             double mse = getMSE(grad);
             if (verbose) {
-                System.out.println(String.format("Step: %3d GradRMSE: %10.5g", step, Math.sqrt(mse)));
+                System.out.println(String.format("Step: %3d GradRMSE: %10.5g P: %10.5g", step, Math.sqrt(mse), PVal));
             }
             if (mse < gradTol2) {
                 converged = true;
@@ -83,9 +84,9 @@ public class NewtonOptimizer {
                 );
                 stepVector = d.getSolver().solve(new ArrayRealVector(grad));
             } catch (NonPositiveDefiniteMatrixException e) {
-//                SingularValueDecomposition d = new SingularValueDecomposition(hhMat);
-//                stepVector = d.getSolver().solve(new ArrayRealVector(grad));
-                break;
+                SingularValueDecomposition d = new SingularValueDecomposition(hhMat);
+                stepVector = d.getSolver().solve(new ArrayRealVector(grad));
+//                break;
             }
             stepVector.mapMultiplyToSelf(-1.0);
 

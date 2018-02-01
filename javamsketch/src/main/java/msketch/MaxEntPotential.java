@@ -2,6 +2,8 @@ package msketch;
 
 import msketch.optimizer.FunctionWithHessian;
 
+import java.util.Arrays;
+
 /**
  * Minimizing this function yields a maxent pdf which matches the the empirical
  * moments of a dataset. The function is convex with symmetric positive definite

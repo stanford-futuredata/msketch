@@ -96,6 +96,9 @@ public class ChebyshevPolynomial implements UnivariateFunction {
     }
 
     public ChebyshevPolynomial multiplyByBasis(int k) {
+        if (k == 0) {
+            return new ChebyshevPolynomial(coeffs.clone());
+        }
         double[] newCoeffs = new double[coeffs.length+k];
         for (int i = 0; i < coeffs.length; i++) {
             double c2 = coeffs[i] / 2;
@@ -144,7 +147,7 @@ public class ChebyshevPolynomial implements UnivariateFunction {
         double ts1 = x;
 
         sum += coeffs[0];
-        if (k > 0) {
+        if (k > 1) {
             sum += coeffs[1] * x;
             for (int i = 2; i < k; i++) {
                 double tt1 = ts1;

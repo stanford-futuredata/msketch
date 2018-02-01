@@ -39,7 +39,7 @@ public class SamplingSketchTest {
         );
         double[] qs2 = mergedSketch.getQuantiles(ps);
 
-        assertArrayEquals(expectedQs, qs2, 400.0);
+        assertArrayEquals(expectedQs, qs2, 1000.0);
     }
 
 }

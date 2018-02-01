@@ -1,8 +1,10 @@
 package msketch;
 
 import msketch.data.*;
+import org.apache.avro.generic.GenericData;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -112,6 +114,7 @@ public class SimpleBoundSolverTest {
                 new RetailQuantityLogData()
         );
 
+        List<Double> entropies = new ArrayList<>(2);
         for (MomentData data : dataSets) {
             double[] powerSums = data.getPowerSums(k);
             double min = data.getMin();
@@ -120,7 +123,9 @@ public class SimpleBoundSolverTest {
             SimpleBoundSolver solver = new SimpleBoundSolver(k);
             double[] xs = {0, 1};
             SimpleBoundSolver.CanonicalDistribution[] sols = solver.getCanonicalDistributions(moments, xs);
-            System.out.println(Arrays.toString(sols));
+            entropies.add(sols[0].entropy()+sols[1].entropy());
         }
+        assertTrue(entropies.get(0) < entropies.get(1));
+        assertTrue(entropies.get(1) > 0);
     }
 }

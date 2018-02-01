@@ -16,6 +16,11 @@ public class HybridMomentSketch implements QuantileSketch{
     private int k = 5;
     private double tolerance = 1e-10;
     private boolean verbose = false;
+
+    public void setTryBoth(boolean tryBoth) {
+        this.tryBoth = tryBoth;
+    }
+
     private boolean tryBoth = false;
 
     private double min;
@@ -232,6 +237,14 @@ public class HybridMomentSketch implements QuantileSketch{
             }
         }
 
+        double[] posPowMoments = MathUtil.powerSumsToPosMoments(powerSums, min, max);
+        double[] posLogMoments = MathUtil.powerSumsToPosMoments(logSums, logMin, logMax);
+        double powStdDev = posPowMoments[2] - posPowMoments[1]*posPowMoments[1];
+        double logStdDev = posLogMoments[2] - posLogMoments[1]*posLogMoments[1];
+        if (verbose) {
+            System.out.println("pow std: "+powStdDev+" log std: "+logStdDev);
+        }
+
         if (powConverged && logConverged) {
             usedLog = (logAvgBoundSize < powAvgBoundSize);
         } else if (!powConverged && logConverged) {
@@ -242,6 +255,7 @@ public class HybridMomentSketch implements QuantileSketch{
             usedLog = false;
             throw new Exception("Did not converge");
         }
+        usedLog = true;
 
         double[] quantiles;
         if (usedLog) {

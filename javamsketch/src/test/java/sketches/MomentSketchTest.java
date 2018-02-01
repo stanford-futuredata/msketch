@@ -3,6 +3,7 @@ package sketches;
 import data.TestDataSource;
 import io.DataGrouper;
 import io.SeqDataGrouper;
+import msketch.MathUtil;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -40,5 +41,24 @@ public class MomentSketchTest {
         double[] qs2 = mmSketch.getQuantiles(ps);
 
         assertArrayEquals(qs, qs2, 1e-7);
+    }
+
+    @Test
+    public void testLogOccupancy() throws Exception {
+        double[] powerSums = {
+                20560.0, 132778.81355561252, 860423.7556197477, 5595528.904319964,
+                3.652405916578557E7, 2.3932372378677437E8, 1.5744015769855406E9, 1.0399585507478048E10,
+                6.898067822853244E10, 4.59495821550009E11, 3.073979747643975E12
+        };
+        double min = 6.022842082800238;
+        double max = 7.638439063070808;
+
+        double[] chebyMoments = MathUtil.powerSumsToChebyMoments(min, max, powerSums);
+//        System.out.println(Arrays.toString(chebyMoments));
+//        MomentSketch ms = new MomentSketch(1e-9);
+//        ms.setStats(powerSums, min, max);
+//
+//        List<Double> ps = Arrays.asList(.1, .5, .9);
+//        double[] qs = ms.getQuantiles(ps);
     }
 }
