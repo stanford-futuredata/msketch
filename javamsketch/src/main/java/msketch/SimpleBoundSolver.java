@@ -103,6 +103,53 @@ public class SimpleBoundSolver {
         return maxErrors;
     }
 
+    public double[] getBoundEndpoints(double[] moments, double x, double boundSize) {
+        double[] bounds = new double[2];
+        int n2 = moments.length;
+        if (n2 <= 2) {
+            bounds[0] = 0.0;
+            bounds[1] = 1.0;
+        } else {
+            double[] shiftedMoments = MathUtil.shiftPowerSum(moments, 1.0, x);
+            shiftedMoments[0] -= boundSize;
+
+            // Find Positions
+            double[] positions = solvePositions(shiftedMoments);
+            if (positions == null) {
+                // TODO: unclear what to do here, since we don't know p
+                bounds[0] = 0.0;
+                bounds[1] = 1.0;
+                return bounds;
+            }
+            int n_positive_positions = 0;
+            for (int j = 0; j < n; j++) {
+                if (positions[j] > 0) n_positive_positions++;
+            }
+
+            if (n_positive_positions == n) {
+                bounds[0] = 0.0;
+                bounds[1] = boundSize;
+            } else if (n_positive_positions == 0) {
+                bounds[0] = 1.0 - boundSize;
+                bounds[1] = 1.0;
+            } else {
+                double[] weights = solveWeights(shiftedMoments, positions);
+
+                // Compute bounds
+                double lowerBound = 0.0;
+                for (int i = 0; i < positions.length; i++) {
+                    if (positions[i] < 0) {
+                        lowerBound += weights[i];
+                    }
+                }
+                bounds[0] = lowerBound;
+                bounds[1] = lowerBound + boundSize;
+            }
+        }
+
+        return bounds;
+    }
+
     public class CanonicalDistribution {
         public double[] positions;
         public double[] weights;

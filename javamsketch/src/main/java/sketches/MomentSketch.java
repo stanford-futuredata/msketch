@@ -6,6 +6,7 @@ import msketch.MathUtil;
 import msketch.SimpleBoundSolver;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MomentSketch implements QuantileSketch {
@@ -113,6 +114,38 @@ public class MomentSketch implements QuantileSketch {
         this.min = mMin;
         this.max = mMax;
         return this;
+    }
+
+    /* Returns bounds for the number of values greater than a threshold. */
+    public double[] boundGreaterThanThreshold(double x) {
+        double[] xs = new double[]{x};
+        SimpleBoundSolver boundSolver = new SimpleBoundSolver(k);
+        double[] moments = MathUtil.powerSumsToMoments(powerSums);
+        double[] bounds;
+        try {
+            double[] boundSizes = boundSolver.solveBounds(moments, xs);
+            bounds = boundSolver.getBoundEndpoints(moments, x, boundSizes[0]);
+        } catch (Exception e) {
+            return new double[]{0.0, 1.0};
+        }
+        return new double[]{1.0 - bounds[1], 1.0 - bounds[0]};
+    }
+
+    public double estimateGreaterThanThreshold(double x) {
+        if (x < min) return 1.0;
+        if (x > max) return 0.0;
+        ChebyshevMomentSolver solver = ChebyshevMomentSolver.fromPowerSums(
+                min, max, powerSums
+        );
+        solver.setVerbose(verbose);
+        // special case
+        if (min == max) {
+            return (x > min) ? 0.0 : 1.0;
+        }
+        solver.solve(tolerance);
+        double scaledX = 2.0 * (x - min) / (max - min) - 1.0;
+        double quantile = solver.estimateCDF(scaledX);
+        return 1.0 - quantile;
     }
 
     @Override
