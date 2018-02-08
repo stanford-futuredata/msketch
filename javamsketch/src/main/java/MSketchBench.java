@@ -1,6 +1,4 @@
-import msketch.ChebyshevMomentSolver;
-import msketch.MathUtil;
-import msketch.SimpleBoundSolver;
+import msketch.*;
 import msketch.data.*;
 import msketch.optimizer.NewtonOptimizer;
 import sketches.HybridMomentSketch;
@@ -17,8 +15,41 @@ public class MSketchBench {
 //        boundSizeBench();
 //        estimateBench();
 //        mergeBench();
-        queryBench();
+//        queryBench();
 //        canonicalSolutionsBench();
+        newSolverBench();
+    }
+
+    public static void newSolverBench() throws IOException {
+        double[] range = {412.75,2076.5};
+        double[] logRange = {6.022842082800238,7.638439063070808};
+        double[] powerSums = {20560.0, 14197775.359523809, 11795382081.900866, 11920150330935.938, 14243310876969824.0, 1.9248869180998238e+19};
+        double[] logSums = {20560.0, 132778.81355561133, 860423.75561972987, 5595528.9043199299, 36524059.16578535, 239323723.78677931};
+
+        ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
+                range[0], range[1], powerSums,
+                logRange[0], logRange[1], logSums
+        );
+        solver.setVerbose(false);
+
+        System.in.read();
+        int numIters = 2000;
+        long startTime = System.nanoTime();
+        for (int i = 0; i < numIters; i++) {
+            double[] l0 = new double[powerSums.length + logSums.length - 1];
+            solver.solve(l0, 1e-9);
+        }
+        long endTime = System.nanoTime();
+        long elapsed = endTime - startTime;
+        double secondsPer = elapsed / (1.0e9 * numIters);
+        MaxEntPotential2 P = (MaxEntPotential2) solver.getOptimizer().getP();
+
+        double[] ps = {.1, .5, .9};
+        double[] qs = solver.estimateQuantiles(ps);
+        System.out.println("Quantiles: "+Arrays.toString(qs));
+
+        System.out.println("Total evals: "+P.getCumFuncEvals());
+        System.out.println("Time Per Solve: "+secondsPer);
     }
 
     public static void mergeBench() {

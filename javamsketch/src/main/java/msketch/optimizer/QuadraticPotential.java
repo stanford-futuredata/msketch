@@ -16,6 +16,15 @@ public class QuadraticPotential implements FunctionWithHessian {
     }
 
     @Override
+    public void computeOnlyValue(double[] point, double tol) {
+        double sum = 0;
+        for (int i = 0; i < point.length; i++) {
+            sum += point[i] * point[i];
+        }
+        Pval = sum;
+    }
+
+    @Override
     public void computeAll(double[] point, double tol) {
         double sum = 0;
         for (int i = 0; i < point.length; i++) {

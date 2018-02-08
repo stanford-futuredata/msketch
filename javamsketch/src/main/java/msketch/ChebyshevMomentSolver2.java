@@ -1,5 +1,6 @@
 package msketch;
 
+import msketch.chebyshev.ChebyshevPolynomial;
 import msketch.optimizer.NewtonOptimizer;
 import org.apache.commons.math3.analysis.solvers.BrentSolver;
 import org.apache.commons.math3.analysis.solvers.UnivariateSolver;
@@ -9,7 +10,7 @@ import java.util.Arrays;
 public class ChebyshevMomentSolver2 {
     private double[] d_mus;
     private int numNormalPowers;
-    private boolean isLog = false;
+    private boolean useStandardBasis = true;
     private boolean verbose = false;
     private double aCenter, aScale, bCenter, bScale;
 
@@ -21,7 +22,7 @@ public class ChebyshevMomentSolver2 {
     private int cumFuncEvals;
 
     public ChebyshevMomentSolver2(
-            boolean isLog,
+            boolean useStandardBasis,
             int numNormalPowers,
             double[] chebyshev_moments,
             double aCenter,
@@ -29,7 +30,7 @@ public class ChebyshevMomentSolver2 {
             double bCenter,
             double bScale
     ) {
-        this.isLog = isLog;
+        this.useStandardBasis = useStandardBasis;
         this.numNormalPowers = numNormalPowers;
         this.d_mus = chebyshev_moments;
         this.aCenter = aCenter;
@@ -48,21 +49,46 @@ public class ChebyshevMomentSolver2 {
         double[] logChebyMoments = MathUtil.powerSumsToChebyMoments(
                 logMin, logMax, logPowerSums
         );
-        double[] combinedMoments = new double[powerSums.length + logPowerSums.length - 1];
-        for (int i = 0; i < logChebyMoments.length; i++) {
-            combinedMoments[i] = logChebyMoments[i];
+
+        boolean useStandardBasis  = true;
+        if (logChebyMoments.length > 2) {
+            // Use the variance as an indicator of how suitable a basis is
+            // Low variance means "spiky" distributions that are hard to handle
+            double powerVar = MathUtil.varOfChebyMoments(powerChebyMoments);
+            double logVar = MathUtil.varOfChebyMoments(logChebyMoments);
+            if (powerVar > logVar || powerSums[0] > logPowerSums[0]) {
+                useStandardBasis = true;
+            } else {
+                useStandardBasis = false;
+            }
         }
-        for (int i = 0; i < powerChebyMoments.length-1; i++) {
-            combinedMoments[i+logChebyMoments.length] = powerChebyMoments[i+1];
+
+        double[] aMoments, bMoments;
+        double aMin, aMax, bMin, bMax;
+        if (useStandardBasis) {
+            aMoments = powerChebyMoments;
+            bMoments = logChebyMoments;
+            aMin = min; aMax = max; bMin = logMin; bMax = logMax;
+        } else {
+            aMoments = logChebyMoments;
+            bMoments = powerChebyMoments;
+            bMin = min; bMax = max; aMin = logMin; aMax = logMax;
+        }
+        double[] combinedMoments = new double[aMoments.length + bMoments.length - 1];
+        for (int i = 0; i < aMoments.length; i++) {
+            combinedMoments[i] = aMoments[i];
+        }
+        for (int i = 0; i < bMoments.length - 1; i++) {
+            combinedMoments[i + aMoments.length] = bMoments[i + 1];
         }
         return new ChebyshevMomentSolver2(
-                false,
-                logChebyMoments.length,
+                useStandardBasis,
+                aMoments.length,
                 combinedMoments,
-                (logMax+logMin)/2,
-                (logMax-logMin)/2,
-                (max+min)/2,
-                (max-min)/2
+                (aMax + aMin) / 2,
+                (aMax - aMin) / 2,
+                (bMax + bMin) / 2,
+                (bMax - bMin)/ 2
         );
     }
 
@@ -77,7 +103,7 @@ public class ChebyshevMomentSolver2 {
 
     public int solve(double[] l_initial, double tol) {
         MaxEntPotential2 potential = new MaxEntPotential2(
-                isLog,
+                useStandardBasis,
                 numNormalPowers,
                 d_mus,
                 aCenter,
@@ -90,12 +116,13 @@ public class ChebyshevMomentSolver2 {
         lambdas = optimizer.solve(l_initial, tol);
         isConverged = optimizer.isConverged();
         if (verbose) {
+            System.out.println("Using standard basis: "+ useStandardBasis);
             System.out.println("Final Polynomial: " + Arrays.toString(lambdas));
+            System.out.println(String.format("linscales: "+ aCenter +","+aScale+","+bCenter+","+bScale));
         }
         cumFuncEvals = potential.getCumFuncEvals();
 
         approxCDF = ChebyshevPolynomial.fit(potential.getFunc(), tol).integralPoly();
-//        approxCDF = ChebyshevPolynomial.fit(new MaxEntFunction(lambdas), tol).integralPoly();
         return optimizer.getStepCount();
     }
 
@@ -121,6 +148,9 @@ public class ChebyshevMomentSolver2 {
                 );
             }
             quantiles[i] = q*aScale+aCenter;
+            if (!useStandardBasis) {
+                quantiles[i] = Math.exp(quantiles[i]);
+            }
         }
         return quantiles;
     }
@@ -143,5 +173,8 @@ public class ChebyshevMomentSolver2 {
 
     public boolean isConverged() {
         return isConverged;
+    }
+    public boolean isUseStandardBasis() {
+        return useStandardBasis;
     }
 }

@@ -56,8 +56,7 @@ public class MaxEntPotential2 implements FunctionWithHessian {
         return d_mus.length;
     }
 
-    @Override
-    public void computeAll(double[] lambd, double tol) {
+    private MaxEntFunction2 setFunction(double[] lambd) {
         this.lambd = lambd;
         int k = lambd.length;
 
@@ -79,7 +78,23 @@ public class MaxEntPotential2 implements FunctionWithHessian {
                 bCenter,
                 bScale
         );
+        return this.func;
+    }
+
+    @Override
+    public void computeOnlyValue(double[] point, double tol) {
+        int k = lambd.length;
+        setFunction(point);
+        this.mus[0] = func.zerothMoment(tol);
+        cumFuncEvals += func.getNumFuncEvals();
+    }
+
+    @Override
+    public void computeAll(double[] lambd, double tol) {
+        int k = lambd.length;
+        setFunction(lambd);
         double[][] pairwiseMoments = func.getPairwiseMoments(tol);
+        cumFuncEvals += func.getNumFuncEvals();
 
         for (int i = 0; i < k; i++) {
             if (i < numNormalPowers) {

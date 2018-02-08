@@ -26,4 +26,17 @@ public class MaxEntFunction2Test {
         assertEquals(1.12095675177, pairwiseMoments[1][1], 1e-8);
     }
 
+    @Test
+    public void testCompareNumpy(){
+        double[] aCoeffs = {-1495.2106196044201, 63797.93868346012, -830014.2179376424, -296736.79198347515, -56032.24104079366, -6481.702314031079, -394.9593472527941};
+        double[] bCoeffs = {0, 280793.4251573418, 887242.8040778289, -41598.46235869913, 725.9088731130822, 223.10996965225195, -35.8575946806040};
+        MaxEntFunction2 f = new MaxEntFunction2(
+                false,
+                aCoeffs,
+                bCoeffs,
+                6.830640572935523, 0.8077984901352853, 1244.625000, 831.875000
+        );
+        assertEquals(1.23, f.value(-.8), 0.01);
+    }
+
 }

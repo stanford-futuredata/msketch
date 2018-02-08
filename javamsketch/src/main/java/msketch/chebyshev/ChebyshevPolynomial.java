@@ -1,4 +1,4 @@
-package msketch;
+package msketch.chebyshev;
 
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.transform.DctNormalization;
@@ -36,6 +36,50 @@ public class ChebyshevPolynomial implements UnivariateFunction {
         double[] basisCoeffs = new double[k+1];
         basisCoeffs[k] = 1.0;
         return new ChebyshevPolynomial(basisCoeffs);
+    }
+
+    public static ChebyshevPolynomial[] fitMulti(
+            CosScaledFunction fMulti,
+            double tol
+    ) {
+        int N = 32;
+        int nFuncs = fMulti.numFuncs();
+        double[][] cs = new double[nFuncs][];
+        double oldError = Double.MAX_VALUE;
+        FastCosineTransformer t = new FastCosineTransformer(
+                DctNormalization.STANDARD_DCT_I
+        );
+        while (true) {
+            double[][] fVals = fMulti.calc(N);
+
+            double error = 0.0;
+            for (int i = 0; i < nFuncs; i++) {
+                cs[i] = t.transform(fVals[i], TransformType.FORWARD);
+                for (int j = 0; j <= N; j++) {
+                    cs[i][j] *= 2.0/N;
+                }
+                cs[i][0] /= 2;
+
+                // calculate the maximum error over all of the approximations
+                for (int j = 1; j <= 5; j+= 2) {
+                    error = Math.max(Math.abs(cs[i][cs[i].length - j]), error);
+                }
+            }
+
+            // HACK: just stop trying if the error gets worse
+            if (error < tol || error > oldError || N > 1000) {
+                break;
+            } else {
+                N *= 2;
+                oldError = error;
+            }
+        }
+
+        ChebyshevPolynomial[] results = new ChebyshevPolynomial[nFuncs];
+        for (int i = 0; i < nFuncs; i++) {
+            results[i] = new ChebyshevPolynomial(cs[i]);
+        }
+        return results;
     }
 
     public static ChebyshevPolynomial fit(

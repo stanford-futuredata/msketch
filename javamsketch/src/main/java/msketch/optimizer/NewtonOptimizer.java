@@ -1,8 +1,6 @@
 package msketch.optimizer;
 
 import org.apache.commons.math3.linear.*;
-import org.apache.commons.math3.util.FastMath;
-import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
 
 import java.util.Arrays;
 
@@ -44,6 +42,10 @@ public class NewtonOptimizer {
         return dampedStepCount;
     }
 
+    public FunctionWithHessian getP() {
+        return P;
+    }
+
     private double getMSE(double[] error) {
         double sum = 0.0;
         for (int i = 0; i < error.length; i++) {
@@ -83,10 +85,10 @@ public class NewtonOptimizer {
                         0
                 );
                 stepVector = d.getSolver().solve(new ArrayRealVector(grad));
-            } catch (NonPositiveDefiniteMatrixException e) {
+            } catch (Exception e) {
+                // Cholesky is faster but fall back to SVD if it doesn't work
                 SingularValueDecomposition d = new SingularValueDecomposition(hhMat);
                 stepVector = d.getSolver().solve(new ArrayRealVector(grad));
-//                break;
             }
             stepVector.mapMultiplyToSelf(-1.0);
 
@@ -100,11 +102,11 @@ public class NewtonOptimizer {
             for (int i = 0; i < k; i++) {
                 newX[i] = x[i] + stepScaleFactor * stepVector.getEntry(i);
             }
-            // we need just enough precision to perform relevant comparisons
-            double requiredPrecision = FastMath.max(
+            // optimistically choose precision to be size of expected step
+            double requiredPrecision = Math.max(
                     gradTol,
-                    FastMath.abs(alpha*stepScaleFactor*dfdx)
-            ) / 4;
+                    Math.abs(alpha*stepScaleFactor*dfdx)
+            ) / 10;
             // Warning: this overwrites grad and hess
             P.computeAll(newX, requiredPrecision);
 
@@ -112,7 +114,8 @@ public class NewtonOptimizer {
             if (dfdx*dfdx > gradTol2) {
                 while (true) {
                     double f1 = P.getValue();
-                    if (f1 <= PVal + alpha * stepScaleFactor * dfdx) {
+                    double delta = PVal + alpha * stepScaleFactor * dfdx - f1;
+                    if (delta >= -gradTol) {
                         break;
                     } else {
                         stepScaleFactor *= beta;
@@ -120,10 +123,8 @@ public class NewtonOptimizer {
                     for (int i = 0; i < k; i++) {
                         newX[i] = x[i] + stepScaleFactor * stepVector.getEntry(i);
                     }
-                    requiredPrecision = FastMath.max(
-                            gradTol / 4,
-                            FastMath.abs(alpha*stepScaleFactor*dfdx/2)
-                    );
+                    // When we are taking small damped steps be conservative with precision
+                    requiredPrecision = gradTol / 10;
                     P.computeAll(newX, requiredPrecision);
                 }
             }
@@ -131,7 +132,7 @@ public class NewtonOptimizer {
                 dampedStepCount++;
             }
             if (verbose) {
-                if (stepScaleFactor > 1.0) {
+                if (stepScaleFactor < 1.0) {
                     System.out.println("Step Size: " + stepScaleFactor);
                 }
             }

@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
+ * DEPRECATED
  * Tracks both the moments and the log-moments to better support
  * lognormal, pareto, etc... distributions
  */
@@ -289,11 +290,11 @@ public class HybridMomentSketch implements QuantileSketch{
 
         double[] powMoments = MathUtil.powerSumsToPosMoments(powerSums, min, max);
         double[] logMoments = MathUtil.powerSumsToPosMoments(logSums, logMin, logMax);
-        System.out.println("sketch data");
-        System.out.println(Arrays.toString(powerSums));
-        System.out.println(Arrays.toString(logSums));
-        System.out.println("min: "+min+" max: "+max);
-        System.out.println("min: "+logMin+" max: "+logMax);
+//        System.out.println("sketch data");
+//        System.out.println(Arrays.toString(powerSums));
+//        System.out.println(Arrays.toString(logSums));
+//        System.out.println("min: "+min+" max: "+max);
+//        System.out.println("min: "+logMin+" max: "+logMax);
 
         if (false) {
             SimpleBoundSolver boundSolver = new SimpleBoundSolver(k);

@@ -18,6 +18,9 @@ public class MathUtil {
     public static int[][] getChebyCoefficients(int k) {
         int[][] chebyCoeffs = new int[k+1][k+1];
         chebyCoeffs[0][0] = 1;
+        if (k == 0) {
+            return chebyCoeffs;
+        }
         chebyCoeffs[1][1] = 1;
         for (int i = 2; i <= k; i++) {
             int[] c1 = chebyCoeffs[i-1];
@@ -28,6 +31,10 @@ public class MathUtil {
             }
         }
         return chebyCoeffs;
+    }
+
+    public static double varOfChebyMoments(double[] chebyMoments) {
+        return (chebyMoments[2]+1)/2 - chebyMoments[1]*chebyMoments[1];
     }
 
     /**

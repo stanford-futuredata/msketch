@@ -73,6 +73,9 @@ public class AccuracyBench {
                     curSketch.add(data);
                     endTime = System.nanoTime();
                     long trainTime = endTime - startTime;
+                    if (verbose) {
+                        System.out.println("Trained Sketch");
+                    }
 
                     startTime = System.nanoTime();
                     double[] qs = curSketch.getQuantiles(quantiles);

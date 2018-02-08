@@ -1,6 +1,9 @@
 package msketch;
 
+import msketch.chebyshev.ChebyshevPolynomial;
+import msketch.chebyshev.CosScaledFunction;
 import org.apache.commons.math3.analysis.UnivariateFunction;
+import org.apache.commons.math3.util.FastMath;
 
 import java.util.Arrays;
 
@@ -14,6 +17,17 @@ public class MaxEntFunction2 implements UnivariateFunction {
     private ChebyshevPolynomial bPoly;
 
     private ChebyshevPolynomial[] bases;
+
+    private int numFuncEvals;
+
+    public int getNumFuncEvals() {
+        return numFuncEvals;
+    }
+
+    public String toString() {
+        return Arrays.toString(aCoeffs)+":"+Arrays.toString(bCoeffs)+":"+
+                aCenter+","+aScale+","+bCenter+","+bScale+"."+isLog;
+    }
 
     public MaxEntFunction2(
             boolean isLog,
@@ -38,6 +52,7 @@ public class MaxEntFunction2 implements UnivariateFunction {
         for (int i = 0; i < bases.length; i++) {
             bases[i] = ChebyshevPolynomial.basis(i);
         }
+        numFuncEvals = 0;
     }
 
     public double valueRaw(double x) {
@@ -60,6 +75,7 @@ public class MaxEntFunction2 implements UnivariateFunction {
 
     public double zerothMoment(double tol) {
         ChebyshevPolynomial pApprox = ChebyshevPolynomial.fit(this, tol);
+        numFuncEvals += pApprox.getNumFitEvals();
         return pApprox.integrate();
     }
 
@@ -139,16 +155,104 @@ public class MaxEntFunction2 implements UnivariateFunction {
         }
     }
 
-    public double[][] getPairwiseMoments(double tol) {
-        ChebyshevPolynomial[] bApproxs = new ChebyshevPolynomial[2*bCoeffs.length];
-        bApproxs[0] = ChebyshevPolynomial.fit(this, tol);
-        for (int i = 1; i < 2*bCoeffs.length; i++) {
-            UnivariateFunction weightedBFunction = new WeightedBFunction(
-                    i,
-                    this
-            );
-            bApproxs[i] = ChebyshevPolynomial.fit(weightedBFunction, tol);
+    private class WeightedMultiFunction implements CosScaledFunction {
+        private int k;
+        private MaxEntFunction2 f2;
+        double[] cosValues;
+        double[] f2Values;
+        double[] scaledBGXs;
+
+        private int numFuncEvals = 0;
+        public int getNumFuncEvals() {
+            return numFuncEvals;
         }
+
+        public WeightedMultiFunction(int k, MaxEntFunction2 f2) {
+            this.k = k;
+            this.f2 = f2;
+            this.numFuncEvals = 0;
+        }
+
+        @Override
+        public int numFuncs() {
+            return k;
+        }
+
+        private double getScaledBGX(double y) {
+            double x = y * aScale + aCenter;
+            double gX;
+            if (isLog) {
+                gX = Math.log(x);
+            } else {
+                gX = Math.exp(x);
+            }
+            double scaledBGX = (gX - bCenter) / bScale;
+            return scaledBGX;
+        }
+
+        @Override
+        public double[][] calc(int N) {
+            if (cosValues == null) {
+                cosValues = new double[N + 1];
+                f2Values = new double[N + 1];
+                scaledBGXs = new double[N + 1];
+                for (int j = 0; j <= N; j++) {
+                    cosValues[j] = FastMath.cos(j * Math.PI / N);
+                    f2Values[j] = f2.value(cosValues[j]);
+                    scaledBGXs[j] = getScaledBGX(cosValues[j]);
+                }
+                numFuncEvals += (N+1);
+            } else {
+                double[] oldCosValues = cosValues;
+                double[] oldF2Values = f2Values;
+                double[] oldScaledBGXs = scaledBGXs;
+                int oldN = oldCosValues.length-1;
+                int ratio = N / oldN;
+
+                cosValues = new double[N+1];
+                f2Values = new double[N+1];
+                scaledBGXs = new double[N+1];
+                for (int j = 0; j <= N; j++) {
+                    if (j % ratio == 0) {
+                        cosValues[j] = oldCosValues[j/ratio];
+                        f2Values[j] = oldF2Values[j/ratio];
+                        scaledBGXs[j] = oldScaledBGXs[j/ratio];
+                    } else {
+                        cosValues[j] = FastMath.cos(j * Math.PI / N);
+                        f2Values[j] = f2.value(cosValues[j]);
+                        scaledBGXs[j] = getScaledBGX(cosValues[j]);
+                        numFuncEvals++;
+                    }
+                }
+            }
+
+
+            double[][] values = new double[k][N+1];
+            for (int i = 0; i < k; i++) {
+                for (int j = 0; j <= N; j++) {
+                    values[i][j] = bases[i].value(scaledBGXs[j])*f2Values[j];
+                }
+            }
+            return values;
+        }
+    }
+
+    public double[][] getPairwiseMoments(double tol) {
+        WeightedMultiFunction multiFunction = new WeightedMultiFunction(2*bCoeffs.length, this);
+        ChebyshevPolynomial[] bApproxs = ChebyshevPolynomial.fitMulti(multiFunction, tol);
+        numFuncEvals += multiFunction.getNumFuncEvals();
+
+//        ChebyshevPolynomial[] bApproxs = new ChebyshevPolynomial[2*bCoeffs.length];
+//        bApproxs[0] = ChebyshevPolynomial.fit(this, tol);
+//        numFuncEvals += bApproxs[0].getNumFitEvals();
+//        for (int i = 1; i < 2*bCoeffs.length; i++) {
+//            UnivariateFunction weightedBFunction = new WeightedBFunction(
+//                    i,
+//                    this
+//            );
+//            bApproxs[i] = ChebyshevPolynomial.fit(weightedBFunction, tol);
+//            numFuncEvals += bApproxs[i].getNumFitEvals();
+//        }
 
 
         int k = aCoeffs.length + bCoeffs.length;

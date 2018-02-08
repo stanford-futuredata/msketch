@@ -1,6 +1,7 @@
 package msketch;
 
-import msketch.ChebyshevPolynomial;
+import msketch.chebyshev.ChebyshevPolynomial;
+import msketch.chebyshev.QuadraticCosFunction;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -20,6 +21,15 @@ public class ChebyshevPolynomialTest {
         assertEquals(2.0, cp.integrate(), 1e-10);
 
         assertEquals(1.848, cp.multiplyByBasis(1).value(.7), 1e-10);
+    }
+
+    @Test
+    public void testFitMulti() {
+        QuadraticCosFunction multiFunction = new QuadraticCosFunction(3);
+        ChebyshevPolynomial[] cfit = ChebyshevPolynomial.fitMulti(multiFunction, 1e-10);
+        for (int i = 0; i < cfit.length; i++) {
+            assertEquals((i+1)*.25, cfit[i].value(.5), 1e-10);
+        }
     }
 
     @Test

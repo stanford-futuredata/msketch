@@ -37,6 +37,11 @@ public class MaxEntPotential implements FunctionWithHessian {
     }
 
     @Override
+    public void computeOnlyValue(double[] point, double tol) {
+        computeAll(point, tol);
+    }
+
+    @Override
     public void computeAll(double[] lambd, double tol) {
         this.lambd = lambd;
         int k = lambd.length;

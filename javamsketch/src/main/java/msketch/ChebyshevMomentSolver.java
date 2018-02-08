@@ -1,11 +1,11 @@
 package msketch;
 
+import msketch.chebyshev.ChebyshevPolynomial;
 import msketch.optimizer.NewtonOptimizer;
 import org.apache.commons.math3.analysis.solvers.BrentSolver;
 import org.apache.commons.math3.analysis.solvers.UnivariateSolver;
 
 import java.util.Arrays;
-import java.util.List;
 
 public class ChebyshevMomentSolver {
     private double[] d_mus;
