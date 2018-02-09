@@ -1,6 +1,5 @@
 package sketches;
 
-import msketch.ChebyshevMomentSolver;
 import msketch.ChebyshevMomentSolver2;
 import msketch.MathUtil;
 import msketch.SimpleBoundSolver;
@@ -21,6 +20,8 @@ public class CMomentSketch implements QuantileSketch{
 
     private double min;
     private double max;
+    private double logMin;
+    private double logMax;
     // Stores the normal moments and the log moments
     private double[] totalSums;
 
@@ -38,7 +39,7 @@ public class CMomentSketch implements QuantileSketch{
 
     @Override
     public int getSize() {
-        return (Double.BYTES)*(2+totalSums.length);
+        return (Double.BYTES)*(2+1+totalSums.length);
     }
 
     @Override
@@ -61,6 +62,8 @@ public class CMomentSketch implements QuantileSketch{
     public void initialize() {
         this.min = Double.MAX_VALUE;
         this.max = -Double.MAX_VALUE;
+        this.logMin = Double.MAX_VALUE;
+        this.logMax = -Double.MAX_VALUE;
         this.totalSums = new double[ka+kb];
     }
 
@@ -73,6 +76,8 @@ public class CMomentSketch implements QuantileSketch{
     public void setStats(
             double min,
             double max,
+            double logMin,
+            double logMax,
             double[] powerSums,
             double[] logSums
     ) {
@@ -88,6 +93,8 @@ public class CMomentSketch implements QuantileSketch{
         }
         this.min = min;
         this.max = max;
+        this.logMin = logMin;
+        this.logMax = logMax;
     }
 
     @Override
@@ -107,8 +114,13 @@ public class CMomentSketch implements QuantileSketch{
             }
 
             if (x > 0.0) {
-                localSums[ka]++;
                 double logX = Math.log(x);
+                if (logX < this.logMin) {
+                    this.logMin = logX;
+                } else if (logX > this.logMax) {
+                    this.logMax = logX;
+                }
+                localSums[ka]++;
                 curPow = 1.0;
                 for (int i = 1; i < kb; i++) {
                     curPow *= logX;
@@ -122,6 +134,8 @@ public class CMomentSketch implements QuantileSketch{
     public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
         double mMin = this.min;
         double mMax = this.max;
+        double mLogMin = this.logMin;
+        double mLogMax = this.logMax;
         double[] mSums = this.totalSums;
         final int l = this.totalSums.length;
 
@@ -133,12 +147,20 @@ public class CMomentSketch implements QuantileSketch{
             if (ms.max > mMax) {
                 mMax = ms.max;
             }
+            if (ms.logMin < mLogMin) {
+                mLogMin = ms.logMin;
+            }
+            if (ms.logMax > mLogMax) {
+                mLogMax = ms.logMax;
+            }
             for (int i = 0; i < l; i++) {
                 mSums[i] += ms.totalSums[i];
             }
         }
         this.min = mMin;
         this.max = mMax;
+        this.logMin = mLogMin;
+        this.logMax = mLogMax;
         return this;
     }
 
@@ -148,13 +170,9 @@ public class CMomentSketch implements QuantileSketch{
         double[] powerSums = Arrays.copyOfRange(totalSums, 0, ka);
         double[] logSums = Arrays.copyOfRange(totalSums, ka, ka+kb);
 
-        double logMin = 0;
-        double logMax = 1;
         ChebyshevMomentSolver2 solver;
         boolean useStandardBasis = true;
         if (min > 0) {
-            logMin = Math.log(min);
-            logMax = Math.log(max);
             solver = ChebyshevMomentSolver2.fromPowerSums(
                     min, max, powerSums,
                     logMin, logMax, logSums
