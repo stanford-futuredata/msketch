@@ -31,6 +31,28 @@ public class ChebyshevMomentSolver2Test {
         assertEquals(476.0, qs[3], 20.0);
     }
 
+    @Test
+    public void testDruid() {
+        double[] range = {2.331497699529331E-6,7936.265379884158};
+        double[] logRange = new double[2];
+        logRange[0] = Math.log(range[0]);
+        logRange[1] = Math.log(range[1]);
+
+        double[] powerSums = {1.2814767E7, 4.6605082350179493E8, 1.309887742552026E11, 1.0548055486726956E14, 1.74335364401727808E17, 4.676320625451096E20, 1.713914827616506E24, 7.732420316935072E27};
+        double[] logSums = {1.2814767E7, 8398321.384180075, 1.5347415740933093E8, 9.186643473957856E7, 3.4859819726620092E9, -2.9439576163248196E9, 1.2790650864340628E11, -4.578233220122189E11};
+
+        ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
+                range[0], range[1], powerSums,
+                logRange[0], logRange[1], logSums
+        );
+        double[] l0 = new double[powerSums.length+logSums.length-1];
+        solver.solve(l0, 1e-9);
+        double[] ps = {.1, .5, .9, .99};
+        double[] qs = solver.estimateQuantiles(ps);
+
+        System.out.println(Arrays.toString(qs));
+    }
+
 
     @Test
     public void testOccupancy() {

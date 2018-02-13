@@ -42,7 +42,7 @@ public class ChebyshevPolynomial implements UnivariateFunction {
             CosScaledFunction fMulti,
             double tol
     ) {
-        int N = 32;
+        int N = 64;
         int nFuncs = fMulti.numFuncs();
         double[][] cs = new double[nFuncs][];
         double oldError = Double.MAX_VALUE;

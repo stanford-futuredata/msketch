@@ -80,9 +80,11 @@ public class YahooSketch implements QuantileSketch {
         double[] quantiles = sketch.getQuantiles(psArray);
 
         errors = new double[m];
-        double errorVal = sketch.getNormalizedRankError();
-        for (int i = 0; i < m; i++) {
-            errors[i] = errorVal;
+        if (calcError) {
+            double errorVal = sketch.getNormalizedRankError();
+            for (int i = 0; i < m; i++) {
+                errors[i] = errorVal;
+            }
         }
         return quantiles;
     }

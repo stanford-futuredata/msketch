@@ -1,6 +1,7 @@
 import msketch.*;
 import msketch.data.*;
 import msketch.optimizer.NewtonOptimizer;
+import sketches.CMomentSketch;
 import sketches.HybridMomentSketch;
 import sketches.MomentSketch;
 import sketches.QuantileSketch;
@@ -15,9 +16,9 @@ public class MSketchBench {
 //        boundSizeBench();
 //        estimateBench();
 //        mergeBench();
-//        queryBench();
+        queryBench();
 //        canonicalSolutionsBench();
-        newSolverBench();
+//        newSolverBench();
     }
 
     public static void newSolverBench() throws IOException {
@@ -30,10 +31,8 @@ public class MSketchBench {
                 range[0], range[1], powerSums,
                 logRange[0], logRange[1], logSums
         );
-        solver.setVerbose(false);
 
-        System.in.read();
-        int numIters = 2000;
+        int numIters = 1000;
         long startTime = System.nanoTime();
         for (int i = 0; i < numIters; i++) {
             double[] l0 = new double[powerSums.length + logSums.length - 1];
@@ -105,21 +104,16 @@ public class MSketchBench {
 //        MomentData pData = new RetailQuantityData();
 //        MomentData lData = new RetailQuantityLogData();
 //        MomentData data = new UniformData();
-        MomentData data = new RetailQuantityLogData();
-//        HybridMomentSketch ms = new HybridMomentSketch(1e-9);
-        MomentSketch ms = new MomentSketch(1e-6);
-        ms.setVerbose(false);
+//        MomentData data = new RetailQuantityLogData();
+        double[] range = {412.75,2076.5};
+        double[] logRange = {6.022842082800238,7.638439063070808};
+        double[] powerSums = {20560.0, 14197775.359523809, 11795382081.900866, 11920150330935.938, 14243310876969824.0, 1.9248869180998238e+19};
+        double[] logSums = {20560.0, 132778.81355561133, 860423.75561972987, 5595528.9043199299, 36524059.16578535, 239323723.78677931};
+
+        CMomentSketch ms = new CMomentSketch(1e-9);
         ms.setCalcError(true);
-        ms.setStats(data.getPowerSums(k), data.getMin(), data.getMax());
-//        ms.setStats(
-//                pData.getPowerSums(k),
-//                lData.getPowerSums(k),
-//                pData.getMin(),
-//                pData.getMax(),
-//                lData.getMin(),
-//                lData.getMax()
-//        );
-        int numIters = 500;
+        ms.setStats(range[0], range[1], logRange[0], logRange[1], powerSums, logSums);
+        int numIters = 1000;
         ArrayList<Double> ps = new ArrayList<>();
         ps.add(.5);
         long startTime = System.nanoTime();

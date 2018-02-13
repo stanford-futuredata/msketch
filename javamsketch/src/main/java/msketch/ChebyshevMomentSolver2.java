@@ -115,12 +115,13 @@ public class ChebyshevMomentSolver2 {
         optimizer.setVerbose(verbose);
         lambdas = optimizer.solve(l_initial, tol);
         isConverged = optimizer.isConverged();
+        cumFuncEvals = potential.getCumFuncEvals();
         if (verbose) {
             System.out.println("Using standard basis: "+ useStandardBasis);
             System.out.println("Final Polynomial: " + Arrays.toString(lambdas));
+            System.out.println("Total Function Evals: "+cumFuncEvals);
             System.out.println(String.format("linscales: "+ aCenter +","+aScale+","+bCenter+","+bScale));
         }
-        cumFuncEvals = potential.getCumFuncEvals();
 
         approxCDF = ChebyshevPolynomial.fit(potential.getFunc(), tol).integralPoly();
         return optimizer.getStepCount();

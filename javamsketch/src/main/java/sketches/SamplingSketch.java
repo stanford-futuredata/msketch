@@ -12,6 +12,7 @@ public class SamplingSketch implements QuantileSketch {
     private int size;
     private ReservoirItemsSketch<Double> reservoir;
     private double[] errors;
+    private boolean calcError = true;
 
     public SamplingSketch() {}
 
@@ -37,7 +38,7 @@ public class SamplingSketch implements QuantileSketch {
 
     @Override
     public void setCalcError(boolean flag) {
-        return;
+        this.calcError = flag;
     }
 
     @Override
@@ -77,9 +78,11 @@ public class SamplingSketch implements QuantileSketch {
         double[] quantiles = QuantileUtil.getTrueQuantiles(ps, data);
 
         errors = new double[m];
-        for (int i = 0; i < m; i++) {
-            double p = ps.get(i);
-            errors[i] = 2.5*FastMath.sqrt(p * (1-p) / this.size);
+        if (calcError) {
+            for (int i = 0; i < m; i++) {
+                double p = ps.get(i);
+                errors[i] = 2.5 * FastMath.sqrt(p * (1 - p) / this.size);
+            }
         }
         return quantiles;
     }

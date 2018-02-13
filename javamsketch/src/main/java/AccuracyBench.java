@@ -17,6 +17,7 @@ public class AccuracyBench {
     private Map<String, List<Double>> methods;
     private List<Double> quantiles;
     private int numTrials;
+    private int numSolveTrials;
 
     private boolean verbose = false;
     private boolean calcError = false;
@@ -30,6 +31,7 @@ public class AccuracyBench {
         methods = conf.get("methods");
         quantiles = conf.get("quantiles");
         numTrials = conf.get("numTrials");
+        numSolveTrials = conf.get("numSolveTrials");
 
         verbose = conf.get("verbose", false);
         calcError = conf.get("calcError", false);
@@ -60,9 +62,7 @@ public class AccuracyBench {
             for (int curTrial = 0; curTrial < numTrials; curTrial++) {
                 for (double sParam : sizeParams) {
                     System.gc();
-                    if (verbose) {
-                        System.out.println(sketchName + ":" + curTrial + "@" + (int) sParam);
-                    }
+                    System.out.println(sketchName + ":" + curTrial + "@" + (int) sParam);
                     QuantileSketch curSketch = SketchLoader.load(sketchName);
                     curSketch.setVerbose(verbose);
                     curSketch.setCalcError(calcError);
@@ -77,11 +77,17 @@ public class AccuracyBench {
                         System.out.println("Trained Sketch");
                     }
 
-                    startTime = System.nanoTime();
                     double[] qs = curSketch.getQuantiles(quantiles);
-                    endTime = System.nanoTime();
-                    long queryTime = endTime - startTime;
                     double[] errors = curSketch.getErrors();
+
+                    curSketch.setCalcError(false);
+                    startTime = System.nanoTime();
+                    for (int curSolveTrial = 0; curSolveTrial < numSolveTrials; curSolveTrial++) {
+                        curSketch.getQuantiles(quantiles);
+                    }
+                    endTime = System.nanoTime();
+                    long queryTime = (endTime - startTime) / numSolveTrials;
+                    curSketch.setCalcError(calcError);
 
                     for (int i = 0; i < qs.length; i++) {
                         double curP = quantiles.get(i);

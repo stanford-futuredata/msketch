@@ -3,6 +3,7 @@
   "fileName": "src/test/resources/test.csv",
   "columnIdx": 0,
   "numTrials": 2,
+  "numSolveTrials": 10,
   "methods": {
     "moments": [3.0, 9.0],
     "tdigest": [5.0, 40.0]
