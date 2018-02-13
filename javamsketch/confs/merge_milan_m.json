@@ -16,6 +16,6 @@
     0.99],
 
   "verbose": false,
-  "calcError": false,
+  "calcError": true,
   "appendTimeStamp": false
 }

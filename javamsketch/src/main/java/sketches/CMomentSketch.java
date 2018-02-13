@@ -192,6 +192,7 @@ public class CMomentSketch implements QuantileSketch{
         double[] ps = MathUtil.listToArray(pList);
         double[] quantiles = solver.estimateQuantiles(ps);
 
+        errors = new double[m];
         if (errorBounds) {
             if (useStandardBasis) {
                 double[] moments = MathUtil.powerSumsToMoments(powerSums);

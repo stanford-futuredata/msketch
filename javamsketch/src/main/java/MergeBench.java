@@ -20,6 +20,7 @@ public class MergeBench {
 
     private boolean verbose;
     private boolean calcError;
+    private boolean appendTimeStamp;
 
     public MergeBench(String confFile) throws IOException{
         RunConfig conf = RunConfig.fromJsonFile(confFile);
@@ -34,6 +35,7 @@ public class MergeBench {
 
         verbose = conf.get("verbose", false);
         calcError = conf.get("calcError", false);
+        appendTimeStamp = conf.get("appendTimeStamp", false);
     }
 
     public static void main(String[] args) throws Exception {
@@ -42,6 +44,7 @@ public class MergeBench {
 
         List<Map<String, String>> results = bench.run();
         CSVOutput output = new CSVOutput();
+        output.setAddTimeStamp(bench.appendTimeStamp);
         output.writeAllResults(results, bench.testName);
     }
 
@@ -91,6 +94,7 @@ public class MergeBench {
                     QuantileSketch mergedSketch = SketchLoader.load(sketchName);
                     mergedSketch.setCalcError(calcError);
                     mergedSketch.setSizeParam(sParam);
+                    mergedSketch.setVerbose(verbose);
                     mergedSketch.initialize();
                     mergedSketch.merge(cellSketches);
                     endTime = System.nanoTime();
