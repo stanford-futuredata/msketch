@@ -49,7 +49,7 @@ public class ChebyshevMomentSolver2 {
     }
 
 
-        public static ChebyshevMomentSolver2 fromPowerSums(
+    public static ChebyshevMomentSolver2 fromPowerSums(
             double min, double max, double[] powerSums,
             double logMin, double logMax, double[] logPowerSums,
             int numSecondaryPowers
@@ -86,6 +86,8 @@ public class ChebyshevMomentSolver2 {
             bMin = min; bMax = max; aMin = logMin; aMax = logMax;
         }
 
+        // Don't use all of the secondary powers to solve, the acc / speed tradeoff
+        // isn't worth it.
         if (numSecondaryPowers >= 0) {
             bMoments = Arrays.copyOf(bMoments, numSecondaryPowers);
         }
