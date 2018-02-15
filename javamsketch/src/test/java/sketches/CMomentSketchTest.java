@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class CMomentSketchTest {
@@ -42,6 +43,29 @@ public class CMomentSketchTest {
         double[] qs2 = mmSketch.getQuantiles(ps);
 
         assertArrayEquals(qs, qs2, 1e-7);
+    }
+
+    @Test
+    public void testWikiCell() throws Exception {
+        CMomentSketch s = new CMomentSketch(1e-9);
+        double min = 1.0;
+        double max = 57040.000000;
+        double[] sums = {
+                10395.0, 1.0471506E8, 3.862161098896E12, 1.51617244847154464E17,
+                6.042038827610059E21, 2.419472648115845E26, 10395.0, 60949.24720109948,
+                472894.2826010175, 4205769.074129269, 4.015627275978303E7, 3.9816719593611807E8
+        };
+        s.setStats(
+                min,
+                max,
+                Math.log(min),
+                Math.log(max),
+                Arrays.copyOfRange(sums, 0, 6),
+                Arrays.copyOfRange(sums, 6, 12)
+        );
+        s.setMaxSolveSecondaryPowers(5);
+        double[] qs = s.getQuantiles(Arrays.asList(.1, 0.5, .9));
+        assertEquals(200.0, qs[1], 20);
     }
 
     @Test

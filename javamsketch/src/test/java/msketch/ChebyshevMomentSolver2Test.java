@@ -3,6 +3,7 @@ package msketch;
 import msketch.data.MomentData;
 import msketch.data.OccupancyData;
 import org.junit.Test;
+import sketches.CMomentSketch;
 
 import java.util.Arrays;
 
@@ -50,6 +51,7 @@ public class ChebyshevMomentSolver2Test {
         double[] ps = {.1, .5, .9, .99};
         double[] qs = solver.estimateQuantiles(ps);
     }
+
 
     @Test
     public void testOccupancy() {
