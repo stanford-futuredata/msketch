@@ -2,6 +2,7 @@ package msketch;
 
 import msketch.data.MomentData;
 import msketch.data.OccupancyData;
+import msketch.data.RetailQuantityData;
 import org.junit.Test;
 import sketches.CMomentSketch;
 
@@ -52,20 +53,40 @@ public class ChebyshevMomentSolver2Test {
         double[] qs = solver.estimateQuantiles(ps);
     }
 
+    @Test
+    public void testRetail() {
+        MomentData data = new RetailQuantityData();
+        double[] range = {data.getMin(), data.getMax()};
+        double[] logRange = {data.getLogMin(), data.getLogMax()};
+        double[] powerSums = data.getPowerSums(7);
+        double[] logSums = data.getLogSums(7);
+
+        ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
+                range[0], range[1], powerSums,
+                logRange[0], logRange[1], logSums,
+                3
+        );
+        solver.solve(1e-9);
+        double[] ps = {.1, .5, .9};
+        double[] qs = solver.estimateQuantiles(ps);
+        assertEquals(3.5, qs[1], 1);
+    }
+
 
     @Test
     public void testOccupancy() {
         MomentData data = new OccupancyData();
         double[] range = {data.getMin(), data.getMax()};
         double[] logRange = {data.getLogMin(), data.getLogMax()};
-        double[] powerSums = data.getPowerSums(9);
-        double[] logSums = data.getLogSums(9);
+        double[] powerSums = data.getPowerSums(3);
+        double[] logSums = data.getLogSums(3);
 
         ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
                 range[0], range[1], powerSums,
                 logRange[0], logRange[1], logSums,
                 5
         );
+        solver.setVerbose(true);
         solver.solve(1e-9);
         double[] ps = {.1, .5, .9, .99};
         double[] qs = solver.estimateQuantiles(ps);

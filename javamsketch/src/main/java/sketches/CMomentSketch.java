@@ -15,7 +15,7 @@ import java.util.List;
 public class CMomentSketch implements QuantileSketch{
     private int ka = 5;
     private int kb = 5;
-    private int maxSolveSecondaryPowers = 5;
+    private int maxSolveSecondaryPowers = 3;
     private double tolerance = 1e-10;
     private boolean verbose = false;
 

@@ -2,21 +2,15 @@ package msketch.data;
 
 public class RetailQuantityData extends MomentData{
     public static final double[] powerSums = {
-            541909.0,
-            5176450.0,
-            25822261422.0,
-            -745215241598.0,
-            1.4680778526547758e+20,
-            1.9195859734681039e+19,
-            8.9883645056629936e+29,
-            2.2528516771732062e+28,
-            5.5448289206614458e+39,
-            5.3232475666358104e+36,
-            3.4438200308790149e+49,
-            9.962234249902733e+44,
-            2.1525281069658358e+59,
-            1.7085535290287837e+53,
-            1.3533396252305566e+69
+            531285.0, 5660981.0, 13127647799.0, 943385744203541.0,
+            7.3401290527335825e+19, 5.7374634895753686e+24, 4.4941878460622702e+29, 3.5267533869172936e+34,
+            2.7724146420399472e+39, 2.1831198887574202e+44, 1.7219100191391005e+49
+    };
+
+    public static final double[] logSums = {
+            531285.0, 733706.08385088702, 1803377.9327264477, 5313341.6192785092,
+            18079041.058607381, 69790609.377532199, 302287816.89519858, 1456494992.1214058,
+            7765406800.8637161, 45788298431.40226, 299590569873.87885
     };
 
     @Override
@@ -25,12 +19,27 @@ public class RetailQuantityData extends MomentData{
     }
 
     @Override
+    public double[] getLogSums() {
+        return logSums;
+    }
+
+    @Override
     public double getMin() {
-        return -80995.0;
+        return 1.0;
     }
 
     @Override
     public double getMax() {
         return 80995.0;
+    }
+
+    @Override
+    public double getLogMin() {
+        return 0.0;
+    }
+
+    @Override
+    public double getLogMax() {
+        return Math.log(80995.0);
     }
 }

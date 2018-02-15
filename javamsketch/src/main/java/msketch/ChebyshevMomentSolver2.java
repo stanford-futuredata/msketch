@@ -52,7 +52,7 @@ public class ChebyshevMomentSolver2 {
     public static ChebyshevMomentSolver2 fromPowerSums(
             double min, double max, double[] powerSums,
             double logMin, double logMax, double[] logPowerSums,
-            int numSecondaryPowers
+            int maxNumSecondaryPowers
     ) {
         double[] powerChebyMoments = MathUtil.powerSumsToChebyMoments(
                 min, max, powerSums
@@ -88,7 +88,8 @@ public class ChebyshevMomentSolver2 {
 
         // Don't use all of the secondary powers to solve, the acc / speed tradeoff
         // isn't worth it.
-        if (numSecondaryPowers >= 0) {
+        if (maxNumSecondaryPowers >= 0) {
+            int numSecondaryPowers = Math.min(bMoments.length, maxNumSecondaryPowers);
             bMoments = Arrays.copyOf(bMoments, numSecondaryPowers);
         }
 
