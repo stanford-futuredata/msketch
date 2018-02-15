@@ -37,6 +37,6 @@ public class TDigestSketchTest {
                 cellData
         );
         double[] qs2 = mergedSketch.getQuantiles(ps);
-        assertArrayEquals(expectedQs, qs2, 100.0);
+        assertArrayEquals(expectedQs, qs2, 200.0);
     }
 }

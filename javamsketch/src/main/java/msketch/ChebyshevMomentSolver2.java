@@ -43,6 +43,17 @@ public class ChebyshevMomentSolver2 {
             double min, double max, double[] powerSums,
             double logMin, double logMax, double[] logPowerSums
     ) {
+        return ChebyshevMomentSolver2.fromPowerSums(
+                min, max, powerSums, logMin, logMax, logPowerSums, -1
+        );
+    }
+
+
+        public static ChebyshevMomentSolver2 fromPowerSums(
+            double min, double max, double[] powerSums,
+            double logMin, double logMax, double[] logPowerSums,
+            int numSecondaryPowers
+    ) {
         double[] powerChebyMoments = MathUtil.powerSumsToChebyMoments(
                 min, max, powerSums
         );
@@ -51,7 +62,7 @@ public class ChebyshevMomentSolver2 {
         );
 
         boolean useStandardBasis  = true;
-        if (logChebyMoments.length > 2) {
+        if (logChebyMoments.length > 2 && powerChebyMoments.length > 2) {
             // Use the variance as an indicator of how suitable a basis is
             // Low variance means "spiky" distributions that are hard to handle
             double powerVar = MathUtil.varOfChebyMoments(powerChebyMoments);
@@ -74,6 +85,11 @@ public class ChebyshevMomentSolver2 {
             bMoments = powerChebyMoments;
             bMin = min; bMax = max; aMin = logMin; aMax = logMax;
         }
+
+        if (numSecondaryPowers >= 0) {
+            bMoments = Arrays.copyOf(bMoments, numSecondaryPowers);
+        }
+
         double[] combinedMoments = new double[aMoments.length + bMoments.length - 1];
         for (int i = 0; i < aMoments.length; i++) {
             combinedMoments[i] = aMoments[i];
@@ -154,6 +170,13 @@ public class ChebyshevMomentSolver2 {
             }
         }
         return quantiles;
+    }
+
+    public int getK1() {
+        return numNormalPowers;
+    }
+    public int getK2() {
+        return d_mus.length - numNormalPowers + 1;
     }
 
     public double estimateCDF(double x) {

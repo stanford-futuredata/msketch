@@ -49,10 +49,11 @@ public class ChebyshevPolynomial implements UnivariateFunction {
         FastCosineTransformer t = new FastCosineTransformer(
                 DctNormalization.STANDARD_DCT_I
         );
+        double error;
         while (true) {
             double[][] fVals = fMulti.calc(N);
 
-            double error = 0.0;
+            error = 0.0;
             for (int i = 0; i < nFuncs; i++) {
                 cs[i] = t.transform(fVals[i], TransformType.FORWARD);
                 for (int j = 0; j <= N; j++) {
@@ -66,14 +67,14 @@ public class ChebyshevPolynomial implements UnivariateFunction {
                 }
             }
 
-            // HACK: just stop trying if the error gets worse
-            if (error < tol || error > oldError || N > 1000) {
+            if (error < tol || N > 2000) {
                 break;
             } else {
                 N *= 2;
                 oldError = error;
             }
         }
+//        System.out.println("cheby n: "+N+" error: "+error);
 
         ChebyshevPolynomial[] results = new ChebyshevPolynomial[nFuncs];
         for (int i = 0; i < nFuncs; i++) {

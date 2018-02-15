@@ -47,8 +47,9 @@ public class CMomentSketchTest {
     @Test
     public void testLogUniform() throws Exception {
         CMomentSketch ms = new CMomentSketch(1e-9);
-        ms.setSizeParam(5);
+        ms.setSizeParam(9);
         ms.initialize();
+        ms.setVerbose(true);
         ms.setCalcError(true);
 
         double[] data = TestDataSource.getUniform(0,1,10001);
