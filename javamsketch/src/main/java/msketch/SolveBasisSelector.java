@@ -16,7 +16,7 @@ import java.util.List;
  * maximum entropy.
  */
 public class SolveBasisSelector {
-    private double maxConditionNumber = 100;
+    private double maxConditionNumber = 150;
     private double tol = 1e-3;
 
     private int ka, kb;
@@ -110,7 +110,7 @@ public class SolveBasisSelector {
             double[][] hess = getHessian(ka, gFunctions);
             RealMatrix m = new Array2DRowRealMatrix(hess, false);
             double c = new SingularValueDecomposition(m).getConditionNumber();
-//            System.out.println("ka: "+ka+" kb: "+kb+" c: "+c);
+            System.out.println("ka: "+ka+" kb: "+kb+" c: "+c);
             if (c > maxConditionNumber || !Double.isFinite(c)) {
                 kb = Math.max(1, kb-1);
                 break;
