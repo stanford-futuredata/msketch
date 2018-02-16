@@ -77,14 +77,15 @@ public class ChebyshevMomentSolver2Test {
 //        double[] logRange = {0.6931471805599453, 13.512056763192021};
 //        double[] powerSums = {23.0, 3739944.0, 2.725615955574E12, 2.01189814442954829E18, 1.4853088942416747E24};
 //        double[] logSums = {23.0, 158.00896039274153, 1517.9110380119068, 17042.88227353671, 206246.28497020964};
-        double[] range = {1.0, 2294912.0};
-        double[] logRange = {0.0, 14.646205056515045};
-        double[] powerSums = {15987.0, 1.3683792E7, 5.373479860282E12, 1.2091112936301693E19, 2.773767503222561E25};
-        double[] logSums = {15987.0, 69934.96684165017, 378408.6755578257, 2325433.8389417287, 1.5773742150493696E7};
+        double[] range = {1.0, 365018.0};
+        double[] logRange = {0.0, 12.807701946417174};
+        double[] powerSums = {15390.0, 2.993478E7, 1.104169071664E12, 9.4489132972188032E16, 2.119775535058452E22};
+        double[] logSums = {15390.0, 64231.9185887806, 367766.1421633075, 2487583.9684920274, 1.8934513580824606E7};
         ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
                 range[0], range[1], powerSums,
                 logRange[0], logRange[1], logSums
         );
+        solver.setVerbose(true);
         solver.solve(1e-9);
         double[] ps = {.1, .5, .9, .99};
         double[] qs = solver.estimateQuantiles(ps);

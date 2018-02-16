@@ -26,14 +26,14 @@ public class MSketchBench {
         double[] range = {data.getMin(), data.getMax()};
         double[] logRange = {data.getLogMin(), data.getLogMax()};
         double[] powerSums = data.getPowerSums(7);
-        double[] logSums = data.getLogSums(7);
+        double[] logSums = data.getLogSums(1);
 
         ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
                 range[0], range[1], powerSums,
                 logRange[0], logRange[1], logSums
         );
 
-        int numIters = 1000;
+        int numIters = 20000;
         long startTime = System.nanoTime();
         for (int i = 0; i < numIters; i++) {
             solver.solve(1e-9);
