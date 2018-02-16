@@ -16,7 +16,7 @@ import java.util.List;
  * maximum entropy.
  */
 public class SolveBasisSelector {
-    private double maxConditionNumber = 150;
+    private double maxConditionNumber = 100;
     private double tol = 1e-3;
 
     private int ka, kb;

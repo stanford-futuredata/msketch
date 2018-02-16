@@ -22,7 +22,7 @@ public class SolveBasisSelectorTest {
             false, new double[7], new double[7],
                 aMin, aMax, bMin, bMax
         );
-        assertEquals(3, sel.getKb());
+        assertEquals(2, sel.getKb());
         assertEquals(7, sel.getKa());
     }
 }
