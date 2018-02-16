@@ -1,5 +1,8 @@
 package msketch;
 
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.SingularValueDecomposition;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -38,5 +41,4 @@ public class MaxEntFunction2Test {
         );
         assertEquals(1.23, f.value(-.8), 0.01);
     }
-
 }

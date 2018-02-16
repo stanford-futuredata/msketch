@@ -286,4 +286,25 @@ public class MaxEntFunction2 implements UnivariateFunction {
         }
         return pairwiseMoments;
     }
+
+    public double[][] getHessian(double tol) {
+        double[][] pairwiseMoments = getPairwiseMoments(tol);
+        double[][] hess = new double[pairwiseMoments.length-1][pairwiseMoments.length-1];
+        int numNormalPowers = aCoeffs.length;
+
+        for (int i = 0; i < hess.length; i++) {
+            for (int j = 0; j < hess.length; j++) {
+                int curI = i;
+                int curJ = j;
+                if (curI >= numNormalPowers) {
+                    curI++;
+                }
+                if (curJ >= numNormalPowers) {
+                    curJ++;
+                }
+                hess[i][j] = pairwiseMoments[curI][curJ];
+            }
+        }
+        return hess;
+    }
 }

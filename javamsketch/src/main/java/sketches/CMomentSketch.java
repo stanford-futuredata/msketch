@@ -15,7 +15,6 @@ import java.util.List;
 public class CMomentSketch implements QuantileSketch{
     private int ka = 5;
     private int kb = 5;
-    private int maxSolveSecondaryPowers = 3;
     private double tolerance = 1e-10;
     private boolean verbose = false;
 
@@ -72,10 +71,6 @@ public class CMomentSketch implements QuantileSketch{
     public void setCalcError(boolean flag) {
         errorBounds = flag;
         return;
-    }
-
-    public void setMaxSolveSecondaryPowers(int k) {
-        this.maxSolveSecondaryPowers = k;
     }
 
     public void setStats(
@@ -180,8 +175,7 @@ public class CMomentSketch implements QuantileSketch{
         if (min > 0) {
             solver = ChebyshevMomentSolver2.fromPowerSums(
                     min, max, powerSums,
-                    logMin, logMax, logSums,
-                    maxSolveSecondaryPowers
+                    logMin, logMax, logSums
             );
             useStandardBasis = solver.isUseStandardBasis();
         } else {

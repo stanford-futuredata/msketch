@@ -27,31 +27,28 @@ public class MSketchBench {
         double[] logRange = {data.getLogMin(), data.getLogMax()};
         double[] powerSums = data.getPowerSums(7);
         double[] logSums = data.getLogSums(7);
-        for (int nPowers = 3; nPowers <= 7; nPowers+=2) {
-            ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
-                    range[0], range[1], powerSums,
-                    logRange[0], logRange[1], logSums,
-                    nPowers
-            );
-            System.out.println("n powers: "+nPowers);
 
-            int numIters = 200;
-            long startTime = System.nanoTime();
-            for (int i = 0; i < numIters; i++) {
-                solver.solve(1e-9);
-            }
-            long endTime = System.nanoTime();
-            long elapsed = endTime - startTime;
-            double secondsPer = elapsed / (1.0e9 * numIters);
-            MaxEntPotential2 P = (MaxEntPotential2) solver.getOptimizer().getP();
+        ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
+                range[0], range[1], powerSums,
+                logRange[0], logRange[1], logSums
+        );
 
-            double[] ps = {.1, .5, .9};
-            double[] qs = solver.estimateQuantiles(ps);
-            System.out.println("Quantiles: " + Arrays.toString(qs));
-
-            System.out.println("Total evals: " + P.getCumFuncEvals());
-            System.out.println("Time Per Solve: " + secondsPer);
+        int numIters = 200;
+        long startTime = System.nanoTime();
+        for (int i = 0; i < numIters; i++) {
+            solver.solve(1e-9);
         }
+        long endTime = System.nanoTime();
+        long elapsed = endTime - startTime;
+        double secondsPer = elapsed / (1.0e9 * numIters);
+        MaxEntPotential2 P = (MaxEntPotential2) solver.getOptimizer().getP();
+
+        double[] ps = {.1, .5, .9};
+        double[] qs = solver.estimateQuantiles(ps);
+        System.out.println("Quantiles: " + Arrays.toString(qs));
+
+        System.out.println("Total evals: " + P.getCumFuncEvals());
+        System.out.println("Time Per Solve: " + secondsPer);
     }
 
     public static void mergeBench() {

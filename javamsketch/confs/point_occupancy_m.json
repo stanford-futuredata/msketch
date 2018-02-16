@@ -1,7 +1,7 @@
 {
   "testName": "point_occupancy_m",
   "fileName": "../../datasets/occupancy_2.csv",
-  "columnIdx": 0,
+  "columnIdx": 3,
   "numTrials": 5,
   "numSolveTrials": 100,
   "methods": {

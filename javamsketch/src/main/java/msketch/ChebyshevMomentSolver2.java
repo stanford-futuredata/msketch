@@ -43,17 +43,6 @@ public class ChebyshevMomentSolver2 {
             double min, double max, double[] powerSums,
             double logMin, double logMax, double[] logPowerSums
     ) {
-        return ChebyshevMomentSolver2.fromPowerSums(
-                min, max, powerSums, logMin, logMax, logPowerSums, -1
-        );
-    }
-
-
-    public static ChebyshevMomentSolver2 fromPowerSums(
-            double min, double max, double[] powerSums,
-            double logMin, double logMax, double[] logPowerSums,
-            int maxNumSecondaryPowers
-    ) {
         double[] powerChebyMoments = MathUtil.powerSumsToChebyMoments(
                 min, max, powerSums
         );
@@ -88,10 +77,11 @@ public class ChebyshevMomentSolver2 {
 
         // Don't use all of the secondary powers to solve, the acc / speed tradeoff
         // isn't worth it.
-        if (maxNumSecondaryPowers >= 0) {
-            int numSecondaryPowers = Math.min(bMoments.length, maxNumSecondaryPowers);
-            bMoments = Arrays.copyOf(bMoments, numSecondaryPowers);
-        }
+        SolveBasisSelector sel = new SolveBasisSelector();
+        sel.select(useStandardBasis, aMoments.length, bMoments.length, aMin, aMax, bMin, bMax);
+        int ka = sel.getKa();
+        int kb = sel.getKb();
+        bMoments = Arrays.copyOf(bMoments, kb);
 
         double[] combinedMoments = new double[aMoments.length + bMoments.length - 1];
         for (int i = 0; i < aMoments.length; i++) {
@@ -132,6 +122,10 @@ public class ChebyshevMomentSolver2 {
         );
         optimizer = new NewtonOptimizer(potential);
         optimizer.setVerbose(verbose);
+        if (verbose) {
+            System.out.println("Beginning solve with order: "+numNormalPowers+","+(d_mus.length-numNormalPowers+1));
+        }
+
         lambdas = optimizer.solve(l_initial, tol);
         isConverged = optimizer.isConverged();
         cumFuncEvals = potential.getCumFuncEvals();

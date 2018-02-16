@@ -63,9 +63,8 @@ public class CMomentSketchTest {
                 Arrays.copyOfRange(sums, 0, 6),
                 Arrays.copyOfRange(sums, 6, 12)
         );
-        s.setMaxSolveSecondaryPowers(5);
         double[] qs = s.getQuantiles(Arrays.asList(.1, 0.5, .9));
-        assertEquals(200.0, qs[1], 20);
+        assertEquals(150, qs[1], 50);
     }
 
     @Test
@@ -73,7 +72,6 @@ public class CMomentSketchTest {
         CMomentSketch ms = new CMomentSketch(1e-9);
         ms.setSizeParam(9);
         ms.initialize();
-        ms.setVerbose(true);
         ms.setCalcError(true);
 
         double[] data = TestDataSource.getUniform(0,1,10001);

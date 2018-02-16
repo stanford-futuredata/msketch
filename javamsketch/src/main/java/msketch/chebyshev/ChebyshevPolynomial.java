@@ -67,7 +67,7 @@ public class ChebyshevPolynomial implements UnivariateFunction {
                 }
             }
 
-            if (error < tol || N > 2000) {
+            if (error < tol || N > 4000) {
                 break;
             } else {
                 N *= 2;

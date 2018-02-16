@@ -31,7 +31,7 @@ public class ChebyshevMomentSolver2Test {
         double[] ps = {.1, .5, .9, .99};
         double[] qs = solver.estimateQuantiles(ps);
         assertEquals(3.0, qs[1], 1.0);
-        assertEquals(476.0, qs[3], 20.0);
+        assertEquals(476.0, qs[3], 50.0);
     }
 
     @Test
@@ -63,8 +63,7 @@ public class ChebyshevMomentSolver2Test {
 
         ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
                 range[0], range[1], powerSums,
-                logRange[0], logRange[1], logSums,
-                3
+                logRange[0], logRange[1], logSums
         );
         solver.solve(1e-9);
         double[] ps = {.1, .5, .9};
@@ -78,18 +77,16 @@ public class ChebyshevMomentSolver2Test {
         MomentData data = new OccupancyData();
         double[] range = {data.getMin(), data.getMax()};
         double[] logRange = {data.getLogMin(), data.getLogMax()};
-        double[] powerSums = data.getPowerSums(3);
-        double[] logSums = data.getLogSums(3);
+        double[] powerSums = data.getPowerSums(7);
+        double[] logSums = data.getLogSums(7);
 
         ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
                 range[0], range[1], powerSums,
-                logRange[0], logRange[1], logSums,
-                5
+                logRange[0], logRange[1], logSums
         );
-        solver.setVerbose(true);
         solver.solve(1e-9);
         double[] ps = {.1, .5, .9, .99};
         double[] qs = solver.estimateQuantiles(ps);
-        assertEquals(565.0, qs[1], 5.0);
+        assertEquals(565.0, qs[1], 7.0);
     }
 }
