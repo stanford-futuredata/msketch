@@ -110,7 +110,7 @@ public class SolveBasisSelector {
             double[][] hess = getHessian(ka, gFunctions);
             RealMatrix m = new Array2DRowRealMatrix(hess, false);
             double c = new SingularValueDecomposition(m).getConditionNumber();
-            System.out.println("ka: "+ka+" kb: "+kb+" c: "+c);
+//            System.out.println("ka: "+ka+" kb: "+kb+" c: "+c);
             if (c > maxConditionNumber || !Double.isFinite(c)) {
                 kb = Math.max(1, kb-1);
                 break;
