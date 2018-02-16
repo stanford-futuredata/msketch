@@ -19,9 +19,26 @@ public class SolveBasisSelector {
     }
 
     public void select(
-            boolean useStandardBasis, int maxKa, int maxKb,
+            boolean useStandardBasis, double[] aMoments, double[] bMoments,
             double aMin, double aMax, double bMin, double bMax
     ) {
+        // only use moments that are < 1, others are the product of numeric issues
+        int maxKa = aMoments.length;
+        for (int i = 0; i < aMoments.length; i++) {
+            if (Math.abs(aMoments[i]) > 1.1) {
+                maxKa = i;
+                break;
+            }
+        }
+        int maxKb = bMoments.length;
+        for (int i = 0; i < bMoments.length; i++) {
+            if (Math.abs(bMoments[i]) > 1.1) {
+                maxKb = i;
+                break;
+            }
+
+        }
+
         ka = maxKa;
         for (int nBMoments = 0; nBMoments < maxKb; nBMoments++) {
             kb = nBMoments+1;

@@ -9,6 +9,7 @@ import java.util.Arrays;
 
 public class ChebyshevMomentSolver2 {
     private double[] d_mus;
+
     private int numNormalPowers;
     private boolean useStandardBasis = true;
     private boolean verbose = false;
@@ -50,17 +51,11 @@ public class ChebyshevMomentSolver2 {
                 logMin, logMax, logPowerSums
         );
 
-        boolean useStandardBasis  = true;
-        if (logChebyMoments.length > 2 && powerChebyMoments.length > 2) {
-            // Use the variance as an indicator of how suitable a basis is
-            // Low variance means "spiky" distributions that are hard to handle
-            double powerVar = MathUtil.varOfChebyMoments(powerChebyMoments);
-            double logVar = MathUtil.varOfChebyMoments(logChebyMoments);
-            if (powerVar > logVar || powerSums[0] > logPowerSums[0]) {
-                useStandardBasis = true;
-            } else {
-                useStandardBasis = false;
-            }
+        boolean useStandardBasis = true;
+        double minPowerMoment = MathUtil.minAbs(powerChebyMoments);
+        double minLogMoment = MathUtil.minAbs(logChebyMoments);
+        if (minLogMoment < minPowerMoment) {
+            useStandardBasis = false;
         }
 
         double[] aMoments, bMoments;
@@ -78,10 +73,13 @@ public class ChebyshevMomentSolver2 {
         // Don't use all of the secondary powers to solve, the acc / speed tradeoff
         // isn't worth it.
         SolveBasisSelector sel = new SolveBasisSelector();
-        sel.select(useStandardBasis, aMoments.length, bMoments.length, aMin, aMax, bMin, bMax);
+        sel.select(useStandardBasis, aMoments, bMoments, aMin, aMax, bMin, bMax);
         int ka = sel.getKa();
         int kb = sel.getKb();
+        aMoments = Arrays.copyOf(aMoments, ka);
         bMoments = Arrays.copyOf(bMoments, kb);
+
+//        System.out.println(aMin+","+aMax+","+Arrays.toString(aMoments)+","+Arrays.toString(bMoments));
 
         double[] combinedMoments = new double[aMoments.length + bMoments.length - 1];
         for (int i = 0; i < aMoments.length; i++) {
@@ -198,4 +196,8 @@ public class ChebyshevMomentSolver2 {
     public boolean isUseStandardBasis() {
         return useStandardBasis;
     }
+    public int getNumNormalPowers() {
+        return numNormalPowers;
+    }
+
 }

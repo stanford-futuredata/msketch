@@ -73,6 +73,21 @@ public class ChebyshevMomentSolver2Test {
 
 
     @Test
+    public void testWikiSlow() {
+        double[] range = {1.0, 738264.0};
+        double[] logRange = {0.0, 13.512056763192021};
+        double[] powerSums = {53.0, 3782523.0, 2.725910937369E12, 2.0119007431824297E18, 1.4853089183589466E24};
+        double[] logSums = {53.0, 315.25127662867254, 2490.551811125909, 23731.847485560018, 255843.41344724607};
+        ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
+                range[0], range[1], powerSums,
+                logRange[0], logRange[1], logSums
+        );
+        solver.solve(1e-9);
+        double[] ps = {.1, .5, .9, .99};
+        double[] qs = solver.estimateQuantiles(ps);
+    }
+
+    @Test
     public void testOccupancy() {
         MomentData data = new OccupancyData();
         double[] range = {data.getMin(), data.getMax()};

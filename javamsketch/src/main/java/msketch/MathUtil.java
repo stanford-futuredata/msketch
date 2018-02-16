@@ -133,6 +133,17 @@ public class MathUtil {
         return xs;
     }
 
+    public static double minAbs(double[] xs) {
+        double curMin = Double.MAX_VALUE;
+        for (double x : xs) {
+            double xAbs = Math.abs(x);
+            if (xAbs < curMin) {
+                curMin = xAbs;
+            }
+        }
+        return curMin;
+    }
+
     public static double arrayMean(double[] xs) {
         double sum = 0.0;
         for (double x : xs) {

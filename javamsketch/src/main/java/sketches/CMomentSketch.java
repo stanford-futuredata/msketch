@@ -196,7 +196,7 @@ public class CMomentSketch implements QuantileSketch{
         if (errorBounds) {
             if (useStandardBasis) {
                 double[] moments = MathUtil.powerSumsToMoments(powerSums);
-                SimpleBoundSolver boundSolver = new SimpleBoundSolver(ka);
+                SimpleBoundSolver boundSolver = new SimpleBoundSolver(solver.getNumNormalPowers());
                 double[] boundSizes = boundSolver.solveBounds(moments, quantiles);
                 errors = boundSolver.getMaxErrors(moments, quantiles, ps, boundSizes);
             } else {
@@ -205,7 +205,7 @@ public class CMomentSketch implements QuantileSketch{
                     logQuantiles[i] = Math.log(quantiles[i]);
                 }
                 double[] moments = MathUtil.powerSumsToMoments(logSums);
-                SimpleBoundSolver boundSolver = new SimpleBoundSolver(kb);
+                SimpleBoundSolver boundSolver = new SimpleBoundSolver(solver.getNumNormalPowers());
                 double[] boundSizes = boundSolver.solveBounds(moments, logQuantiles);
                 errors = boundSolver.getMaxErrors(moments, logQuantiles, ps, boundSizes);
             }

@@ -33,7 +33,7 @@ public class MSketchBench {
                 logRange[0], logRange[1], logSums
         );
 
-        int numIters = 200;
+        int numIters = 1000;
         long startTime = System.nanoTime();
         for (int i = 0; i < numIters; i++) {
             solver.solve(1e-9);
