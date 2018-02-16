@@ -25,7 +25,7 @@ public class SamplingSketchTest {
         double[] qs = sketch.getQuantiles(ps);
 
         double[] expectedQs = QuantileUtil.getTrueQuantiles(ps, data);
-        assertArrayEquals(expectedQs, qs, 400.0);
+        assertArrayEquals(expectedQs, qs, 1000.0);
 
         DataGrouper grouper = new SeqDataGrouper(60);
         ArrayList<double[]> cellData = grouper.group(data);

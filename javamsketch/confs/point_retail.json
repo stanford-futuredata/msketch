@@ -3,7 +3,7 @@
   "fileName": "../../datasets/retail_quantity_pos.csv",
   "columnIdx": 0,
   "numTrials": 5,
-  "numSolveTrials": 100,
+  "numSolveTrials": 1000,
   "methods": {
     "tdigest": [1.0, 1.5, 2.0, 4.0, 8.0, 16.0, 32.0],
     "yahoo": [2.0, 4.0, 8.0, 16.0, 32.0, 64.0],

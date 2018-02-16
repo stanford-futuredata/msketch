@@ -4,6 +4,8 @@ import msketch.chebyshev.ChebyshevPolynomial;
 import msketch.chebyshev.QuadraticCosFunction;
 import org.junit.Test;
 
+import java.util.Arrays;
+
 import static org.junit.Assert.*;
 
 public class ChebyshevPolynomialTest {
@@ -48,5 +50,20 @@ public class ChebyshevPolynomialTest {
         double[] coeff = {2.0, 1.0, 3.0};
         ChebyshevPolynomial cp = new ChebyshevPolynomial(coeff);
         assertEquals(cp.integrate(), cp.integralPoly().value(1), 1e-10);
+    }
+
+    @Test
+    public void testMultiply() {
+        double[] c1 = {1.0, 2.0, 3.0};
+        double[] c2 = {.5, .6};
+        ChebyshevPolynomial cp1 = new ChebyshevPolynomial(c1);
+        ChebyshevPolynomial cp2 = new ChebyshevPolynomial(c2);
+
+        ChebyshevPolynomial product = cp1.multiply(cp2);
+        assertEquals(
+                cp1.value(.5)*cp2.value(.5),
+                product.value(.5),
+                1e-10
+                );
     }
 }

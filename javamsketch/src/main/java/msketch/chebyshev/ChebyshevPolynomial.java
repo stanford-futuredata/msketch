@@ -157,6 +157,50 @@ public class ChebyshevPolynomial implements UnivariateFunction {
         return new ChebyshevPolynomial(newCoeffs);
     }
 
+    /**
+     * See https://arxiv.org/pdf/1009.4597.pdf
+     * @param p2 factor
+     * @return new product
+     */
+    public ChebyshevPolynomial multiply(ChebyshevPolynomial p2) {
+        double[] c = new double[coeffs.length + p2.coeffs.length - 1];
+        int d = Math.max(coeffs.length, p2.coeffs.length)-1;
+        double[] a = Arrays.copyOf(coeffs, d+1);
+        double[] b = Arrays.copyOf(p2.coeffs, d+1);
+        a[0] *= 2;
+        b[0] *= 2;
+        double sum;
+        // k = 0
+        sum = a[0] * b[0];
+        for (int l = 1; l <= d; l++) {
+            sum += a[l]*b[l]*2;
+        }
+        c[0] = sum / 2;
+
+        // 1 <= k <= d1
+        for (int k = 1; k <= d-1; k++) {
+            sum = 0;
+            for (int l = 0; l <= k; l++) {
+                sum += a[k-l]*b[l];
+            }
+            for (int l = 1; l <= d-k; l++) {
+                sum += a[l]*b[k+1] + a[k+l]*b[l];
+            }
+            c[k] = sum/2;
+        }
+
+        for (int k = d; k < c.length; k++) {
+            sum = 0;
+            for (int l = k-d; l <= d; l++) {
+                sum += a[k-l]*b[l];
+            }
+            c[k] = sum/2;
+        }
+
+        c[0] /= 2;
+        return new ChebyshevPolynomial(c);
+    }
+
     public double integrate() {
         double sum = 0.0;
         for (int i2 = 0; i2 < coeffs.length; i2+=2) {

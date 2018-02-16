@@ -41,6 +41,7 @@ public class AccuracyBench {
     public static void main(String[] args) throws Exception {
         String confFile = args[0];
         AccuracyBench bench = new AccuracyBench(confFile);
+//        System.in.read();
 
         List<Map<String, String>> results = bench.run();
         CSVOutput output = new CSVOutput();
