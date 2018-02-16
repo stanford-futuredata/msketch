@@ -238,7 +238,7 @@ public class MaxEntFunction2 implements UnivariateFunction {
     }
 
     public double[][] getPairwiseMoments(double tol) {
-        WeightedMultiFunction multiFunction = new WeightedMultiFunction(2*bCoeffs.length, this);
+        WeightedMultiFunction multiFunction = new WeightedMultiFunction(2*bCoeffs.length-1, this);
         ChebyshevPolynomial[] bApproxs = ChebyshevPolynomial.fitMulti(multiFunction, tol);
         numFuncEvals += multiFunction.getNumFuncEvals();
 
