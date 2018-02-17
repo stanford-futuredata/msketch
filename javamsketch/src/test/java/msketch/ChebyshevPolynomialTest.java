@@ -14,6 +14,7 @@ public class ChebyshevPolynomialTest {
         double[] coeff = {1.0, 2.0, 3.0};
         ChebyshevPolynomial cp = new ChebyshevPolynomial(coeff);
         assertEquals(2.34, cp.value(.7), 1e-10);
+        assertEquals(cp.value(.7), cp.value2(.7), 1e-10);
 
         ChebyshevPolynomial cb = ChebyshevPolynomial.basis(2);
         assertEquals(-0.02, cb.value(.7), 1e-10);
@@ -54,8 +55,8 @@ public class ChebyshevPolynomialTest {
 
     @Test
     public void testMultiply() {
-        double[] c1 = {1.0, 2.0, 3.0};
-        double[] c2 = {.5, .6};
+        double[] c1 = {1.0, 2.0, 3.0, 4.0};
+        double[] c2 = {.5, .6, .7, .8, .9};
         ChebyshevPolynomial cp1 = new ChebyshevPolynomial(c1);
         ChebyshevPolynomial cp2 = new ChebyshevPolynomial(c2);
 
@@ -65,5 +66,12 @@ public class ChebyshevPolynomialTest {
                 product.value(.5),
                 1e-10
                 );
+
+        product = cp1.multiply(cp1);
+        assertEquals(
+                cp1.value(.7)*cp1.value(.7),
+                product.value(.7),
+                1e-10
+        );
     }
 }

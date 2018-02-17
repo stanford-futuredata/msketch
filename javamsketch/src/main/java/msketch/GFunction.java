@@ -10,14 +10,15 @@ class GFunction implements UnivariateFunction {
 
     public GFunction(
             int k, boolean useStandardBasis,
-            double aMin, double aMax, double bMin, double bMax
+            double aCenter, double aScale,
+            double bCenter, double bScale
     ) {
         this.cBasis = ChebyshevPolynomial.basis(k);
         this.useStandardBasis = useStandardBasis;
-        aCenter = (aMin + aMax) / 2;
-        aScale = (aMax - aMin) / 2;
-        bCenter = (bMin + bMax) / 2;
-        bScale = (bMax - bMin) / 2;
+        this.aCenter = aCenter;
+        this.aScale = aScale;
+        this.bCenter = bCenter;
+        this.bScale = bScale;
     }
 
     @Override

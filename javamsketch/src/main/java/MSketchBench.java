@@ -32,9 +32,8 @@ public class MSketchBench {
                 range[0], range[1], powerSums,
                 logRange[0], logRange[1], logSums
         );
-        solver.setVerbose(true);
 
-        int numIters = 100;
+        int numIters = 20000;
         long startTime = System.nanoTime();
         for (int i = 0; i < numIters; i++) {
             solver.solve(1e-9);

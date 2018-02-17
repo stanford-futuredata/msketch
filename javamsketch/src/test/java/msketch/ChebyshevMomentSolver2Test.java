@@ -85,7 +85,6 @@ public class ChebyshevMomentSolver2Test {
                 range[0], range[1], powerSums,
                 logRange[0], logRange[1], logSums
         );
-        solver.setVerbose(true);
         solver.solve(1e-9);
         double[] ps = {.1, .5, .9, .99};
         double[] qs = solver.estimateQuantiles(ps);

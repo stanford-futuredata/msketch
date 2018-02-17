@@ -4,6 +4,7 @@ import msketch.chebyshev.ChebyshevPolynomial;
 import msketch.chebyshev.CosScaledFunction;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.util.FastMath;
+import org.apache.commons.math3.util.MathArrays;
 
 import java.util.Arrays;
 
@@ -12,10 +13,11 @@ public class MaxEntFunction2 implements UnivariateFunction {
     private double[] bCoeffs;
     private double aCenter, aScale, bCenter, bScale;
     private boolean isLog;
+    // starting with order 1
+    private ChebyshevPolynomial[] gPolys;
 
     private ChebyshevPolynomial aPoly;
     private ChebyshevPolynomial bPoly;
-
     private ChebyshevPolynomial[] bases;
 
     private int numFuncEvals;
@@ -39,28 +41,42 @@ public class MaxEntFunction2 implements UnivariateFunction {
             double bScale
     ) {
         this.isLog = isLog;
-        this.aCoeffs = aCoeffs;
-        this.bCoeffs = bCoeffs;
         this.aCenter = aCenter;
         this.aScale = aScale;
         this.bCenter = bCenter;
         this.bScale = bScale;
+        setCoeffs(aCoeffs, bCoeffs);
 
-        this.aPoly = new ChebyshevPolynomial(aCoeffs);
-        this.bPoly = new ChebyshevPolynomial(bCoeffs);
         this.bases = new ChebyshevPolynomial[2*(aCoeffs.length+bCoeffs.length)];
         for (int i = 0; i < bases.length; i++) {
             bases[i] = ChebyshevPolynomial.basis(i);
         }
+        this.gPolys = new ChebyshevPolynomial[bCoeffs.length-1];
+        for (int i = 0; i < gPolys.length; i++) {
+            gPolys[i] = ChebyshevPolynomial.fit(new GFunction(
+                    i+1, isLog,
+                    aCenter, aScale, bCenter, bScale
+            ), 1e-9
+            );
+        }
         numFuncEvals = 0;
+    }
+
+    public void setCoeffs(
+            double[] aCoeffs,
+            double[] bCoeffs
+    ) {
+        this.aCoeffs = aCoeffs;
+        this.bCoeffs = bCoeffs;
+        this.aPoly = new ChebyshevPolynomial(aCoeffs);
+        this.bPoly = new ChebyshevPolynomial(bCoeffs);
     }
 
     public double valueRaw(double x) {
         return value((x - aCenter) / aScale);
     }
 
-    @Override
-    public double value(double y) {
+    private double getBGX(double y) {
         double x = y*aScale+aCenter;
         double gX;
         if (isLog) {
@@ -68,7 +84,12 @@ public class MaxEntFunction2 implements UnivariateFunction {
         } else {
             gX = Math.exp(x);
         }
-        double scaledBGX = (gX - bCenter) / bScale;
+        return (gX - bCenter) / bScale;
+    }
+
+    @Override
+    public double value(double y) {
+        double scaledBGX = getBGX(y);
         double expValue = aPoly.value(y) + bPoly.value(scaledBGX);
         return Math.exp(expValue);
     }
@@ -127,31 +148,6 @@ public class MaxEntFunction2 implements UnivariateFunction {
                 wj = bases[j].value(scaledBGX);
             }
             return wi*wj*f2.value(y);
-        }
-    }
-
-    private class WeightedBFunction implements UnivariateFunction {
-        int i;
-        private MaxEntFunction2 f2;
-        public WeightedBFunction(
-                int i,
-                MaxEntFunction2 f2
-        ) {
-            this.i = i;
-            this.f2 = f2;
-        }
-
-        @Override
-        public double value(double y) {
-            double x = y * aScale + aCenter;
-            double gX;
-            if (isLog) {
-                gX = Math.log(x);
-            } else {
-                gX = Math.exp(x);
-            }
-            double scaledBGX = (gX - bCenter) / bScale;
-            return bases[i].value(scaledBGX)*f2.value(y);
         }
     }
 
@@ -237,23 +233,45 @@ public class MaxEntFunction2 implements UnivariateFunction {
         }
     }
 
+    public double[][] getHessian(double tol) {
+        int ka = aCoeffs.length;
+        int kb = bCoeffs.length-1;
+        ChebyshevPolynomial cb_f = ChebyshevPolynomial.fit(this, tol);
+        numFuncEvals += cb_f.getNumFitEvals();
+
+        double[][] hess = new double[ka+kb][ka+kb];
+
+        double[] preCalcIntegrals = new double[2*ka];
+        for (int i = 0; i < 2*ka-1; i++) {
+            preCalcIntegrals[i] = cb_f.multiplyByBasis(i).integrate();
+        }
+        for (int i = 0; i < ka; i++)  {
+            for (int j = 0; j <= i; j++) {
+                hess[i][j] = (preCalcIntegrals[i+j] + preCalcIntegrals[i-j])/2;
+            }
+        }
+        for (int i = 0; i < kb; i++) {
+            for (int j = 0; j < ka; j++) {
+                hess[i+ka][j] = gPolys[i].multiplyByBasis(j).multiply(cb_f).integrate();
+            }
+        }
+        for (int i = 0; i < kb; i++) {
+            for (int j = 0; j <= i; j++) {
+                hess[i+ka][j+ka] = gPolys[i].multiply(gPolys[j]).multiply(cb_f).integrate();
+            }
+        }
+        for (int i=0; i<hess.length; i++) {
+            for (int j=i; j<hess.length; j++) {
+                hess[i][j] = hess[j][i];
+            }
+        }
+        return hess;
+    }
+
     public double[][] getPairwiseMoments(double tol) {
         WeightedMultiFunction multiFunction = new WeightedMultiFunction(2*bCoeffs.length-1, this);
         ChebyshevPolynomial[] bApproxs = ChebyshevPolynomial.fitMulti(multiFunction, tol);
         numFuncEvals += multiFunction.getNumFuncEvals();
-
-//        ChebyshevPolynomial[] bApproxs = new ChebyshevPolynomial[2*bCoeffs.length];
-//        bApproxs[0] = ChebyshevPolynomial.fit(this, tol);
-//        numFuncEvals += bApproxs[0].getNumFitEvals();
-//        for (int i = 1; i < 2*bCoeffs.length; i++) {
-//            UnivariateFunction weightedBFunction = new WeightedBFunction(
-//                    i,
-//                    this
-//            );
-//            bApproxs[i] = ChebyshevPolynomial.fit(weightedBFunction, tol);
-//            numFuncEvals += bApproxs[i].getNumFitEvals();
-//        }
-
 
         int k = aCoeffs.length + bCoeffs.length;
         double[][] pairwiseMoments = new double[k][k];
@@ -287,7 +305,7 @@ public class MaxEntFunction2 implements UnivariateFunction {
         return pairwiseMoments;
     }
 
-    public double[][] getHessian(double tol) {
+    public double[][] getHessianOld(double tol) {
         double[][] pairwiseMoments = getPairwiseMoments(tol);
         double[][] hess = new double[pairwiseMoments.length-1][pairwiseMoments.length-1];
         int numNormalPowers = aCoeffs.length;

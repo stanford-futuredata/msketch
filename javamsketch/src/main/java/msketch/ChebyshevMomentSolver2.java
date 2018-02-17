@@ -70,10 +70,15 @@ public class ChebyshevMomentSolver2 {
             bMin = min; bMax = max; aMin = logMin; aMax = logMax;
         }
 
+        double aCenter = (aMax + aMin)/2;
+        double aScale = (aMax - aMin)/2;
+        double bCenter = (bMax + bMin)/2;
+        double bScale = (bMax - bMin)/2;
+
         // Don't use all of the secondary powers to solve, the acc / speed tradeoff
         // isn't worth it.
         SolveBasisSelector sel = new SolveBasisSelector();
-        sel.select(useStandardBasis, aMoments, bMoments, aMin, aMax, bMin, bMax);
+        sel.select(useStandardBasis, aMoments, bMoments, aCenter, aScale, bCenter, bScale);
         int ka = sel.getKa();
         int kb = sel.getKb();
         aMoments = Arrays.copyOf(aMoments, ka);
@@ -92,10 +97,10 @@ public class ChebyshevMomentSolver2 {
                 useStandardBasis,
                 aMoments.length,
                 combinedMoments,
-                (aMax + aMin) / 2,
-                (aMax - aMin) / 2,
-                (bMax + bMin) / 2,
-                (bMax - bMin)/ 2
+                aCenter,
+                aScale,
+                bCenter,
+                bScale
         );
     }
 

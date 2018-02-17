@@ -125,9 +125,9 @@ public class ChebyshevPolynomial implements UnivariateFunction {
             if (e2 > error) {error = e2;}
             double e3 = 2*FastMath.abs(cs[cs.length-5]);
             if (e3 > error) {error = e3;}
+//            System.out.println("cheby n: "+N+" error: "+error);
 
-            // HACK: just stop trying if the error gets worse
-            if (error < tol || error > oldError) {
+            if (error < tol || N > 1000) {
                 break;
             } else {
                 N *= 2;
@@ -158,6 +158,7 @@ public class ChebyshevPolynomial implements UnivariateFunction {
     }
 
     /**
+     * This function appears to be unreliable for large polynomials
      * See https://arxiv.org/pdf/1009.4597.pdf
      * @param p2 factor
      * @return new product
@@ -184,7 +185,7 @@ public class ChebyshevPolynomial implements UnivariateFunction {
                 sum += a[k-l]*b[l];
             }
             for (int l = 1; l <= d-k; l++) {
-                sum += a[l]*b[k+1] + a[k+l]*b[l];
+                sum += a[l]*b[k+l] + a[k+l]*b[l];
             }
             c[k] = sum/2;
         }
@@ -247,6 +248,16 @@ public class ChebyshevPolynomial implements UnivariateFunction {
         }
 
         return sum;
+    }
+
+    public double value2(double x) {
+        double bk0=0,bk1=0, bk2=0;
+        for (int i = coeffs.length-1; i > 0; i--) {
+            bk2=bk1;
+            bk1=bk0;
+            bk0=coeffs[i] + 2*x*bk1 - bk2;
+        }
+        return coeffs[0]+x*bk0-bk1;
     }
 
     @Override

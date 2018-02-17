@@ -16,8 +16,8 @@ import java.util.List;
  * maximum entropy.
  */
 public class SolveBasisSelector {
-    private double maxConditionNumber = 150;
-    private double tol = 1e-3;
+    private double maxConditionNumber = 10000;
+    private double tol = 1e-5;
 
     private int ka, kb;
 
@@ -66,7 +66,7 @@ public class SolveBasisSelector {
 
     public void select(
             boolean useStandardBasis, double[] aMoments, double[] bMoments,
-            double aMin, double aMax, double bMin, double bMax
+            double aCenter, double aScale, double bCenter, double bScale
     ) {
         // only use moments that are < 1, others are the product of numeric issues
         int maxKa = aMoments.length;
@@ -87,30 +87,31 @@ public class SolveBasisSelector {
         ka = maxKa;
         for (int nBMoments = 0; nBMoments < maxKb; nBMoments++) {
             kb = nBMoments+1;
-//            double aCenter = (aMax + aMin)/2;
-//            double aScale = (aMax - aMin)/2;
-//            double bCenter = (bMax + bMin)/2;
-//            double bScale = (bMax - bMin)/2;
-//            MaxEntFunction2 f = new MaxEntFunction2(
-//                    useStandardBasis,
-//                    new double[ka],
-//                    new double[kb],
-//                    aCenter, aScale, bCenter, bScale
-//            );
-//            double[][] hess = f.getHessian(tol);
             List<UnivariateFunction> gFunctions = new ArrayList<>();
             for (int i = 1; i < kb; i++) {
                 gFunctions.add(
                         new GFunction(
                                 i, useStandardBasis,
-                                aMin, aMax, bMin, bMax
+                                aCenter, aScale, bCenter, bScale
                         )
                 );
             }
             double[][] hess = getHessian(ka, gFunctions);
+//
+//            MaxEntFunction2 f = new MaxEntFunction2(
+//                    useStandardBasis,
+//                    new double[ka],
+//                    new double[kb],
+//                    aCenter,aScale,
+//                    bCenter,bScale
+//            );
+//            double[][] hess2 = f.getHessian(tol);
+//            RealMatrix m2 = new Array2DRowRealMatrix(hess2, false);
+//            double c2 = new SingularValueDecomposition(m2).getConditionNumber();
+
             RealMatrix m = new Array2DRowRealMatrix(hess, false);
             double c = new SingularValueDecomposition(m).getConditionNumber();
-//            System.out.println("ka: "+ka+" kb: "+kb+" c: "+c);
+            System.out.println("ka: "+ka+" kb: "+kb+" c: "+c);
             if (c > maxConditionNumber || !Double.isFinite(c)) {
                 kb = Math.max(1, kb-1);
                 break;

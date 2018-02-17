@@ -21,7 +21,6 @@ public class MaxEntPotential2 implements FunctionWithHessian {
 
     private MaxEntFunction2 func;
 
-    private int cumFuncEvals = 0;
     protected double[] lambd;
     protected double[] mus;
     protected double[] grad;
@@ -44,7 +43,12 @@ public class MaxEntPotential2 implements FunctionWithHessian {
         this.bCenter = bCenter;
         this.bScale = bScale;
 
-        this.cumFuncEvals = 0;
+        this.func = new MaxEntFunction2(
+                isLog,
+                new double[numNormalPowers],
+                new double[d_mus.length - numNormalPowers+1],
+                aCenter, aScale, bCenter, bScale
+        );
         int k = d_mus.length;
         this.mus = new double[k];
         this.grad = new double[k];
@@ -56,7 +60,7 @@ public class MaxEntPotential2 implements FunctionWithHessian {
         return d_mus.length;
     }
 
-    private MaxEntFunction2 setFunction(double[] lambd) {
+    private void setFunction(double[] lambd) {
         this.lambd = lambd;
         int k = lambd.length;
 
@@ -69,16 +73,11 @@ public class MaxEntPotential2 implements FunctionWithHessian {
                 bCoeffs[i - numNormalPowers + 1] = lambd[i];
             }
         }
-        this.func = new MaxEntFunction2(
-                isLog,
+        this.func.setCoeffs(
                 aCoeffs,
-                bCoeffs,
-                aCenter,
-                aScale,
-                bCenter,
-                bScale
+                bCoeffs
         );
-        return this.func;
+        return;
     }
 
     @Override
@@ -86,38 +85,46 @@ public class MaxEntPotential2 implements FunctionWithHessian {
         int k = lambd.length;
         setFunction(point);
         this.mus[0] = func.zerothMoment(tol);
-        cumFuncEvals += func.getNumFuncEvals();
     }
 
     @Override
     public void computeAll(double[] lambd, double tol) {
         int k = lambd.length;
         setFunction(lambd);
-        double[][] pairwiseMoments = func.getPairwiseMoments(tol);
-        cumFuncEvals += func.getNumFuncEvals();
-
-        for (int i = 0; i < k; i++) {
-            if (i < numNormalPowers) {
-                this.mus[i] = pairwiseMoments[i][0];
-            } else {
-                this.mus[i] = pairwiseMoments[i+1][0];
+        // experimental new code path
+        if (false) {
+            double[][] hess = func.getHessian(tol);
+            for (int i = 0; i < k; i++) {
+                this.mus[i] = hess[i][0];
+                this.grad[i] = this.mus[i] - this.d_mus[i];
             }
-        }
-        for (int i = 0; i < k; i++) {
-            this.grad[i] = this.mus[i] - this.d_mus[i];
-        }
+            this.hess = hess;
+        } else {
+            double[][] pairwiseMoments = func.getPairwiseMoments(tol);
 
-        for (int i = 0; i < k; i++) {
-            for (int j = 0; j < k; j++) {
-                int curI = i;
-                int curJ = j;
-                if (curI >= numNormalPowers) {
-                    curI++;
+            for (int i = 0; i < k; i++) {
+                if (i < numNormalPowers) {
+                    this.mus[i] = pairwiseMoments[i][0];
+                } else {
+                    this.mus[i] = pairwiseMoments[i + 1][0];
                 }
-                if (curJ >= numNormalPowers) {
-                    curJ++;
+            }
+            for (int i = 0; i < k; i++) {
+                this.grad[i] = this.mus[i] - this.d_mus[i];
+            }
+
+            for (int i = 0; i < k; i++) {
+                for (int j = 0; j < k; j++) {
+                    int curI = i;
+                    int curJ = j;
+                    if (curI >= numNormalPowers) {
+                        curI++;
+                    }
+                    if (curJ >= numNormalPowers) {
+                        curJ++;
+                    }
+                    this.hess[i][j] = pairwiseMoments[curI][curJ];
                 }
-                this.hess[i][j] = pairwiseMoments[curI][curJ];
             }
         }
     }
@@ -143,6 +150,6 @@ public class MaxEntPotential2 implements FunctionWithHessian {
     }
 
     public int getCumFuncEvals() {
-        return cumFuncEvals;
+        return this.func.getNumFuncEvals();
     }
 }

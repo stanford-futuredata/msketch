@@ -104,11 +104,6 @@ public class NewtonOptimizer {
             for (int i = 0; i < k; i++) {
                 newX[i] = x[i] + stepScaleFactor * stepVector.getEntry(i);
             }
-            // optimistically choose precision to be size of expected step
-//            double requiredPrecision = Math.max(
-//                    gradTol,
-//                    Math.abs(alpha*stepScaleFactor*dfdx)
-//            ) / 10;
             // Warning: this overwrites grad and hess
             P.computeAll(newX, requiredPrecision);
 

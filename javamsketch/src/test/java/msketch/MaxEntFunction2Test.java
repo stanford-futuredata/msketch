@@ -5,6 +5,8 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 import org.junit.Test;
 
+import java.util.Arrays;
+
 import static org.junit.Assert.*;
 
 public class MaxEntFunction2Test {
@@ -27,6 +29,11 @@ public class MaxEntFunction2Test {
         assertEquals(3.73002156214, pairwiseMoments[0][0], 1e-8);
         assertEquals(0.4078218803, pairwiseMoments[1][3], 1e-8);
         assertEquals(1.12095675177, pairwiseMoments[1][1], 1e-8);
+
+        double[][] hess = f.getHessian(1e-7);
+        assertEquals(3.73002156214, hess[0][0], 1e-8);
+        assertEquals(0.4078218803, hess[1][2], 1e-8);
+        assertEquals(1.12095675177, hess[1][1], 1e-8);
     }
 
     @Test
