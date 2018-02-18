@@ -1,7 +1,7 @@
 {
-  "testName": "point_retail",
-  "fileName": "../../datasets/retail_quantity_pos.csv",
-  "columnIdx": 0,
+  "testName": "point_power",
+  "fileName": "../../datasets/household_power.csv",
+  "columnIdx": 2,
   "numTrials": 10,
   "numSolveTrials": 1000,
   "methods": {

@@ -2,14 +2,14 @@
   "testName": "point_milan",
   "fileName": "../../datasets/internet-mi-2013-11-01_09.csv",
   "columnIdx": 0,
-  "numTrials": 5,
+  "numTrials": 10,
   "numSolveTrials": 1000,
   "methods": {
-    "tdigest": [1.0, 1.5, 2.0, 4.0, 8.0, 16.0, 32.0],
+    "tdigest": [1.0, 1.5, 2.0, 4.0, 8.0, 16.0],
     "yahoo": [2.0, 4.0, 8.0, 16.0, 32.0, 64.0],
-    "sampling": [10.0, 50.0, 100.0, 1000.0],
+    "sampling": [10.0, 50.0, 100.0, 400.0, 1000.0, 2000.0],
     "spark_gk": [5.0, 10.0, 20.0, 50.0, 100.0],
-    "histogram":  [3.0, 5.0, 7.0, 10.0, 20.0, 40.0, 100.0]
+    "histogram":  [10.0, 20.0, 40.0, 100.0, 200.0]
   },
   "quantiles": [
     0.01, 0.05, 0.1, 0.15,
