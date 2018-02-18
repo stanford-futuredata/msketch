@@ -10,6 +10,7 @@ import java.util.Arrays;
 public class ChebyshevMomentSolver2 {
     private double[] d_mus;
 
+    private int hessianType = 0;
     private int numNormalPowers;
     private boolean useStandardBasis = true;
     private boolean verbose = false;
@@ -123,10 +124,12 @@ public class ChebyshevMomentSolver2 {
                 bCenter,
                 bScale
         );
+        potential.setHessianType(hessianType);
         optimizer = new NewtonOptimizer(potential);
         optimizer.setVerbose(verbose);
         if (verbose) {
             System.out.println("Beginning solve with order: "+numNormalPowers+","+(d_mus.length-numNormalPowers+1));
+            System.out.println("Using hessian type: "+hessianType);
         }
 
         lambdas = optimizer.solve(l_initial, tol);
@@ -205,4 +208,7 @@ public class ChebyshevMomentSolver2 {
         return numNormalPowers;
     }
 
+    public void setHessianType(int hessianType) {
+        this.hessianType = hessianType;
+    }
 }

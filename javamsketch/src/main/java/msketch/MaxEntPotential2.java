@@ -14,6 +14,7 @@ public class MaxEntPotential2 implements FunctionWithHessian {
     protected int numNormalPowers;
     protected double[] d_mus;
     private double aCenter, aScale, bCenter, bScale;
+    private int hessianType = 0;
 
     public MaxEntFunction2 getFunc() {
         return func;
@@ -91,40 +92,54 @@ public class MaxEntPotential2 implements FunctionWithHessian {
     public void computeAll(double[] lambd, double tol) {
         int k = lambd.length;
         setFunction(lambd);
-        // experimental new code path
-        if (false) {
-            double[][] hess = func.getHessian(tol);
-            for (int i = 0; i < k; i++) {
-                this.mus[i] = hess[i][0];
-                this.grad[i] = this.mus[i] - this.d_mus[i];
-            }
-            this.hess = hess;
-        } else {
-            double[][] pairwiseMoments = func.getPairwiseMoments(tol);
+        // experimental code paths
+        int type = 2;
+        switch (hessianType) {
+            case 0: {
+                double[][] pairwiseMoments = func.getPairwiseMoments(tol);
 
-            for (int i = 0; i < k; i++) {
-                if (i < numNormalPowers) {
-                    this.mus[i] = pairwiseMoments[i][0];
-                } else {
-                    this.mus[i] = pairwiseMoments[i + 1][0];
+                for (int i = 0; i < k; i++) {
+                    if (i < numNormalPowers) {
+                        this.mus[i] = pairwiseMoments[i][0];
+                    } else {
+                        this.mus[i] = pairwiseMoments[i + 1][0];
+                    }
                 }
-            }
-            for (int i = 0; i < k; i++) {
-                this.grad[i] = this.mus[i] - this.d_mus[i];
-            }
+                for (int i = 0; i < k; i++) {
+                    this.grad[i] = this.mus[i] - this.d_mus[i];
+                }
 
-            for (int i = 0; i < k; i++) {
-                for (int j = 0; j < k; j++) {
-                    int curI = i;
-                    int curJ = j;
-                    if (curI >= numNormalPowers) {
-                        curI++;
+                for (int i = 0; i < k; i++) {
+                    for (int j = 0; j < k; j++) {
+                        int curI = i;
+                        int curJ = j;
+                        if (curI >= numNormalPowers) {
+                            curI++;
+                        }
+                        if (curJ >= numNormalPowers) {
+                            curJ++;
+                        }
+                        this.hess[i][j] = pairwiseMoments[curI][curJ];
                     }
-                    if (curJ >= numNormalPowers) {
-                        curJ++;
-                    }
-                    this.hess[i][j] = pairwiseMoments[curI][curJ];
                 }
+                break;
+            }
+            case 1: {
+                double[][] hess = func.getHessian(tol);
+                for (int i = 0; i < k; i++) {
+                    this.mus[i] = hess[i][0];
+                    this.grad[i] = this.mus[i] - this.d_mus[i];
+                }
+                this.hess = hess;
+                break;
+            }
+            case 2: {
+                double[][] hess = func.getHessianNaive(tol);
+                for (int i = 0; i < k; i++) {
+                    this.mus[i] = hess[i][0];
+                    this.grad[i] = this.mus[i] - this.d_mus[i];
+                }
+                this.hess = hess;
             }
         }
     }
@@ -151,5 +166,9 @@ public class MaxEntPotential2 implements FunctionWithHessian {
 
     public int getCumFuncEvals() {
         return this.func.getNumFuncEvals();
+    }
+
+    public void setHessianType(int hessianType) {
+        this.hessianType = hessianType;
     }
 }

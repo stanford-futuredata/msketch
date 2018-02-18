@@ -3,6 +3,10 @@ package msketch;
 import msketch.chebyshev.ChebyshevPolynomial;
 import msketch.chebyshev.CosScaledFunction;
 import org.apache.commons.math3.analysis.UnivariateFunction;
+import org.apache.commons.math3.analysis.integration.IterativeLegendreGaussIntegrator;
+import org.apache.commons.math3.analysis.integration.LegendreGaussIntegrator;
+import org.apache.commons.math3.analysis.integration.RombergIntegrator;
+import org.apache.commons.math3.analysis.integration.UnivariateIntegrator;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.MathArrays;
 
@@ -231,6 +235,47 @@ public class MaxEntFunction2 implements UnivariateFunction {
             }
             return values;
         }
+    }
+
+    public double[][] getHessianNaive(double tol) {
+        int ka = aCoeffs.length;
+        int kb = bCoeffs.length-1;
+        double[][] hess = new double[ka+kb][ka+kb];
+
+//        UnivariateIntegrator integrator = new IterativeLegendreGaussIntegrator(4, 0, 1e-8);
+        UnivariateIntegrator integrator = new RombergIntegrator(0.0, 1e-8, 4, 32);
+        for (int i = 0; i < ka; i++)  {
+            for (int j = 0; j <= i; j++) {
+                int curI = i;
+                int curJ = j;
+                UnivariateFunction f = (x) -> {
+                    return bases[curI].value(x)*bases[curJ].value(x)*this.value(x);
+                };
+                hess[i][j] = integrator.integrate(50000, f, -1, 1);
+            }
+        }
+//        for (int i = 0; i < kb; i++) {
+//            for (int j = 0; j < ka; j++) {
+//                int curI = i;
+//                int curJ = j;
+//                UnivariateFunction f = (x) -> {
+//                    return bases[curI].value(x)*bases[curJ].value(x)*this.value(x);
+//                };
+//                hess[i][j] = integrator.integrate(1000, f, -1, 1);
+//                hess[i+ka][j] = gPolys[i].multiplyByBasis(j).multiply(cb_f).integrate();
+//            }
+//        }
+//        for (int i = 0; i < kb; i++) {
+//            for (int j = 0; j <= i; j++) {
+//                hess[i+ka][j+ka] = gPolys[i].multiply(gPolys[j]).multiply(cb_f).integrate();
+//            }
+//        }
+        for (int i=0; i<hess.length; i++) {
+            for (int j=i; j<hess.length; j++) {
+                hess[i][j] = hess[j][i];
+            }
+        }
+        return hess;
     }
 
     public double[][] getHessian(double tol) {

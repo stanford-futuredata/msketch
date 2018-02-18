@@ -111,12 +111,13 @@ public class ChebyshevMomentSolver2Test {
         double[] range = {data.getMin(), data.getMax()};
         double[] logRange = {data.getLogMin(), data.getLogMax()};
         double[] powerSums = data.getPowerSums(7);
-        double[] logSums = data.getLogSums(7);
+        double[] logSums = data.getLogSums(1);
 
         ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
                 range[0], range[1], powerSums,
                 logRange[0], logRange[1], logSums
         );
+//        solver.setVerbose(true);
         solver.solve(1e-9);
         double[] ps = {.1, .5, .9, .99};
         double[] qs = solver.estimateQuantiles(ps);
