@@ -71,6 +71,7 @@ public class MBCascadesBench {
         Map<String, String> result = new HashMap<String, String>();
         result.put("min_support", String.format("%f", minSupport));
         result.put("cube", momentCubeFilename);
+        result.put("containment", String.format("%b", doContainment));
         results.add(result);
 
         results.add(testCubeOrder3(true, new boolean[]{false, false, false}));
@@ -342,7 +343,7 @@ public class MBCascadesBench {
 
         Map<String, String> result = new HashMap<String, String>();
         result.put("avg_runtime", String.format("%f", timeElapsed / (1.e9 * trialsDone)));
-        result.put("avg_apltime", String.format("%f", summ.aplTime / (1.e9 * trialsDone)));
+        result.put("avg_apltime", String.format("%f", (summ.aplTime + precomputationTime) / (1.e9 * trialsDone)));
         result.put("avg_querytime", String.format("%f", precomputationTime / (1.e9 * trialsDone)));
         result.put("avg_mergetime", String.format("%f", summ.mergeTime / (1.e9 * trialsDone)));
         result.put("type", "yahoo2");
