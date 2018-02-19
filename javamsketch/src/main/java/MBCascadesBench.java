@@ -68,18 +68,17 @@ public class MBCascadesBench {
 //        testOracleOrder3();
 
         List<Map<String, String>> results = new ArrayList<Map<String, String>>();
-//        results.add(testCubeOrder3(true, new boolean[]{false, false, false}));
-//        results.add(testCubeOrder3(true, new boolean[]{true, false, false}));
+        results.add(testCubeOrder3(true, new boolean[]{false, false, false}));
+        results.add(testCubeOrder3(true, new boolean[]{true, false, false}));
         results.add(testCubeOrder3(true, new boolean[]{true, true, false}));
         results.add(testCubeOrder3(true, new boolean[]{true, true, true}));
-//
-//        CSVOutput output = new CSVOutput();
-//        output.setAddTimeStamp(true);
-//        output.writeAllResults(results, testName);
 
-        runYahoo();
+        results.add(runYahoo());
+        results.add(runYahoo2());
 
-        runYahoo2();
+        CSVOutput output = new CSVOutput();
+        output.setAddTimeStamp(true);
+        output.writeAllResults(results, testName);
     }
 
     public void testOracleOrder3() throws Exception {
@@ -225,6 +224,8 @@ public class MBCascadesBench {
             double overallThroughput = trialsDone * 1.e9 * metric.numEnterAction / (metric.actionTime);
             System.out.format("Entered Maxent: %d (%f qps)\n", metric.numEnterAction, overallThroughput);
         }
+        result.put("avg_runtime", String.format("%f", timeElapsed / (1.e9 * trialsDone)));
+        result.put("type", "cascade");
         APLExplanation e = summ.getResults();
         System.out.format("Num results: %d\n\n", e.getResults().size());
         if (verbose) {
@@ -233,7 +234,7 @@ public class MBCascadesBench {
         return result;
     }
 
-    public void runYahoo() throws Exception {
+    public Map<String, String> runYahoo() throws Exception {
         List<String> requiredColumns = new ArrayList<>(attributes);
         Map<String, Schema.ColType> colTypes = new HashMap<>();
         CSVDataFrameParser loader = new CSVDataFrameParser(groupsFile, requiredColumns);
@@ -268,9 +269,14 @@ public class MBCascadesBench {
         long timeElapsed = System.nanoTime() - start;
         SketchSupportMetric metric = summ.supportMetricList.get(0);
         System.out.format("Yahoo time: %g (%g)\n\n", timeElapsed / (1.e9 * trialsDone), metric.actionTime / (1.e9 * trialsDone));
+
+        Map<String, String> result = new HashMap<String, String>();
+        result.put("avg_runtime", String.format("%f", timeElapsed / (1.e9 * trialsDone)));
+        result.put("type", "yahoo1");
+        return result;
     }
 
-    public void runYahoo2() throws Exception {
+    public Map<String, String> runYahoo2() throws Exception {
         List<String> requiredColumns = new ArrayList<>(attributes);
         Map<String, Schema.ColType> colTypes = new HashMap<>();
         CSVDataFrameParser loader = new CSVDataFrameParser(groupsFile, requiredColumns);
@@ -300,6 +306,11 @@ public class MBCascadesBench {
 //        if (e != null) {
 //            System.out.println(e.prettyPrint());
 //        }
+
+        Map<String, String> result = new HashMap<String, String>();
+        result.put("avg_runtime", String.format("%f", timeElapsed / (1.e9 * trialsDone)));
+        result.put("type", "yahoo2");
+        return result;
     }
 
     public APLExplanation yahoo2(DataFrame input, YahooSketch[] sketches) throws Exception {
