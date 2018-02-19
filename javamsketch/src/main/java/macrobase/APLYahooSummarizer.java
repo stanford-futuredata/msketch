@@ -30,6 +30,10 @@ public class APLYahooSummarizer {
     protected List<String> attributes = new ArrayList<>();
     List<APLSketchExplanationResult> aplResults;
 
+    public long aplTime = 0;
+    public long mergeTime = 0;
+    public long queryTime = 0;
+
     public List<String> getAggregateNames() {
         ArrayList<String> aggregateNames = new ArrayList<>();
         aggregateNames.add("Yahoo");
@@ -78,7 +82,7 @@ public class APLYahooSummarizer {
 //        return count * percentile / 100.0;
 //    }
 
-    public void process(DataFrame input, String fileName) throws Exception {
+    public void process(DataFrame input, YahooSketch[][] aggregateColumns) throws Exception {
         encoder = new AttributeEncoder();
         encoder.setColumnNames(attributes);
         long startTime = System.currentTimeMillis();
@@ -97,9 +101,12 @@ public class APLYahooSummarizer {
         );
         aplKernel.setDoContainment(doContainment);
 
-        YahooSketch[][] aggregateColumns = getAggregateColumns(fileName);
         List<String> aggregateNames = getAggregateNames();
+        long start = System.nanoTime();
         aplResults = aplKernel.explain(encoded, aggregateColumns);
+        aplTime += System.nanoTime() - start;
+        mergeTime += aplKernel.mergeTime;
+        queryTime += aplKernel.queryTime;
 //        long numOutliers = (long)getNumberOutliers(aggregateColumns);
 
 //        explanation = new APLExplanation(
@@ -119,4 +126,10 @@ public class APLYahooSummarizer {
     public void setMinSupport(double minSupport) { this.minOutlierSupport = minSupport; }
     public void setAttributes(List<String> attributes) { this.attributes = attributes; }
     public void setDoContainment(boolean doContainment) { this.doContainment = doContainment; }
+
+    public void resetTime() {
+        this.aplTime = 0;
+        this.mergeTime = 0;
+        this.queryTime = 0;
+    }
 }
