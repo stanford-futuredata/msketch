@@ -68,11 +68,6 @@ public class MBCascadesBench {
 //        testOracleOrder3();
 
         List<Map<String, String>> results = new ArrayList<Map<String, String>>();
-        Map<String, String> result = new HashMap<String, String>();
-        result.put("min_support", String.format("%f", minSupport));
-        result.put("cube", momentCubeFilename);
-        result.put("containment", String.format("%b", doContainment));
-        results.add(result);
 
         results.add(testCubeOrder3(true, new boolean[]{false, false, false}));
         results.add(testCubeOrder3(true, new boolean[]{true, false, false}));
@@ -239,6 +234,9 @@ public class MBCascadesBench {
         result.put("avg_querytime", String.format("%f", summ.queryTime / (1.e9 * trialsDone)));
         result.put("avg_mergetime", String.format("%f", summ.mergeTime / (1.e9 * trialsDone)));
         result.put("type", "cascade");
+        result.put("min_support", String.format("%f", minSupport));
+        result.put("cube", momentCubeFilename);
+        result.put("containment", String.format("%b", doContainment));
         APLExplanation e = summ.getResults();
         System.out.format("Num results: %d\n\n", e.getResults().size());
         if (verbose) {
