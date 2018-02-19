@@ -1,12 +1,7 @@
-package macrobase;
-
-import com.yahoo.sketches.quantiles.UpdateDoublesSketch;
-import edu.stanford.futuredata.macrobase.RunConfig;
 import sketches.YahooSketch;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class YahooCubeCreator {
     static String inputFile;

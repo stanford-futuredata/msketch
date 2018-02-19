@@ -1,6 +1,5 @@
 import com.yahoo.memory.Memory;
 import com.yahoo.sketches.quantiles.UpdateDoublesSketch;
-import edu.stanford.futuredata.macrobase.RunConfig;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.APLExplanation;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.APLOutlierSummarizer;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.APLSummarizer;
