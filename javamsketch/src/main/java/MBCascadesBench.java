@@ -1,7 +1,6 @@
 import com.yahoo.memory.Memory;
 import com.yahoo.sketches.quantiles.UpdateDoublesSketch;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.APLExplanation;
-import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.APLOutlierSummarizer;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.APLSummarizer;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.metrics.QualityMetric;
 import edu.stanford.futuredata.macrobase.datamodel.DataFrame;
@@ -9,6 +8,7 @@ import edu.stanford.futuredata.macrobase.datamodel.Schema;
 import edu.stanford.futuredata.macrobase.ingest.CSVDataFrameParser;
 import io.CSVOutput;
 import macrobase.APLMomentSummarizer;
+import macrobase.APLOutlierSummarizer;
 import macrobase.APLYahooSummarizer;
 import macrobase.EstimatedSupportMetric;
 import macrobase.SketchSupportMetric;
@@ -68,6 +68,11 @@ public class MBCascadesBench {
 //        testOracleOrder3();
 
         List<Map<String, String>> results = new ArrayList<Map<String, String>>();
+        Map<String, String> result = new HashMap<String, String>();
+        result.put("min_support", String.format("%f", minSupport));
+        result.put("cube", momentCubeFilename);
+        results.add(result);
+
         results.add(testCubeOrder3(true, new boolean[]{false, false, false}));
         results.add(testCubeOrder3(true, new boolean[]{true, false, false}));
         results.add(testCubeOrder3(true, new boolean[]{true, true, false}));
@@ -163,6 +168,7 @@ public class MBCascadesBench {
         summ.setVerbose(false);
         long actionTime = 0;
         int trialsDone = 0;
+        summ.resetTime();
         long start = System.nanoTime();
         for (int i = 0; i < numTrials; i++) {
             summ.process(df);
@@ -178,6 +184,9 @@ public class MBCascadesBench {
         Map<String, String> result = new HashMap<String, String>();
         EstimatedSupportMetric metric = (EstimatedSupportMetric)summ.qualityMetricList.get(0);
         System.out.format("Overall time: %g\n", timeElapsed / (1.e9 * trialsDone));
+        System.out.format("APL time: %g\n", summ.aplTime / (1.e9 * trialsDone));
+        System.out.format("Query time: %g\n", summ.queryTime / (1.e9 * trialsDone));
+        System.out.format("Merge time: %g\n", summ.mergeTime / (1.e9 * trialsDone));
         if (useCascade) {
             int prunedByNaive = metric.numEnterCascade - metric.numAfterNaiveCheck;
             int prunedByMarkov = metric.numAfterNaiveCheck - metric.numAfterMarkovBound;
@@ -225,6 +234,9 @@ public class MBCascadesBench {
             System.out.format("Entered Maxent: %d (%f qps)\n", metric.numEnterAction, overallThroughput);
         }
         result.put("avg_runtime", String.format("%f", timeElapsed / (1.e9 * trialsDone)));
+        result.put("avg_apltime", String.format("%f", summ.aplTime / (1.e9 * trialsDone)));
+        result.put("avg_querytime", String.format("%f", summ.queryTime / (1.e9 * trialsDone)));
+        result.put("avg_mergetime", String.format("%f", summ.mergeTime / (1.e9 * trialsDone)));
         result.put("type", "cascade");
         APLExplanation e = summ.getResults();
         System.out.format("Num results: %d\n\n", e.getResults().size());
@@ -240,6 +252,7 @@ public class MBCascadesBench {
         CSVDataFrameParser loader = new CSVDataFrameParser(groupsFile, requiredColumns);
         loader.setColumnTypes(colTypes);
         DataFrame df = loader.load();
+        YahooSketch[][] aggregateColumns = APLYahooSummarizer.getAggregateColumns(yahooFile);
 
         APLYahooSummarizer summ = new APLYahooSummarizer();
         summ.setMinSupport(minSupport);
@@ -248,17 +261,18 @@ public class MBCascadesBench {
         summ.setDoContainment(doContainment);
         long warmupStart = System.nanoTime();
         for (int i = 0; i < numWarmupTrials; i++) {
-            summ.process(df, yahooFile);
+            summ.process(df, aggregateColumns);
             if (System.nanoTime() - warmupStart > 10.0 * 1.e9) {
                 break;
             }
         }
         System.out.println("Warmup finished");
         long actionTime = 0;
+        summ.resetTime();
         long start = System.nanoTime();
         int trialsDone = 0;
         for (int i = 0; i < numTrials; i++) {
-            summ.process(df, yahooFile);
+            summ.process(df, aggregateColumns);
             SketchSupportMetric metric = summ.supportMetricList.get(0);
             actionTime += metric.actionTime;
             trialsDone++;
@@ -268,10 +282,16 @@ public class MBCascadesBench {
         }
         long timeElapsed = System.nanoTime() - start;
         SketchSupportMetric metric = summ.supportMetricList.get(0);
-        System.out.format("Yahoo time: %g (%g)\n\n", timeElapsed / (1.e9 * trialsDone), metric.actionTime / (1.e9 * trialsDone));
+        System.out.format("Yahoo time: %g\n", timeElapsed / (1.e9 * trialsDone));
+        System.out.format("APL time: %g\n", summ.aplTime / (1.e9 * trialsDone));
+        System.out.format("Query time: %g\n", summ.queryTime / (1.e9 * trialsDone));
+        System.out.format("Merge time: %g\n\n", summ.mergeTime / (1.e9 * trialsDone));
 
         Map<String, String> result = new HashMap<String, String>();
         result.put("avg_runtime", String.format("%f", timeElapsed / (1.e9 * trialsDone)));
+        result.put("avg_apltime", String.format("%f", summ.aplTime / (1.e9 * trialsDone)));
+        result.put("avg_querytime", String.format("%f", summ.queryTime / (1.e9 * trialsDone)));
+        result.put("avg_mergetime", String.format("%f", summ.mergeTime / (1.e9 * trialsDone)));
         result.put("type", "yahoo1");
         return result;
     }
@@ -283,37 +303,53 @@ public class MBCascadesBench {
         loader.setColumnTypes(colTypes);
         DataFrame df = loader.load();
         YahooSketch[] sketches = APLYahooSummarizer.getAggregateColumns(yahooFile)[0];
+
+        APLOutlierSummarizer summ = new APLOutlierSummarizer();
+        summ.setCountColumn("counts");
+        summ.setOutlierColumn("oCounts");
+        summ.setMinSupport(minSupport);
+        summ.setMinRatioMetric(3.0);
+        summ.onlyUseSupport(true);
+        summ.setAttributes(attributes);
         long warmupStart = System.nanoTime();
         for (int i = 0; i < numWarmupTrials; i++) {
-            yahoo2(df, sketches);
+            DataFrame input = yahoo2precompute(df, sketches);
+            summ.process(input);
             if (System.nanoTime() - warmupStart > 10.0 * 1.e9) {
                 break;
             }
         }
         System.out.println("Warmup finished");
-        APLExplanation e = null;
+        long precomputationTime = 0;
+        summ.resetTime();
         long start = System.nanoTime();
         int trialsDone = 0;
         for (int i = 0; i < numTrials; i++) {
-            e = yahoo2(df, sketches);
+            long queryStart = System.nanoTime();
+            DataFrame input = yahoo2precompute(df, sketches);
+            precomputationTime = System.nanoTime() - queryStart;
+            summ.process(input);
             trialsDone++;
             if (System.nanoTime() - start > maxTrialTime * 1.e9) {
                 break;
             }
         }
         long timeElapsed = System.nanoTime() - start;
-        System.out.format("Yahoo 2 time: %g\n\n", timeElapsed / (1.e9 * trialsDone));
-//        if (e != null) {
-//            System.out.println(e.prettyPrint());
-//        }
+        System.out.format("Yahoo 2 time: %g\n", timeElapsed / (1.e9 * trialsDone));
+        System.out.format("APL time: %g\n", summ.aplTime / (1.e9 * trialsDone));
+        System.out.format("Precomputation time: %g\n", precomputationTime / (1.e9 * trialsDone));
+        System.out.format("Merge time: %g\n\n", summ.mergeTime / (1.e9 * trialsDone));
 
         Map<String, String> result = new HashMap<String, String>();
         result.put("avg_runtime", String.format("%f", timeElapsed / (1.e9 * trialsDone)));
+        result.put("avg_apltime", String.format("%f", summ.aplTime / (1.e9 * trialsDone)));
+        result.put("avg_querytime", String.format("%f", precomputationTime / (1.e9 * trialsDone)));
+        result.put("avg_mergetime", String.format("%f", summ.mergeTime / (1.e9 * trialsDone)));
         result.put("type", "yahoo2");
         return result;
     }
 
-    public APLExplanation yahoo2(DataFrame input, YahooSketch[] sketches) throws Exception {
+    public DataFrame yahoo2precompute(DataFrame input, YahooSketch[] sketches) throws Exception {
         double[] counts = new double[sketches.length];
         double[] outlierCounts = new double[sketches.length];
 
@@ -331,15 +367,6 @@ public class MBCascadesBench {
         input.addDoubleColumn("counts", counts);
         input.addDoubleColumn("oCounts", outlierCounts);
 
-        APLOutlierSummarizer summ = new APLOutlierSummarizer();
-        summ.setCountColumn("counts");
-        summ.setOutlierColumn("oCounts");
-        summ.setMinSupport(minSupport);
-        summ.setMinRatioMetric(3.0);
-        summ.onlyUseSupport(true);
-        summ.setAttributes(attributes);
-        summ.process(input);
-        APLExplanation e = summ.getResults();
-        return e;
+        return input;
     }
 }

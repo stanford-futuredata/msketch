@@ -28,6 +28,10 @@ public class APLMomentSummarizer extends APLSummarizer {
     private boolean[] useStages;
     private boolean verbose;
 
+    public long aplTime = 0;
+    public long mergeTime = 0;
+    public long queryTime = 0;
+
     @Override
     public List<String> getAggregateNames() {
         ArrayList<String> aggregateNames = new ArrayList<>();
@@ -97,6 +101,46 @@ public class APLMomentSummarizer extends APLSummarizer {
         return count * percentile / 100.0;
     }
 
+    public void process(DataFrame input) throws Exception {
+        encoder = new AttributeEncoder();
+        encoder.setColumnNames(attributes);
+        long startTime = System.currentTimeMillis();
+        List<int[]> encoded = encoder.encodeAttributes(
+                input.getStringColsByName(attributes)
+        );
+        long elapsed = System.currentTimeMillis() - startTime;
+        log.debug("Encoded in: {}", elapsed);
+        log.debug("Encoded Categories: {}", encoder.getNextKey());
+
+        thresholds = getThresholds();
+        qualityMetricList = getQualityMetricList();
+        aplKernel = new APrioriLinear(
+                qualityMetricList,
+                thresholds
+        );
+        aplKernel.setDoContainment(doContainment);
+
+        double[][] aggregateColumns = getAggregateColumns(input);
+        List<String> aggregateNames = getAggregateNames();
+        Map<String, int[]> aggregationOps = getAggregationOps();
+        long start = System.nanoTime();
+        List<APLExplanationResult> aplResults = aplKernel.explain(encoded, aggregateColumns, aggregationOps);
+        aplTime += System.nanoTime() - start;
+        mergeTime += aplKernel.mergeTime;
+        queryTime += aplKernel.queryTime;
+        numOutliers = (long)getNumberOutliers(aggregateColumns);
+
+        explanation = new APLExplanation(
+                encoder,
+                numEvents,
+                numOutliers,
+                aggregateNames,
+                qualityMetricList,
+                thresholds,
+                aplResults
+        );
+    }
+
     public String getMinColumn() {
         return minColumn;
     }
@@ -127,4 +171,10 @@ public class APLMomentSummarizer extends APLSummarizer {
     }
     public void setUseStages(boolean[] useStages) { this.useStages = useStages; }
     public void setVerbose(boolean verbose) { this.verbose = verbose; }
+
+    public void resetTime() {
+        this.aplTime = 0;
+        this.mergeTime = 0;
+        this.queryTime = 0;
+    }
 }
