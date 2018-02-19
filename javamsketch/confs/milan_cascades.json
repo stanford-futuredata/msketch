@@ -1,0 +1,19 @@
+{
+  "testName": "cascade_milan",
+  "minSupport": 0.02,
+  "percentile": 1.0,
+  "outlierColumn": "outliers1",
+  "numWarmupTrials": 20,
+  "numTrials": 10,
+  "oracleCubeFilename": "src/test/resources/milan_oracle_cubed.csv",
+  "momentCubeFilename": "src/test/resources/milan_12M_6H_cubed.csv",
+  "attributes": [
+    "Grid",
+    "Country",
+    "Time"
+  ],
+  "doContainment": false,
+  "verbose": false,
+  "groupsFile": "src/test/resources/milan_grouped_12M_6H.csv",
+  "yahooFile": "src/test/resources/milan_yahoo_12M_6H"
+}
