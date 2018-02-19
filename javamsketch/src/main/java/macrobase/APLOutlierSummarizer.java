@@ -3,7 +3,6 @@ package macrobase;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.APLExplanation;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.APLExplanationResult;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.APLSummarizer;
-import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.APrioriLinear;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.metrics.GlobalRatioMetric;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.metrics.QualityMetric;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.metrics.SupportMetric;
@@ -22,6 +21,7 @@ public class APLOutlierSummarizer extends APLSummarizer {
     private Logger log = LoggerFactory.getLogger("APLOutlierSummarizer");
     private String countColumn = null;
     private boolean onlyUseSupport = false;
+    private macrobase.APrioriLinear aplKernel;
 
     public long aplTime = 0;
     public long mergeTime = 0;

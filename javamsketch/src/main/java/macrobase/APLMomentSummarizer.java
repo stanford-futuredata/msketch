@@ -3,7 +3,6 @@ package macrobase;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.APLExplanation;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.APLExplanationResult;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.APLSummarizer;
-import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.APrioriLinear;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.metrics.QualityMetric;
 import edu.stanford.futuredata.macrobase.analysis.summary.util.AttributeEncoder;
 import edu.stanford.futuredata.macrobase.datamodel.DataFrame;
@@ -27,6 +26,7 @@ public class APLMomentSummarizer extends APLSummarizer {
     private boolean useCascade = false;
     private boolean[] useStages;
     private boolean verbose;
+    private APrioriLinear aplKernel;
 
     public long aplTime = 0;
     public long mergeTime = 0;
