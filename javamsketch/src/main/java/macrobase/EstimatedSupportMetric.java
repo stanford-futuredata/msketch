@@ -14,10 +14,8 @@ import java.util.Collections;
 public class EstimatedSupportMetric implements QualityMetric {
     private int minIdx = 0;
     private int maxIdx = 1;
-    private int logMinIdx = 2;
-    private int logMaxIdx = 3;
-    private int momentsBaseIdx = 4;
-    private int logMomentsBaseIdx = 4 + 5;
+    private int momentsBaseIdx = 2;
+    private int logMomentsBaseIdx = 2 + 6;
     private double quantile;  // eg, 0.99
     private double cutoff;
     private double globalCount;
@@ -37,14 +35,12 @@ public class EstimatedSupportMetric implements QualityMetric {
     public long momentBoundTime = 0;
     public long maxentTime = 0;
 
-    public EstimatedSupportMetric(int minIdx, int maxIdx, int logMinIdx, int logMaxIdx, int momentsBaseIdx,
+    public EstimatedSupportMetric(int minIdx, int maxIdx, int momentsBaseIdx,
                                   int logMomentsBaseIdx, double quantile, double tolerance, boolean useCascade) {
         this.minIdx = minIdx;
         this.maxIdx = maxIdx;
-        this.logMinIdx = logMinIdx;
-        this.logMaxIdx = logMaxIdx;
         this.momentsBaseIdx = momentsBaseIdx;
-        this.logMomentsBaseIdx = logMomentsBaseIdx;
+        this.logMomentsBaseIdx = logMomentsBaseIdx;  // points to the first log moment (not zeroth)
         this.quantile = quantile;
         this.tolerance = tolerance;
         this.useCascade = useCascade;
@@ -59,10 +55,12 @@ public class EstimatedSupportMetric implements QualityMetric {
         CMomentSketch ms = new CMomentSketch(tolerance);
         double min = aggregates[minIdx];
         double max = aggregates[maxIdx];
-        double logMin = aggregates[logMinIdx];
-        double logMax = aggregates[logMaxIdx];
+        double logMin = Math.log(min);
+        double logMax = Math.log(max);
         double[] powerSums = Arrays.copyOfRange(aggregates, momentsBaseIdx, logMomentsBaseIdx);
-        double[] logSums = Arrays.copyOfRange(aggregates, logMomentsBaseIdx, aggregates.length);
+        double[] logSums = new double[aggregates.length - logMomentsBaseIdx + 1];
+        logSums[0] = aggregates[momentsBaseIdx];
+        System.arraycopy(aggregates, logMomentsBaseIdx, logSums, 1, aggregates.length - logMomentsBaseIdx);
         ms.setStats(min, max, logMin, logMax, powerSums, logSums);
         return ms;
     }

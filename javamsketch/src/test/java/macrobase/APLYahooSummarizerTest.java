@@ -35,11 +35,11 @@ public class APLYahooSummarizerTest {
         List<APLSketchExplanationResult> aplResults = summ.aplResults;
         SketchSupportMetric metric = summ.supportMetricList.get(0);
 
-        System.out.println(aplResults.size());
-        System.out.println(metric.cutoff);
-        for (APLSketchExplanationResult r : aplResults) {
-            System.out.println(r.prettyPrint(summ.encoder, requiredColumns));
-        }
+//        System.out.println(aplResults.size());
+//        System.out.println(metric.cutoff);
+//        for (APLSketchExplanationResult r : aplResults) {
+//            System.out.println(r.prettyPrint(summ.encoder, requiredColumns));
+//        }
 
         assertEquals(4, aplResults.size());
         assertEquals(46.5, metric.cutoff, 0.5);
