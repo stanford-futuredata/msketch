@@ -28,6 +28,10 @@ public class SketchAPrioriLinear {
     private double[] thresholds;
     private boolean doContainment = true;
 
+    public long mergeTime = 0;
+    public long queryTime = 0;
+    private long start;
+
     // **Cached values**
 
     // Singleton viable sets for quick lookup
@@ -61,6 +65,7 @@ public class SketchAPrioriLinear {
         // Quality metrics are initialized with global aggregates to
         // allow them to determine the appropriate relative thresholds
         YahooSketch[] globalAggregates = new YahooSketch[numAggregates];
+        start = System.nanoTime();
         for (int j = 0; j < numAggregates; j++) {
             YahooSketch globalSketch = new YahooSketch();
             globalSketch.setSizeParam(sizeParam);
@@ -70,9 +75,12 @@ public class SketchAPrioriLinear {
             globalSketch.mergeYahoo(curSketches);
             globalAggregates[j] = globalSketch;
         }
+        mergeTime += System.nanoTime() - start;
+        start = System.nanoTime();
         for (SketchSupportMetric q : qualityMetrics) {
             q.initialize(globalAggregates);
         }
+        queryTime += System.nanoTime() - start;
 
         // Row store for more convenient access
         final YahooSketch[][] aRows = new YahooSketch[numRows][numAggregates];
@@ -95,6 +103,7 @@ public class SketchAPrioriLinear {
                 threadSetAggregates.add(new HashMap<>());
             }
             final CountDownLatch doneSignal = new CountDownLatch(numThreads);
+            start = System.nanoTime();
             for (int threadNum = 0; threadNum < numThreads; threadNum++) {
                 final int startIndex = (numRows * threadNum) / numThreads;
                 final int endIndex = (numRows * (threadNum + 1)) / numThreads;
@@ -156,6 +165,7 @@ public class SketchAPrioriLinear {
                     }
                 }
             }
+            mergeTime += System.nanoTime() - start;
 
             HashSet<IntSet> curOrderNext = new HashSet<>();
             HashSet<IntSet> curOrderSaved = new HashSet<>();
@@ -163,11 +173,13 @@ public class SketchAPrioriLinear {
             for (IntSet curCandidate: setAggregates.keySet()) {
                 YahooSketch[] curAggregates = setAggregates.get(curCandidate);
                 QualityMetric.Action action = QualityMetric.Action.KEEP;
+                start = System.nanoTime();
                 for (int i = 0; i < qualityMetrics.length; i++) {
                     SketchSupportMetric q = qualityMetrics[i];
                     double t = thresholds[i];
                     action = QualityMetric.Action.combine(action, q.getAction(curAggregates, t));
                 }
+                queryTime += System.nanoTime() - start;
                 if (action == QualityMetric.Action.KEEP) {
                     // if a set is already past the threshold on all metrics,
                     // save it and no need for further exploration if we do containment
