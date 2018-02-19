@@ -40,7 +40,7 @@ public class APLMomentSummarizer extends APLSummarizer {
 
     @Override
     public double[][] getAggregateColumns(DataFrame input) {
-        double[][] aggregateColumns = new double[4+momentColumns.size()+logMomentColumns.size()][];
+        double[][] aggregateColumns = new double[2+momentColumns.size()+logMomentColumns.size()][];
         int curCol = 0;
         aggregateColumns[curCol++] = input.getDoubleColumnByName(minColumn);
         aggregateColumns[curCol++] = input.getDoubleColumnByName(maxColumn);
