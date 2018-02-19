@@ -21,8 +21,6 @@ public class APLMomentSummarizer extends APLSummarizer {
     private Logger log = LoggerFactory.getLogger("APLMomentSummarizer");
     private String minColumn = null;
     private String maxColumn = null;
-    private String logMinColumn = "lmin";
-    private String logMaxColumn = "lmax";
     private List<String> momentColumns;
     private List<String> logMomentColumns;
     private double percentile;
@@ -35,8 +33,6 @@ public class APLMomentSummarizer extends APLSummarizer {
         ArrayList<String> aggregateNames = new ArrayList<>();
         aggregateNames.add("Minimum");
         aggregateNames.add("Maximum");
-        aggregateNames.add("Log Minimum");
-        aggregateNames.add("Log Maximum");
         aggregateNames.addAll(momentColumns);
         aggregateNames.addAll(logMomentColumns);
         return aggregateNames;
@@ -48,8 +44,6 @@ public class APLMomentSummarizer extends APLSummarizer {
         int curCol = 0;
         aggregateColumns[curCol++] = input.getDoubleColumnByName(minColumn);
         aggregateColumns[curCol++] = input.getDoubleColumnByName(maxColumn);
-        aggregateColumns[curCol++] = input.getDoubleColumnByName(logMinColumn);
-        aggregateColumns[curCol++] = input.getDoubleColumnByName(logMaxColumn);
         for (int i = 0; i < momentColumns.size(); i++) {
             aggregateColumns[curCol++] = input.getDoubleColumnByName(momentColumns.get(i));
         }
@@ -64,9 +58,9 @@ public class APLMomentSummarizer extends APLSummarizer {
     @Override
     public Map<String, int[]> getAggregationOps() {
         Map<String, int[]> aggregationOps = new HashMap<>();
-        aggregationOps.put("add", IntStream.range(4, 4+momentColumns.size()+logMomentColumns.size()).toArray());
-        aggregationOps.put("min", new int[]{0, 2});
-        aggregationOps.put("max", new int[]{1, 3});
+        aggregationOps.put("add", IntStream.range(2, 2+momentColumns.size()+logMomentColumns.size()).toArray());
+        aggregationOps.put("min", new int[]{0});
+        aggregationOps.put("max", new int[]{1});
         return aggregationOps;
     }
 
@@ -74,14 +68,14 @@ public class APLMomentSummarizer extends APLSummarizer {
     public List<QualityMetric> getQualityMetricList() {
         List<QualityMetric> qualityMetricList = new ArrayList<>();
         if (useCascade) {
-            EstimatedSupportMetric metric = new EstimatedSupportMetric(0, 1, 2, 3, 4, 4+momentColumns.size(),
+            EstimatedSupportMetric metric = new EstimatedSupportMetric(0, 1, 2, 2+momentColumns.size(),
                     (100.0 - percentile) / 100.0, 1e-4, true);
             metric.setCascadeStages(useStages);
             metric.setVerbose(verbose);
             qualityMetricList.add(metric);
         } else {
             qualityMetricList.add(
-                    new EstimatedSupportMetric(0, 1, 2, 3, 4, 4+momentColumns.size(),
+                    new EstimatedSupportMetric(0, 1, 2, 2+momentColumns.size(),
                             (100.0 - percentile) / 100.0, 1e-4, false)
             );
         }
@@ -96,7 +90,7 @@ public class APLMomentSummarizer extends APLSummarizer {
     @Override
     public double getNumberOutliers(double[][] aggregates) {
         double count = 0.0;
-        double[] counts = aggregates[4];
+        double[] counts = aggregates[2];
         for (int i = 0; i < counts.length; i++) {
             count += counts[i];
         }
