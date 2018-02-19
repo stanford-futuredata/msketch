@@ -31,7 +31,8 @@ public class APLYahooSummarizerTest {
         summ.setPercentile(1.0);
         summ.setDoContainment(true);
 
-        summ.process(df, "src/test/resources/sample_yahoo");
+        YahooSketch[][] aggregates = APLYahooSummarizer.getAggregateColumns("src/test/resources/sample_yahoo");
+        summ.process(df, aggregates);
         List<APLSketchExplanationResult> aplResults = summ.aplResults;
         SketchSupportMetric metric = summ.supportMetricList.get(0);
 
