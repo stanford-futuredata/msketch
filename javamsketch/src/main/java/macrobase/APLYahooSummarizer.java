@@ -95,7 +95,7 @@ public class APLYahooSummarizer {
 
         List<Double> thresholds = getThresholds();
         supportMetricList = getSupportMetricList();
-        SketchAPrioriLinear aplKernel = new SketchAPrioriLinear(
+        SketchAPrioriLinearSimple aplKernel = new SketchAPrioriLinearSimple(
                 supportMetricList,
                 thresholds
         );
