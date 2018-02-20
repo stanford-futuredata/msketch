@@ -29,6 +29,7 @@ public class APLOutlierSummarizer extends APLSummarizer {
 
     public List<Integer> o1results;
     public List<int[]> encoded;
+    public AttributeEncoder encoder;
 
     @Override
     public List<String> getAggregateNames() {
