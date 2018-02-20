@@ -21,7 +21,7 @@ public class SketchAPrioriLinearSimple {
     Logger log = LoggerFactory.getLogger("APLSummarizer");
 
     // **Parameters**
-    private SketchSupportMetric[] qualityMetrics;
+    private SketchQualityMetric[] qualityMetrics;
     private double[] thresholds;
     private boolean doContainment = true;
 
@@ -31,10 +31,10 @@ public class SketchAPrioriLinearSimple {
 
 
     public SketchAPrioriLinearSimple(
-            List<SketchSupportMetric> qualityMetrics,
+            List<SketchQualityMetric> qualityMetrics,
             List<Double> thresholds
     ) {
-        this.qualityMetrics = qualityMetrics.toArray(new SketchSupportMetric[0]);
+        this.qualityMetrics = qualityMetrics.toArray(new SketchQualityMetric[0]);
         this.thresholds = new double[thresholds.size()];
         for (int i = 0; i < thresholds.size(); i++) {
             this.thresholds[i] = thresholds.get(i);
@@ -64,7 +64,7 @@ public class SketchAPrioriLinearSimple {
         }
 //        mergeTime += System.nanoTime() - start;
 //        start = System.nanoTime();
-        for (SketchSupportMetric q : qualityMetrics) {
+        for (SketchQualityMetric q : qualityMetrics) {
             q.initialize(globalAggregates);
         }
 //        queryTime += System.nanoTime() - start;
@@ -110,7 +110,7 @@ public class SketchAPrioriLinearSimple {
             YahooSketch[] curAggregates = setAggregates.get(curCandidate);
             QualityMetric.Action action = QualityMetric.Action.KEEP;
             for (int i = 0; i < qualityMetrics.length; i++) {
-                SketchSupportMetric q = qualityMetrics[i];
+                SketchQualityMetric q = qualityMetrics[i];
                 double t = thresholds[i];
                 action = QualityMetric.Action.combine(action, q.getAction(curAggregates, t));
             }

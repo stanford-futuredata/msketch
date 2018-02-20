@@ -11,13 +11,13 @@ import java.util.*;
  * Subgroup which meets the quality threshold metrics.
  */
 public class APLSketchExplanationResult {
-    private SketchSupportMetric[] metricTypes;
+    private SketchQualityMetric[] metricTypes;
     private IntSet matcher;
     private YahooSketch[] aggregates;
     private double[] metrics;
 
     public APLSketchExplanationResult(
-            SketchSupportMetric[] metricTypes,
+            SketchQualityMetric[] metricTypes,
             IntSet matcher,
             YahooSketch[] aggregates,
             double[] metrics
