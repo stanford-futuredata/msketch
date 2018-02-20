@@ -23,12 +23,15 @@ import java.util.stream.IntStream;
 public class APLYahooSummarizer {
     private Logger log = LoggerFactory.getLogger("APLYahooSummarizer");
     private double percentile;
-    public List<SketchSupportMetric> supportMetricList;
+    public List<SketchQualityMetric> qualityMetricList;
     boolean doContainment = true;
     protected double minOutlierSupport = 0.1;
+    protected double minRatioMetric = 10.0;
     AttributeEncoder encoder;
     protected List<String> attributes = new ArrayList<>();
-    List<APLSketchExplanationResult> aplResults;
+    public List<APLSketchExplanationResult> aplResults;
+    private boolean useSupport;
+    private boolean useGlobalRatio;
 
     public long aplTime = 0;
     public long mergeTime = 0;
@@ -60,17 +63,29 @@ public class APLYahooSummarizer {
         return aggregateColumns;
     }
 
-    public List<SketchSupportMetric> getSupportMetricList() {
-        List<SketchSupportMetric> qualityMetricList = new ArrayList<>();
+    public List<SketchQualityMetric> getQualityMetricList() {
+        List<SketchQualityMetric> qualityMetricList = new ArrayList<>();
 
-        SketchSupportMetric metric = new SketchSupportMetric((100.0 - percentile) / 100.0, 1e-4, true);
-        qualityMetricList.add(metric);
+        if (useSupport) {
+            SketchSupportMetric metric = new SketchSupportMetric((100.0 - percentile) / 100.0, 1e-4, true);
+            qualityMetricList.add(metric);
+        }
+        if (useGlobalRatio) {
+            SketchGlobalRatioMetric metric = new SketchGlobalRatioMetric((100.0 - percentile) / 100.0, 1e-4, true);
+            qualityMetricList.add(metric);
+        }
 
         return qualityMetricList;
     }
 
     public List<Double> getThresholds() {
-        return Arrays.asList(minOutlierSupport);
+        List<Double> thresholds = new ArrayList<>();
+        if (useSupport) {
+            thresholds.add(minOutlierSupport);
+        } else {
+            thresholds.add(minRatioMetric);
+        }
+        return thresholds;
     }
 
 //    public double getNumberOutliers(double[][] aggregates) {
@@ -94,9 +109,9 @@ public class APLYahooSummarizer {
         log.debug("Encoded Categories: {}", encoder.getNextKey());
 
         List<Double> thresholds = getThresholds();
-        supportMetricList = getSupportMetricList();
+        qualityMetricList = getQualityMetricList();
         SketchAPrioriLinearSimple aplKernel = new SketchAPrioriLinearSimple(
-                supportMetricList,
+                qualityMetricList,
                 thresholds
         );
         aplKernel.setDoContainment(doContainment);
@@ -124,8 +139,11 @@ public class APLYahooSummarizer {
         this.percentile = percentile;
     }
     public void setMinSupport(double minSupport) { this.minOutlierSupport = minSupport; }
+    public void setMinRatioMetric(double minRatio) { this.minRatioMetric = minRatio; }
     public void setAttributes(List<String> attributes) { this.attributes = attributes; }
     public void setDoContainment(boolean doContainment) { this.doContainment = doContainment; }
+    public void setUseSupport(boolean useSupport) { this.useSupport = useSupport; }
+    public void setUseGlobalRatio(boolean useGlobalRatio) { this.useGlobalRatio = useGlobalRatio; }
 
     public void resetTime() {
         this.aplTime = 0;

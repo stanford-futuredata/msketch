@@ -30,11 +30,13 @@ public class APLYahooSummarizerTest {
         summ.setAttributes(requiredColumns);
         summ.setPercentile(1.0);
         summ.setDoContainment(true);
+        summ.setUseSupport(true);
+        summ.setUseGlobalRatio(false);
 
         YahooSketch[][] aggregates = APLYahooSummarizer.getAggregateColumns("src/test/resources/sample_yahoo");
         summ.process(df, aggregates);
         List<APLSketchExplanationResult> aplResults = summ.aplResults;
-        SketchSupportMetric metric = summ.supportMetricList.get(0);
+        SketchSupportMetric metric = (SketchSupportMetric)summ.qualityMetricList.get(0);
 
 //        System.out.println(aplResults.size());
 //        System.out.println(metric.cutoff);

@@ -3,7 +3,6 @@ package macrobase;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.metrics.QualityMetric;
 import msketch.MathUtil;
 import sketches.CMomentSketch;
-import sketches.MomentSketch;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,7 +10,7 @@ import java.util.Collections;
 /**
  * Measures the relative outlier rate w.r.t. the global outlier rate
  */
-public class EstimatedSupportMetric extends CascadeQualityMetric implements QualityMetric {
+public class EstimatedGlobalRatioMetric extends CascadeQualityMetric implements QualityMetric {
     private int minIdx = 0;
     private int maxIdx = 1;
     private int momentsBaseIdx = 2;
@@ -35,8 +34,8 @@ public class EstimatedSupportMetric extends CascadeQualityMetric implements Qual
 //    public long momentBoundTime = 0;
 //    public long maxentTime = 0;
 
-    public EstimatedSupportMetric(int minIdx, int maxIdx, int momentsBaseIdx,
-                                  int logMomentsBaseIdx, double quantile, double tolerance, boolean useCascade) {
+    public EstimatedGlobalRatioMetric(int minIdx, int maxIdx, int momentsBaseIdx,
+                                      int logMomentsBaseIdx, double quantile, double tolerance, boolean useCascade) {
         this.minIdx = minIdx;
         this.maxIdx = maxIdx;
         this.momentsBaseIdx = momentsBaseIdx;
@@ -80,7 +79,7 @@ public class EstimatedSupportMetric extends CascadeQualityMetric implements Qual
     @Override
     public double value(double[] aggregates) {
         CMomentSketch ms = sketchFromAggregates(aggregates);
-        return ms.estimateGreaterThanThreshold(cutoff) * aggregates[momentsBaseIdx] / globalCount;
+        return ms.estimateGreaterThanThreshold(cutoff) / (1.0 - quantile);
     }
 
     @Override
@@ -99,7 +98,7 @@ public class EstimatedSupportMetric extends CascadeQualityMetric implements Qual
 
     private Action getActionCascade(double[] aggregates, double threshold) {
         numEnterCascade++;
-        double outlierRateNeeded = threshold * globalCount / aggregates[momentsBaseIdx];
+        double outlierRateNeeded = threshold * (1.0 - quantile);
 
         if (useStages[0]) {
             // Simple checks on min and max
@@ -171,7 +170,7 @@ public class EstimatedSupportMetric extends CascadeQualityMetric implements Qual
     }
 
     private Action getActionMaxent(double[] aggregates, double threshold) {
-        double outlierRateNeeded = threshold * globalCount / aggregates[momentsBaseIdx];
+        double outlierRateNeeded = threshold * (1.0 - quantile);
         CMomentSketch ms = sketchFromAggregates(aggregates);
         double outlierRateEstimate = ms.estimateGreaterThanThreshold(cutoff);
         return (outlierRateEstimate >= outlierRateNeeded) ? Action.KEEP : Action.PRUNE;
@@ -179,7 +178,7 @@ public class EstimatedSupportMetric extends CascadeQualityMetric implements Qual
 
     @Override
     public boolean isMonotonic() {
-        return true;
+        return false;
     }
 
     public void setCascadeStages(boolean[] useStages) { this.useStages = useStages; }

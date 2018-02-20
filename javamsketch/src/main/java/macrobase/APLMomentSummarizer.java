@@ -23,10 +23,11 @@ public class APLMomentSummarizer extends APLSummarizer {
     private List<String> momentColumns;
     private List<String> logMomentColumns;
     private double percentile;
-    private boolean useCascade = false;
     private boolean[] useStages;
     private boolean verbose;
     private APrioriLinear aplKernel;
+    private boolean useSupport;
+    private boolean useGlobalRatio;
 
     public long aplTime = 0;
     public long mergeTime = 0;
@@ -71,24 +72,32 @@ public class APLMomentSummarizer extends APLSummarizer {
     @Override
     public List<QualityMetric> getQualityMetricList() {
         List<QualityMetric> qualityMetricList = new ArrayList<>();
-        if (useCascade) {
+        if (useSupport) {
             EstimatedSupportMetric metric = new EstimatedSupportMetric(0, 1, 2, 2+momentColumns.size(),
                     (100.0 - percentile) / 100.0, 1e-4, true);
             metric.setCascadeStages(useStages);
             metric.setVerbose(verbose);
             qualityMetricList.add(metric);
-        } else {
-            qualityMetricList.add(
-                    new EstimatedSupportMetric(0, 1, 2, 2+momentColumns.size(),
-                            (100.0 - percentile) / 100.0, 1e-4, false)
-            );
+        }
+        if (useGlobalRatio) {
+            EstimatedGlobalRatioMetric metric = new EstimatedGlobalRatioMetric(0, 1, 2, 2+momentColumns.size(),
+                    (100.0 - percentile) / 100.0, 1e-4, true);
+            metric.setCascadeStages(useStages);
+            metric.setVerbose(verbose);
+            qualityMetricList.add(metric);
         }
         return qualityMetricList;
     }
 
     @Override
     public List<Double> getThresholds() {
-        return Arrays.asList(minOutlierSupport);
+        List<Double> thresholds = new ArrayList<>();
+        if (useSupport) {
+            thresholds.add(minOutlierSupport);
+        } else {
+            thresholds.add(minRatioMetric);
+        }
+        return thresholds;
     }
 
     @Override
@@ -165,12 +174,13 @@ public class APLMomentSummarizer extends APLSummarizer {
     public void setPercentile(double percentile) {
         this.percentile = percentile;
     }
-    public void setCascade(boolean useCascade) { this.useCascade = useCascade; }
     public double getMinRatioMetric() {
         return minRatioMetric;
     }
     public void setUseStages(boolean[] useStages) { this.useStages = useStages; }
     public void setVerbose(boolean verbose) { this.verbose = verbose; }
+    public void setUseSupport(boolean useSupport) { this.useSupport = useSupport; }
+    public void setUseGlobalRatio(boolean useGlobalRatio) { this.useGlobalRatio = useGlobalRatio; }
 
     public void resetTime() {
         this.aplTime = 0;
