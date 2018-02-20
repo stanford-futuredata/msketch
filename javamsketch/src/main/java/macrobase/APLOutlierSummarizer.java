@@ -20,8 +20,9 @@ import java.util.*;
 public class APLOutlierSummarizer extends APLSummarizer {
     private Logger log = LoggerFactory.getLogger("APLOutlierSummarizer");
     private String countColumn = null;
-    private boolean onlyUseSupport = false;
     private macrobase.APrioriLinear aplKernel;
+    private boolean useSupport;
+    private boolean useGlobalRatio;
 
     public long aplTime = 0;
     public long mergeTime = 0;
@@ -51,10 +52,12 @@ public class APLOutlierSummarizer extends APLSummarizer {
     @Override
     public List<QualityMetric> getQualityMetricList() {
         List<QualityMetric> qualityMetricList = new ArrayList<>();
-        qualityMetricList.add(
-                new SupportMetric(0)
-        );
-        if (!onlyUseSupport) {
+        if (useSupport) {
+            qualityMetricList.add(
+                    new SupportMetric(0)
+            );
+        }
+        if (useGlobalRatio) {
             qualityMetricList.add(
                     new GlobalRatioMetric(0, 1)
             );
@@ -64,11 +67,13 @@ public class APLOutlierSummarizer extends APLSummarizer {
 
     @Override
     public List<Double> getThresholds() {
-        if (onlyUseSupport) {
-            return Collections.singletonList(minOutlierSupport);
+        List<Double> thresholds = new ArrayList<>();
+        if (useSupport) {
+            thresholds.add(minOutlierSupport);
         } else {
-            return Arrays.asList(minOutlierSupport, minRatioMetric);
+            thresholds.add(minRatioMetric);
         }
+        return thresholds;
     }
 
     @Override
@@ -131,7 +136,8 @@ public class APLOutlierSummarizer extends APLSummarizer {
     public double getMinRatioMetric() {
         return minRatioMetric;
     }
-    public void onlyUseSupport(boolean onlyUseSupport) { this.onlyUseSupport = onlyUseSupport; }
+    public void setUseSupport(boolean useSupport) { this.useSupport = useSupport; }
+    public void setUseGlobalRatio(boolean useGlobalRatio) { this.useGlobalRatio = useGlobalRatio; }
 
     public void resetTime() {
         this.aplTime = 0;
