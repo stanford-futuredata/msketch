@@ -29,12 +29,7 @@ public class APrioriLinear {
     public long queryTime = 0;
     private long start;
 
-    // Singleton viable sets for quick lookup
-    private HashSet<Integer> singleNext;
-    // Sets that has high enough support but not high risk ratio, need to be explored
-    private HashMap<Integer, HashSet<IntSet>> setNext;
-    // Aggregate values for all of the sets we saved
-    private HashMap<Integer, HashMap<IntSet, double[]>> savedAggregates;
+    public List<Integer> o1results;
 
     public APrioriLinear(
             List<QualityMetric> qualityMetrics,
@@ -45,8 +40,6 @@ public class APrioriLinear {
         for (int i = 0; i < thresholds.size(); i++) {
             this.thresholds[i] = thresholds.get(i);
         }
-        this.setNext = new HashMap<>(3);
-        this.savedAggregates = new HashMap<>(3);
     }
 
     public List<APLExplanationResult> explain(
@@ -67,7 +60,7 @@ public class APrioriLinear {
         // Quality metrics are initialized with global aggregates to
         // allow them to determine the appropriate relative thresholds
         double[] globalAggregates = new double[numAggregates];
-        start = System.nanoTime();
+//        start = System.nanoTime();
         if (aggregationOps == null) {
             for (int j = 0; j < numAggregates; j++) {
                 globalAggregates[j] = 0;
@@ -99,12 +92,12 @@ public class APrioriLinear {
                 }
             }
         }
-        mergeTime += System.nanoTime() - start;
-        start = System.nanoTime();
+//        mergeTime += System.nanoTime() - start;
+//        start = System.nanoTime();
         for (QualityMetric q : qualityMetrics) {
             q.initialize(globalAggregates);
         }
-        queryTime += System.nanoTime() - start;
+//        queryTime += System.nanoTime() - start;
 
         // Row store for more convenient access
         final double[][] aRows = new double[numRows][numAggregates];
@@ -145,24 +138,22 @@ public class APrioriLinear {
 
         HashSet<Integer> curOrderSaved = new HashSet<>();
         int pruned = 0;
+        start = System.nanoTime();
         for (int curCandidate: aggregates.keySet()) {
             double[] curAggregates = aggregates.get(curCandidate);
             QualityMetric.Action action = QualityMetric.Action.KEEP;
-            start = System.nanoTime();
             for (int i = 0; i < qualityMetrics.length; i++) {
                 QualityMetric q = qualityMetrics[i];
                 double t = thresholds[i];
                 action = QualityMetric.Action.combine(action, q.getAction(curAggregates, t));
             }
-            queryTime += System.nanoTime() - start;
             if (action == QualityMetric.Action.KEEP) {
-                // if a set is already past the threshold on all metrics,
-                // save it and no need for further exploration if we do containment
                 curOrderSaved.add(curCandidate);
             } else {
                 pruned++;
             }
         }
+        queryTime += System.nanoTime() - start;
 
         HashMap<Integer, double[]> curSavedAggregates = new HashMap<>(curOrderSaved.size());
         for (int curSaved : curOrderSaved) {
@@ -170,12 +161,14 @@ public class APrioriLinear {
         }
 
         List<APLExplanationResult> results = new ArrayList<>();
+        o1results = new ArrayList<>();
         for (int curSet : curSavedAggregates.keySet()) {
             double[] aggs = curSavedAggregates.get(curSet);
             double[] metrics = new double[qualityMetrics.length];
             for (int i = 0; i < metrics.length; i++) {
                 metrics[i] = qualityMetrics[i].value(aggs);
             }
+            o1results.add(curSet);
             results.add(
                     new APLExplanationResult(qualityMetrics, new IntSet(curSet), aggs, metrics)
             );

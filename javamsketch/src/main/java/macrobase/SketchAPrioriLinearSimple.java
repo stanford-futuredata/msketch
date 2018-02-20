@@ -52,7 +52,7 @@ public class SketchAPrioriLinearSimple {
         // Quality metrics are initialized with global aggregates to
         // allow them to determine the appropriate relative thresholds
         YahooSketch[] globalAggregates = new YahooSketch[numAggregates];
-        start = System.nanoTime();
+//        start = System.nanoTime();
         for (int j = 0; j < numAggregates; j++) {
             YahooSketch globalSketch = new YahooSketch();
             globalSketch.setSizeParam(sizeParam);
@@ -62,12 +62,12 @@ public class SketchAPrioriLinearSimple {
             globalSketch.mergeYahoo(curSketches);
             globalAggregates[j] = globalSketch;
         }
-        mergeTime += System.nanoTime() - start;
-        start = System.nanoTime();
+//        mergeTime += System.nanoTime() - start;
+//        start = System.nanoTime();
         for (SketchSupportMetric q : qualityMetrics) {
             q.initialize(globalAggregates);
         }
-        queryTime += System.nanoTime() - start;
+//        queryTime += System.nanoTime() - start;
 
         // Row store for more convenient access
         final YahooSketch[][] aRows = new YahooSketch[numRows][numAggregates];
@@ -105,16 +105,15 @@ public class SketchAPrioriLinearSimple {
 
         HashSet<Integer> curOrderSaved = new HashSet<>();
         int pruned = 0;
+        start = System.nanoTime();
         for (int curCandidate: setAggregates.keySet()) {
             YahooSketch[] curAggregates = setAggregates.get(curCandidate);
             QualityMetric.Action action = QualityMetric.Action.KEEP;
-            start = System.nanoTime();
             for (int i = 0; i < qualityMetrics.length; i++) {
                 SketchSupportMetric q = qualityMetrics[i];
                 double t = thresholds[i];
                 action = QualityMetric.Action.combine(action, q.getAction(curAggregates, t));
             }
-            queryTime += System.nanoTime() - start;
             if (action == QualityMetric.Action.KEEP) {
                 // if a set is already past the threshold on all metrics,
                 // save it and no need for further exploration if we do containment
@@ -123,6 +122,7 @@ public class SketchAPrioriLinearSimple {
                 pruned++;
             }
         }
+        queryTime += System.nanoTime() - start;
 
         HashMap<Integer, YahooSketch[]> curSavedAggregates = new HashMap<>(curOrderSaved.size());
         for (int curSaved : curOrderSaved) {
