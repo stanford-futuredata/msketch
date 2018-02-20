@@ -154,10 +154,7 @@ public class MBCascadesBench {
         summ.setUseStages(useStages);
         summ.setVerbose(false);
         long warmupStart = System.nanoTime();
-        for (int i = 0; i < numWarmupTrials; i++) {
-            if (System.nanoTime() - warmupStart > 10.0 * 1.e9) {
-                break;
-            }
+        while (System.nanoTime() - warmupStart < maxWarmupTime * 1.e9) {
             summ.process(df);
         }
         System.out.println("Warmup finished");
@@ -166,14 +163,11 @@ public class MBCascadesBench {
         int trialsDone = 0;
         summ.resetTime();
         long start = System.nanoTime();
-        for (int i = 0; i < numTrials; i++) {
+        while (System.nanoTime() - start < maxTrialTime * 1.e9) {
             summ.process(df);
             EstimatedSupportMetric metric = (EstimatedSupportMetric)summ.qualityMetricList.get(0);
             actionTime += metric.actionTime;
             trialsDone++;
-            if (System.nanoTime() - start > maxTrialTime * 1.e9) {
-                break;
-            }
         }
         long timeElapsed = System.nanoTime() - start;
 
@@ -239,9 +233,9 @@ public class MBCascadesBench {
         result.put("containment", String.format("%b", doContainment));
         APLExplanation e = summ.getResults();
         System.out.format("Num results: %d\n\n", e.getResults().size());
-        if (verbose) {
-            System.out.println(e.prettyPrint());
-        }
+//        if (verbose) {
+//            System.out.println(e.prettyPrint());
+//        }
         return result;
     }
 
@@ -259,28 +253,18 @@ public class MBCascadesBench {
         summ.setPercentile(percentile);
         summ.setDoContainment(doContainment);
         long warmupStart = System.nanoTime();
-        for (int i = 0; i < numWarmupTrials; i++) {
+        while (System.nanoTime() - warmupStart < maxWarmupTime * 1.e9) {
             summ.process(df, aggregateColumns);
-            if (System.nanoTime() - warmupStart > 10.0 * 1.e9) {
-                break;
-            }
         }
         System.out.println("Warmup finished");
-        long actionTime = 0;
         summ.resetTime();
         long start = System.nanoTime();
         int trialsDone = 0;
-        for (int i = 0; i < numTrials; i++) {
+        while (System.nanoTime() - start < maxTrialTime * 1.e9) {
             summ.process(df, aggregateColumns);
-            SketchSupportMetric metric = summ.supportMetricList.get(0);
-            actionTime += metric.actionTime;
             trialsDone++;
-            if (System.nanoTime() - start > maxTrialTime * 1.e9) {
-                break;
-            }
         }
         long timeElapsed = System.nanoTime() - start;
-        SketchSupportMetric metric = summ.supportMetricList.get(0);
         System.out.format("Yahoo time: %g\n", timeElapsed / (1.e9 * trialsDone));
         System.out.format("APL time: %g\n", summ.aplTime / (1.e9 * trialsDone));
         System.out.format("Query time: %g\n", summ.queryTime / (1.e9 * trialsDone));
@@ -303,6 +287,12 @@ public class MBCascadesBench {
         DataFrame df = loader.load();
         YahooSketch[] sketches = APLYahooSummarizer.getAggregateColumns(yahooFile)[0];
 
+        YahooSketch globalSketch = new YahooSketch();
+        globalSketch.setSizeParam(16.0);
+        globalSketch.initialize();
+        globalSketch.mergeYahoo(sketches);
+        double cutoff = globalSketch.getQuantiles(Collections.singletonList(1.0-percentile/100.0))[0];
+
         APLOutlierSummarizer summ = new APLOutlierSummarizer();
         summ.setCountColumn("counts");
         summ.setOutlierColumn("oCounts");
@@ -311,52 +301,47 @@ public class MBCascadesBench {
         summ.onlyUseSupport(true);
         summ.setAttributes(attributes);
         long warmupStart = System.nanoTime();
-        for (int i = 0; i < numWarmupTrials; i++) {
-            DataFrame input = yahoo2precompute(df, sketches);
+        while (System.nanoTime() - warmupStart < maxWarmupTime * 1.e9) {
+            DataFrame input = yahoo2precompute(df, sketches, cutoff);
             summ.process(input);
-            if (System.nanoTime() - warmupStart > 10.0 * 1.e9) {
-                break;
-            }
+            HashMap<Integer, YahooSketch> aggs = yahoo2postmerge(summ.o1results, summ.encoded, df, sketches);
         }
         System.out.println("Warmup finished");
-        long precomputationTime = 0;
         summ.resetTime();
+        long precomputationTime = 0;
+        long postmergeTime = 0;
         long start = System.nanoTime();
         int trialsDone = 0;
-        for (int i = 0; i < numTrials; i++) {
+        while (System.nanoTime() - start < maxTrialTime * 1.e9) {
             long queryStart = System.nanoTime();
-            DataFrame input = yahoo2precompute(df, sketches);
-            precomputationTime = System.nanoTime() - queryStart;
+            DataFrame input = yahoo2precompute(df, sketches, cutoff);
+            precomputationTime += System.nanoTime() - queryStart;
             summ.process(input);
+            long mergeStart = System.nanoTime();
+            HashMap<Integer, YahooSketch> aggs = yahoo2postmerge(summ.o1results, summ.encoded, df, sketches);
+            postmergeTime += System.nanoTime() - mergeStart;
             trialsDone++;
-            if (System.nanoTime() - start > maxTrialTime * 1.e9) {
-                break;
-            }
         }
         long timeElapsed = System.nanoTime() - start;
         System.out.format("Yahoo 2 time: %g\n", timeElapsed / (1.e9 * trialsDone));
         System.out.format("APL time: %g\n", summ.aplTime / (1.e9 * trialsDone));
         System.out.format("Precomputation time: %g\n", precomputationTime / (1.e9 * trialsDone));
-        System.out.format("Merge time: %g\n\n", summ.mergeTime / (1.e9 * trialsDone));
+        System.out.format("Merge time: %g\n", summ.mergeTime / (1.e9 * trialsDone));
+        System.out.format("Post-merge time: %g\n\n", postmergeTime / (1.e9 * trialsDone));
 
         Map<String, String> result = new HashMap<String, String>();
         result.put("avg_runtime", String.format("%f", timeElapsed / (1.e9 * trialsDone)));
-        result.put("avg_apltime", String.format("%f", (summ.aplTime + precomputationTime) / (1.e9 * trialsDone)));
+        result.put("avg_apltime", String.format("%f", (summ.aplTime + precomputationTime + postmergeTime) / (1.e9 * trialsDone)));
         result.put("avg_querytime", String.format("%f", precomputationTime / (1.e9 * trialsDone)));
-        result.put("avg_mergetime", String.format("%f", summ.mergeTime / (1.e9 * trialsDone)));
+        result.put("avg_mergetime", String.format("%f", (summ.mergeTime + postmergeTime) / (1.e9 * trialsDone)));
         result.put("type", "yahoo2");
         return result;
     }
 
-    public DataFrame yahoo2precompute(DataFrame input, YahooSketch[] sketches) throws Exception {
+    public DataFrame yahoo2precompute(DataFrame input, YahooSketch[] sketches, double cutoff) throws Exception {
         double[] counts = new double[sketches.length];
         double[] outlierCounts = new double[sketches.length];
 
-        YahooSketch globalSketch = new YahooSketch();
-        globalSketch.setSizeParam(16.0);
-        globalSketch.initialize();
-        globalSketch.mergeYahoo(sketches);
-        double cutoff = globalSketch.getQuantiles(Collections.singletonList(1.0-percentile/100.0))[0];
         for (int j = 0; j < sketches.length; j++) {
             YahooSketch sketch = sketches[j];
             counts[j] = sketch.getCount();
@@ -367,5 +352,33 @@ public class MBCascadesBench {
         input.addDoubleColumn("oCounts", outlierCounts);
 
         return input;
+    }
+
+    public HashMap<Integer, YahooSketch> yahoo2postmerge(List<Integer> o1results, List<int[]> attributes,
+                                                         DataFrame df, YahooSketch[] sketches) {
+        HashMap<Integer, YahooSketch> setAggregates = new HashMap<>();
+        double sizeParam = sketches[0].sketch.getK();
+
+        for (int i = 0; i < sketches.length; i++) {
+            int[] curRowAttributes = attributes.get(i);
+            for (int c = 0; c < curRowAttributes.length; c++) {
+                int curCandidate = curRowAttributes[c];
+                if (!o1results.contains(curCandidate)) {
+                    continue;
+                }
+                YahooSketch candidateVal = setAggregates.get(curCandidate);
+                if (candidateVal == null) {
+                    YahooSketch agg = new YahooSketch();
+                    agg.setSizeParam(sizeParam);
+                    agg.initialize();
+                    agg.mergeYahoo(sketches[i]);
+                    setAggregates.put(curCandidate, agg);
+                } else {
+                    setAggregates.put(curCandidate, candidateVal.mergeYahoo(sketches[i]));
+                }
+            }
+        }
+
+        return setAggregates;
     }
 }

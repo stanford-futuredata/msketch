@@ -27,6 +27,9 @@ public class APLOutlierSummarizer extends APLSummarizer {
     public long mergeTime = 0;
     public long queryTime = 0;
 
+    public List<Integer> o1results;
+    public List<int[]> encoded;
+
     @Override
     public List<String> getAggregateNames() {
         return Arrays.asList("Outliers", "Count");
@@ -81,7 +84,7 @@ public class APLOutlierSummarizer extends APLSummarizer {
         encoder = new AttributeEncoder();
         encoder.setColumnNames(attributes);
         long startTime = System.currentTimeMillis();
-        List<int[]> encoded = encoder.encodeAttributes(
+        encoded = encoder.encodeAttributes(
                 input.getStringColsByName(attributes)
         );
         long elapsed = System.currentTimeMillis() - startTime;
@@ -104,6 +107,7 @@ public class APLOutlierSummarizer extends APLSummarizer {
         aplTime += System.nanoTime() - start;
         mergeTime += aplKernel.mergeTime;
         queryTime += aplKernel.queryTime;
+        o1results = aplKernel.o1results;
         numOutliers = (long)getNumberOutliers(aggregateColumns);
 
         explanation = new APLExplanation(
