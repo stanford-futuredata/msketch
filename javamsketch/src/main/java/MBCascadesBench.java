@@ -45,7 +45,7 @@ public class MBCascadesBench {
         outlierColumn = conf.get("outlierColumn");
         numWarmupTrials = conf.get("numWarmupTrials", 20);
         numTrials = conf.get("numTrials", 10);
-        numMoments = conf.get("numMoments", 5);
+        numMoments = conf.get("numMoments", 8);
         oracleCubeFilename = conf.get("oracleCubeFilename");
         momentCubeFilename = conf.get("momentCubeFilename");
         doContainment = conf.get("doContainment", false);
