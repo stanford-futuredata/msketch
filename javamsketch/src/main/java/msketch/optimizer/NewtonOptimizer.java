@@ -92,6 +92,8 @@ public class NewtonOptimizer {
                 SingularValueDecomposition d = new SingularValueDecomposition(hhMat);
                 stepVector = d.getSolver().solve(new ArrayRealVector(grad));
             }
+//            SingularValueDecomposition d = new SingularValueDecomposition(hhMat);
+//            System.out.println("cond: "+d.getConditionNumber());
             stepVector.mapMultiplyToSelf(-1.0);
 
             double dfdx = 0.0;

@@ -45,20 +45,27 @@ public class ChebyshevMomentSolver2 {
             double min, double max, double[] powerSums,
             double logMin, double logMax, double[] logPowerSums
     ) {
+        double[] posPowerMoments = MathUtil.powerSumsToPosMoments(
+                powerSums, min, max
+        );
+        double[] posLogMoments = MathUtil.powerSumsToPosMoments(
+                logPowerSums, logMin, logMax
+        );
+        // compare whether log moments or standard moments are closer to uniform distribution
+        double powerDelta = MathUtil.deltaFromUniformMoments(posPowerMoments);
+        double logDelta = MathUtil.deltaFromUniformMoments(posLogMoments);
+
+        boolean useStandardBasis = true;
+        if (logDelta < powerDelta) {
+            useStandardBasis = false;
+        }
+
         double[] powerChebyMoments = MathUtil.powerSumsToChebyMoments(
                 min, max, powerSums
         );
         double[] logChebyMoments = MathUtil.powerSumsToChebyMoments(
                 logMin, logMax, logPowerSums
         );
-
-        boolean useStandardBasis = true;
-        double minPowerMoment = MathUtil.minAbs(powerChebyMoments);
-        double minLogMoment = MathUtil.minAbs(logChebyMoments);
-        if (minLogMoment < minPowerMoment) {
-            useStandardBasis = false;
-        }
-
         double[] aMoments, bMoments;
         double aMin, aMax, bMin, bMax;
         if (useStandardBasis) {
