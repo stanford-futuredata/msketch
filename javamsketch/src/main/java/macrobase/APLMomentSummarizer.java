@@ -78,14 +78,14 @@ public class APLMomentSummarizer extends APLSummarizer {
         List<QualityMetric> qualityMetricList = new ArrayList<>();
         if (useSupport) {
             EstimatedSupportMetric metric = new EstimatedSupportMetric(0, 1, 2, 2+momentColumns.size(),
-                    (100.0 - percentile) / 100.0, 1e-4, true);
+                    (100.0 - percentile) / 100.0, 1e-10, true);
             metric.setCascadeStages(useStages);
             metric.setVerbose(verbose);
             qualityMetricList.add(metric);
         }
         if (useGlobalRatio) {
             EstimatedGlobalRatioMetric metric = new EstimatedGlobalRatioMetric(0, 1, 2, 2+momentColumns.size(),
-                    (100.0 - percentile) / 100.0, 1e-4, true);
+                    (100.0 - percentile) / 100.0, 1e-10, true);
             metric.setCascadeStages(useStages);
             metric.setVerbose(verbose);
             qualityMetricList.add(metric);
