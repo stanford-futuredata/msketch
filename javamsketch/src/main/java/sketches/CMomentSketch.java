@@ -208,8 +208,8 @@ public class CMomentSketch implements QuantileSketch{
     }
 
     public double estimateGreaterThanThreshold(double x) {
-        if (x < min) return 1.0;
-        if (x > max) return 0.0;
+//        if (x < min) return 1.0;
+//        if (x > max) return 0.0;
         if (min == max) {
             return (x > min) ? 0.0 : 1.0;
         }
@@ -242,6 +242,8 @@ public class CMomentSketch implements QuantileSketch{
         } else {
             scaledX = 2.0 * (Math.log(x) - logMin) / (logMax - logMin) - 1.0;
         }
+        if (scaledX < -1.0) return 1.0;
+        if (scaledX > 1.0) return 0.0;
         double quantile = solver.estimateCDF(scaledX);
         return 1.0 - quantile;
     }
