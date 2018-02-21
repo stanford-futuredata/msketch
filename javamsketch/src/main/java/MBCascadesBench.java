@@ -270,7 +270,7 @@ public class MBCascadesBench {
         while (System.nanoTime() - start < maxTrialTime * 1.e9) {
             long premergeStart = System.nanoTime();
             double cutoff = yahoo2premerge(sketches);
-            premergeTime += start - premergeStart;
+            premergeTime += System.nanoTime() - premergeStart;
             long queryStart = System.nanoTime();
             DataFrame input = yahoo2precompute(df, sketches, cutoff);
             precomputationTime += System.nanoTime() - queryStart;
