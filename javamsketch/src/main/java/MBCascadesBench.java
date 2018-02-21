@@ -245,12 +245,6 @@ public class MBCascadesBench {
         DataFrame df = loader.load();
         YahooSketch[] sketches = APLYahooSummarizer.getAggregateColumns(yahooFile)[0];
 
-        YahooSketch globalSketch = new YahooSketch();
-        globalSketch.setSizeParam(16.0);
-        globalSketch.initialize();
-        globalSketch.mergeYahoo(sketches);
-        double cutoff = globalSketch.getQuantiles(Collections.singletonList(1.0-percentile/100.0))[0];
-
         APLOutlierSummarizer summ = new APLOutlierSummarizer();
         summ.setCountColumn("counts");
         summ.setOutlierColumn("oCounts");
@@ -261,41 +255,56 @@ public class MBCascadesBench {
         summ.setUseGlobalRatio(useGlobalRatio);
         long warmupStart = System.nanoTime();
         while (System.nanoTime() - warmupStart < maxWarmupTime * 1.e9) {
+            double cutoff = yahoo2premerge(sketches);
             DataFrame input = yahoo2precompute(df, sketches, cutoff);
             summ.process(input);
-            HashMap<Integer, YahooSketch> aggs = yahoo2postmerge(summ.o1results, summ.encoded, df, sketches);
+//            HashMap<Integer, YahooSketch> aggs = yahoo2postmerge(summ.o1results, summ.encoded, df, sketches);
         }
         System.out.println("Warmup finished");
         summ.resetTime();
+        long premergeTime = 0;
         long precomputationTime = 0;
         long postmergeTime = 0;
         long start = System.nanoTime();
         int trialsDone = 0;
         while (System.nanoTime() - start < maxTrialTime * 1.e9) {
+            long premergeStart = System.nanoTime();
+            double cutoff = yahoo2premerge(sketches);
+            premergeTime += start - premergeStart;
             long queryStart = System.nanoTime();
             DataFrame input = yahoo2precompute(df, sketches, cutoff);
             precomputationTime += System.nanoTime() - queryStart;
             summ.process(input);
-            long mergeStart = System.nanoTime();
-            HashMap<Integer, YahooSketch> aggs = yahoo2postmerge(summ.o1results, summ.encoded, df, sketches);
-            postmergeTime += System.nanoTime() - mergeStart;
+//            long mergeStart = System.nanoTime();
+//            HashMap<Integer, YahooSketch> aggs = yahoo2postmerge(summ.o1results, summ.encoded, df, sketches);
+//            postmergeTime += System.nanoTime() - mergeStart;
             trialsDone++;
         }
         long timeElapsed = System.nanoTime() - start;
         System.out.format("Yahoo 2 time: %g\n", timeElapsed / (1.e9 * trialsDone));
         System.out.format("APL time: %g\n", summ.aplTime / (1.e9 * trialsDone));
+        System.out.format("Pre-merge time: %g\n", premergeTime / (1.e9 * trialsDone));
         System.out.format("Precomputation time: %g\n", precomputationTime / (1.e9 * trialsDone));
         System.out.format("Merge time: %g\n", summ.mergeTime / (1.e9 * trialsDone));
-        System.out.format("Post-merge time: %g\n", postmergeTime / (1.e9 * trialsDone));
+//        System.out.format("Post-merge time: %g\n", postmergeTime / (1.e9 * trialsDone));
         System.out.format("Num results: %d\n\n", summ.o1results.size());
 
         Map<String, String> result = new HashMap<String, String>();
         result.put("avg_runtime", String.format("%f", timeElapsed / (1.e9 * trialsDone)));
-        result.put("avg_apltime", String.format("%f", (summ.aplTime + precomputationTime + postmergeTime) / (1.e9 * trialsDone)));
+        result.put("avg_apltime", String.format("%f", (summ.aplTime + precomputationTime + premergeTime) / (1.e9 * trialsDone)));
         result.put("avg_querytime", String.format("%f", precomputationTime / (1.e9 * trialsDone)));
-        result.put("avg_mergetime", String.format("%f", (summ.mergeTime + postmergeTime) / (1.e9 * trialsDone)));
+        result.put("avg_mergetime", String.format("%f", (summ.mergeTime + premergeTime) / (1.e9 * trialsDone)));
         result.put("type", "yahoo2");
         return result;
+    }
+
+    public double yahoo2premerge(YahooSketch[] sketches) throws Exception {
+        YahooSketch globalSketch = new YahooSketch();
+        globalSketch.setSizeParam(16.0);
+        globalSketch.initialize();
+        globalSketch.mergeYahoo(sketches);
+        double cutoff = globalSketch.getQuantiles(Collections.singletonList(1.0-percentile/100.0))[0];
+        return cutoff;
     }
 
     public DataFrame yahoo2precompute(DataFrame input, YahooSketch[] sketches, double cutoff) throws Exception {
