@@ -133,6 +133,18 @@ public class MathUtil {
         return xs;
     }
 
+    public static double deltaFromUniformMoments(double[] posMoments) {
+        if (posMoments.length <= 1) {
+            return Double.POSITIVE_INFINITY;
+        }
+        double l2Sum = 0;
+        for (int i = 0; i < posMoments.length; i++) {
+            double delta = posMoments[i] - 1.0/(i+1);
+            l2Sum += delta*delta;
+        }
+        return Math.sqrt(l2Sum / posMoments.length);
+    }
+
     public static double minAbs(double[] xs) {
         double curMin = Double.MAX_VALUE;
         for (double x : xs) {
