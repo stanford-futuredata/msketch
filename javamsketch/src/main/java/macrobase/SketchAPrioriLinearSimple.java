@@ -52,7 +52,7 @@ public class SketchAPrioriLinearSimple {
         // Quality metrics are initialized with global aggregates to
         // allow them to determine the appropriate relative thresholds
         YahooSketch[] globalAggregates = new YahooSketch[numAggregates];
-//        start = System.nanoTime();
+        start = System.nanoTime();
         for (int j = 0; j < numAggregates; j++) {
             YahooSketch globalSketch = new YahooSketch();
             globalSketch.setSizeParam(sizeParam);
@@ -62,12 +62,12 @@ public class SketchAPrioriLinearSimple {
             globalSketch.mergeYahoo(curSketches);
             globalAggregates[j] = globalSketch;
         }
-//        mergeTime += System.nanoTime() - start;
-//        start = System.nanoTime();
+        mergeTime += System.nanoTime() - start;
+        start = System.nanoTime();
         for (SketchQualityMetric q : qualityMetrics) {
             q.initialize(globalAggregates);
         }
-//        queryTime += System.nanoTime() - start;
+        queryTime += System.nanoTime() - start;
 
         // Row store for more convenient access
         final YahooSketch[][] aRows = new YahooSketch[numRows][numAggregates];

@@ -60,7 +60,7 @@ public class APrioriLinear {
         // Quality metrics are initialized with global aggregates to
         // allow them to determine the appropriate relative thresholds
         double[] globalAggregates = new double[numAggregates];
-//        start = System.nanoTime();
+        start = System.nanoTime();
         if (aggregationOps == null) {
             for (int j = 0; j < numAggregates; j++) {
                 globalAggregates[j] = 0;
@@ -92,12 +92,12 @@ public class APrioriLinear {
                 }
             }
         }
-//        mergeTime += System.nanoTime() - start;
-//        start = System.nanoTime();
+        mergeTime += System.nanoTime() - start;
+        start = System.nanoTime();
         for (QualityMetric q : qualityMetrics) {
             q.initialize(globalAggregates);
         }
-//        queryTime += System.nanoTime() - start;
+        queryTime += System.nanoTime() - start;
 
         // Row store for more convenient access
         final double[][] aRows = new double[numRows][numAggregates];
