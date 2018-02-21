@@ -29,6 +29,10 @@ public class APLMomentSummarizer extends APLSummarizer {
     private boolean useSupport;
     private boolean useGlobalRatio;
 
+    public AttributeEncoder encoder;
+    public List<Integer> o1results;
+    public List<int[]> encoded;
+
     public long aplTime = 0;
     public long mergeTime = 0;
     public long queryTime = 0;
@@ -114,7 +118,7 @@ public class APLMomentSummarizer extends APLSummarizer {
         encoder = new AttributeEncoder();
         encoder.setColumnNames(attributes);
         long startTime = System.currentTimeMillis();
-        List<int[]> encoded = encoder.encodeAttributes(
+        encoded = encoder.encodeAttributes(
                 input.getStringColsByName(attributes)
         );
         long elapsed = System.currentTimeMillis() - startTime;
@@ -137,6 +141,7 @@ public class APLMomentSummarizer extends APLSummarizer {
         aplTime += System.nanoTime() - start;
         mergeTime += aplKernel.mergeTime;
         queryTime += aplKernel.queryTime;
+        o1results = aplKernel.o1results;
         numOutliers = (long)getNumberOutliers(aggregateColumns);
 
         explanation = new APLExplanation(
