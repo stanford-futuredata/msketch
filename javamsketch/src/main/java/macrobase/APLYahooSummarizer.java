@@ -82,7 +82,8 @@ public class APLYahooSummarizer {
         List<Double> thresholds = new ArrayList<>();
         if (useSupport) {
             thresholds.add(minOutlierSupport);
-        } else {
+        }
+        if (useGlobalRatio) {
             thresholds.add(minRatioMetric);
         }
         return thresholds;
