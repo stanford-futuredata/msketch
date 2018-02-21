@@ -218,6 +218,7 @@ public class MBCascadesBench {
         int trialsDone = 0;
         while (System.nanoTime() - start < maxTrialTime * 1.e9) {
             summ.process(df, aggregateColumns);
+            System.out.println(summ.aplResults.size());
             trialsDone++;
         }
         long timeElapsed = System.nanoTime() - start;
