@@ -80,19 +80,21 @@ public class ChebyshevMomentSolver2Test {
 
     @Test
     public void testMilanSlow2() {
-        double[] range = {0.0135545696474, 4386.50382919};
-        double[] powerSums = {8290.0, 1818915.7699888274, 8.614955910375332E8, 5.2805179587441315E11, 6.545047643243524E14, 1.86640135552236134E18, 7.400537480448464E21, 3.1632580816705223E25, 1.3765892569349529E29};
-        double[] logSums = {8290.0, 15081.854941126687, 197305.65488463588, 769366.0754455471, 6350644.459677804, 3.139665099950071E7, 2.2043781377439335E8, 1.2171209009868085E9, 7.969244654966052E9};
+        double[] range = {0.0660641515826, 1132.45333683};
+        double[] powerSums = {6400.0, 2029906.399774176, 1.0429918877324446E9, 5.780038122901864E11, 3.416250946008891E14, 2.14240501430776544E17, 1.4239668751562714E20, 1.0041004985137054E23, 7.519721016948273E25};
+        double[] logSums = {6400.0, 24291.716240560112, 166411.34767031836, 976357.261249677, 6121315.203662701, 3.7448917881558396E7, 2.324092899690887E8, 1.4384302798955774E9, 8.943507161577347E9};
         powerSums = Arrays.copyOf(powerSums,9);
         logSums = Arrays.copyOf(logSums,9);
         ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
                 range[0], range[1], powerSums,
                 Math.log(range[0]), Math.log(range[1]), logSums
         );
+        solver.setVerbose(true);
         solver.solve(1e-9);
 
         double[] ps = {.1, .5, .9, .99};
         double[] qs = solver.estimateQuantiles(ps);
+        System.out.println(Arrays.toString(qs));
     }
 
     @Test
