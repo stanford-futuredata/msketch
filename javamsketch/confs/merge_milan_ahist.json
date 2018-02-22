@@ -1,5 +1,5 @@
 {
-  "testName": "merge_milan",
+  "testName": "merge_milan_ahist",
   "fileName": "../../datasets/internet-mi-2013-11-01_09.csv",
   "columnIdx": 0,
   "cellSize": 100,
