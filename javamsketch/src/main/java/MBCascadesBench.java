@@ -113,6 +113,7 @@ public class MBCascadesBench {
         summ.setUseGlobalRatio(useGlobalRatio);
         long warmupStart = System.nanoTime();
         while (System.nanoTime() - warmupStart < maxWarmupTime * 1.e9) {
+            System.gc();
             summ.process(df);
         }
         System.out.println("Warmup finished");
@@ -121,6 +122,7 @@ public class MBCascadesBench {
         summ.resetTime();
         long start = System.nanoTime();
         while (System.nanoTime() - start < maxTrialTime * 1.e9) {
+            System.gc();
             summ.process(df);
             trialsDone++;
         }
@@ -210,6 +212,7 @@ public class MBCascadesBench {
         summ.setUseGlobalRatio(useGlobalRatio);
         long warmupStart = System.nanoTime();
         while (System.nanoTime() - warmupStart < maxWarmupTime * 1.e9) {
+            System.gc();
             summ.process(df, aggregateColumns);
         }
         System.out.println("Warmup finished");
@@ -217,6 +220,7 @@ public class MBCascadesBench {
         long start = System.nanoTime();
         int trialsDone = 0;
         while (System.nanoTime() - start < maxTrialTime * 1.e9) {
+            System.gc();
             summ.process(df, aggregateColumns);
             trialsDone++;
         }
@@ -254,6 +258,7 @@ public class MBCascadesBench {
         summ.setUseGlobalRatio(useGlobalRatio);
         long warmupStart = System.nanoTime();
         while (System.nanoTime() - warmupStart < maxWarmupTime * 1.e9) {
+            System.gc();
             double cutoff = yahoo2premerge(sketches);
             DataFrame input = yahoo2precompute(df, sketches, cutoff);
             summ.process(input);
@@ -267,6 +272,7 @@ public class MBCascadesBench {
         long start = System.nanoTime();
         int trialsDone = 0;
         while (System.nanoTime() - start < maxTrialTime * 1.e9) {
+            System.gc();
             long premergeStart = System.nanoTime();
             double cutoff = yahoo2premerge(sketches);
             premergeTime += System.nanoTime() - premergeStart;
