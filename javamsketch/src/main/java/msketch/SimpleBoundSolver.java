@@ -29,8 +29,8 @@ public class SimpleBoundSolver {
         RealMatrix momentMatrix = new Array2DRowRealMatrix(momentArray, false);
 
         double[] vectorData = new double[n+1];
-        LUDecomposition momentMatrixDecomp = new LUDecomposition(momentMatrix);
-//        CholeskyDecomposition momentMatrixDecomp = new CholeskyDecomposition(momentMatrix);
+//        LUDecomposition momentMatrixDecomp = new LUDecomposition(momentMatrix);
+        CholeskyDecomposition momentMatrixDecomp = new CholeskyDecomposition(momentMatrix);
 
         int numPoints = xs.length;
         double[] boundSizes = new double[numPoints];
