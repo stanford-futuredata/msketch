@@ -113,6 +113,7 @@ public class APLOutlierSummarizer extends APLSummarizer {
         aplTime += System.nanoTime() - start;
         mergeTime += aplKernel.mergeTime;
         queryTime += aplKernel.queryTime;
+        System.out.format("APL %f, merge %f, query %f\n", (System.nanoTime() - start)/1.e9, aplKernel.mergeTime/1.e9, aplKernel.queryTime/1.e9);
         o1results = aplKernel.o1results;
         numOutliers = (long)getNumberOutliers(aggregateColumns);
 

@@ -280,7 +280,7 @@ public class MBCascadesBench {
             long queryStart = System.nanoTime();
             DataFrame input = yahoo2precompute(df, sketches, cutoff);
             precomputationTime += System.nanoTime() - queryStart;
-            System.out.format("Precomp: %f\n", (System.nanoTime() - premergeStart)/1.e9);
+            System.out.format("Precomp: %f\n", (System.nanoTime() - queryStart)/1.e9);
             summ.process(input);
 //            long mergeStart = System.nanoTime();
 //            HashMap<Integer, YahooSketch> aggs = yahoo2postmerge(summ.o1results, summ.encoded, df, sketches);
