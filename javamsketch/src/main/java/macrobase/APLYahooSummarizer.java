@@ -123,6 +123,7 @@ public class APLYahooSummarizer {
         aplTime += System.nanoTime() - start;
         mergeTime += aplKernel.mergeTime;
         queryTime += aplKernel.queryTime;
+        System.out.format("APL %f, merge %f, query %f\n", System.nanoTime() - start/1.e9, aplKernel.mergeTime/1.e9, aplKernel.queryTime/1.e9);
 //        long numOutliers = (long)getNumberOutliers(aggregateColumns);
 
 //        explanation = new APLExplanation(

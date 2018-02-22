@@ -37,6 +37,11 @@ public class APLMomentSummarizer extends APLSummarizer {
     public long mergeTime = 0;
     public long queryTime = 0;
 
+    public long actionTime = 0;
+    public long markovBoundTime = 0;
+    public long momentBoundTime = 0;
+    public long maxentTime = 0;
+
     @Override
     public List<String> getAggregateNames() {
         ArrayList<String> aggregateNames = new ArrayList<>();
@@ -141,7 +146,16 @@ public class APLMomentSummarizer extends APLSummarizer {
         aplTime += System.nanoTime() - start;
         mergeTime += aplKernel.mergeTime;
         queryTime += aplKernel.queryTime;
+        CascadeQualityMetric metric = (CascadeQualityMetric)qualityMetricList.get(0);
+        actionTime += metric.actionTime;
+        markovBoundTime += metric.markovBoundTime;
+        momentBoundTime += metric.momentBoundTime;
+        maxentTime += metric.maxentTime;
         o1results = aplKernel.o1results;
+        System.out.format("APL %f, merge %f, query %f, action %f, markov %f, moment %f, maxent %f\n",
+                (System.nanoTime() - start)/1.e9, aplKernel.mergeTime/1.e9, aplKernel.queryTime/1.e9,
+                metric.actionTime/1.e9, metric.markovBoundTime/1.e9, metric.momentBoundTime/1.e9,
+                metric.maxentTime/1.e9);
         numOutliers = (long)getNumberOutliers(aggregateColumns);
 
         explanation = new APLExplanation(
@@ -191,5 +205,9 @@ public class APLMomentSummarizer extends APLSummarizer {
         this.aplTime = 0;
         this.mergeTime = 0;
         this.queryTime = 0;
+        this.actionTime = 0;
+        this.markovBoundTime = 0;
+        this.momentBoundTime = 0;
+        this.maxentTime = 0;
     }
 }

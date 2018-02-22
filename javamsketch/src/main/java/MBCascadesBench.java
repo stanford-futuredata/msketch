@@ -136,15 +136,15 @@ public class MBCascadesBench {
         int prunedByNaive = metric.numEnterCascade - metric.numAfterNaiveCheck;
         int prunedByMarkov = metric.numAfterNaiveCheck - metric.numAfterMarkovBound;
         int prunedByMoments = metric.numAfterMarkovBound - metric.numAfterMomentBound;
-        double overallThroughput = metric.numEnterCascade / (metric.actionTime / 1.e9);
-        double naiveThroughput = metric.numEnterCascade / ((metric.actionTime - metric.markovBoundTime - metric.momentBoundTime - metric.maxentTime) / 1.e9);
-        double markovThroughput = metric.numAfterNaiveCheck / (metric.markovBoundTime / 1.e9);
-        double momentThroughput = metric.numAfterMarkovBound / (metric.momentBoundTime / 1.e9);
-        double maxentThroughput = metric.numAfterMomentBound / (metric.maxentTime / 1.e9);
-        double naiveTime = (metric.actionTime - metric.markovBoundTime - metric.momentBoundTime - metric.maxentTime) / (double)metric.actionTime;
-        double markovTime = metric.markovBoundTime / (double)metric.actionTime;
-        double momentTime = metric.momentBoundTime / (double)metric.actionTime;
-        double maxentTime = metric.maxentTime / (double)metric.actionTime;
+        double overallThroughput = metric.numEnterCascade / (summ.actionTime / (1.e9 * trialsDone));
+        double naiveThroughput = metric.numEnterCascade / ((summ.actionTime - summ.markovBoundTime - summ.momentBoundTime - summ.maxentTime) / (1.e9 * trialsDone));
+        double markovThroughput = metric.numAfterNaiveCheck / (summ.markovBoundTime / (1.e9 * trialsDone));
+        double momentThroughput = metric.numAfterMarkovBound / (summ.momentBoundTime / (1.e9 * trialsDone));
+        double maxentThroughput = metric.numAfterMomentBound / (summ.maxentTime / (1.e9 * trialsDone));
+        double naiveTime = (summ.actionTime - summ.markovBoundTime - summ.momentBoundTime - summ.maxentTime) / (double)summ.actionTime;
+        double markovTime = summ.markovBoundTime / (double)summ.actionTime;
+        double momentTime = summ.momentBoundTime / (double)summ.actionTime;
+        double maxentTime = summ.maxentTime / (double)summ.actionTime;
         System.out.format("Avg. cascade: %f qps\n", trialsDone * metric.numEnterCascade * 1.e9 / summ.queryTime);
         System.out.format("Cascade PTR\n\t" +
                         "Entered cascade: %d (%f qps)\n\t" +
@@ -218,7 +218,6 @@ public class MBCascadesBench {
         int trialsDone = 0;
         while (System.nanoTime() - start < maxTrialTime * 1.e9) {
             summ.process(df, aggregateColumns);
-            System.out.println(summ.aplResults.size());
             trialsDone++;
         }
         long timeElapsed = System.nanoTime() - start;
@@ -271,9 +270,11 @@ public class MBCascadesBench {
             long premergeStart = System.nanoTime();
             double cutoff = yahoo2premerge(sketches);
             premergeTime += System.nanoTime() - premergeStart;
+            System.out.format("Premerge: %f\n", (System.nanoTime() - premergeStart)/1.e9);
             long queryStart = System.nanoTime();
             DataFrame input = yahoo2precompute(df, sketches, cutoff);
             precomputationTime += System.nanoTime() - queryStart;
+            System.out.format("Precomp: %f\n", (System.nanoTime() - premergeStart)/1.e9);
             summ.process(input);
 //            long mergeStart = System.nanoTime();
 //            HashMap<Integer, YahooSketch> aggs = yahoo2postmerge(summ.o1results, summ.encoded, df, sketches);
