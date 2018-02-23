@@ -123,17 +123,11 @@ public class EstimatedGlobalRatioMetric extends CascadeQualityMetric implements 
         if (useStages[1]) {
             // Markov bounds
             long markovStart = System.nanoTime();
-            double[] outlierRateBounds = MarkovBound.getOutlierRateBounds(cutoff, min, max, logMin, logMax, powerSums, logSums);
-
-            if (outlierRateBounds[1] < outlierRateNeeded) {
+            Action action = MarkovBound.isPastThreshold(outlierRateNeeded, cutoff, min, max, logMin, logMax, powerSums, logSums);
+            if (action != null) {
                 markovBoundTime += System.nanoTime() - markovStart;
-                return Action.PRUNE;
+                return action;
             }
-            if (outlierRateBounds[0] >= outlierRateNeeded) {
-                markovBoundTime += System.nanoTime() - markovStart;
-                return Action.KEEP;
-            }
-
             markovBoundTime += System.nanoTime() - markovStart;
         }
         numAfterMarkovBound++;
