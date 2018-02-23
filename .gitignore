@@ -3,13 +3,18 @@ CMakeFiles/
 *.cmake
 *.svg
 *.dylib
-main
+mlib/main
+mlib/rtest
+javamsketch/cp.txt
 CMakeCache.txt
 *.pdf
 *.csv
 *.lyx~
-mscript/mlib/Makefile
+mlib/Makefile
 mscript/results/report.html
+*.iml
+*.cbp
+*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -28,7 +33,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
