@@ -1,19 +1,21 @@
 {
   "testName": "cascade_milan",
   "minSupport": 0.02,
+  "minGlobalRatio": 30.0,
   "percentile": 1.0,
-  "outlierColumn": "outliers1",
-  "numWarmupTrials": 20,
-  "numTrials": 10,
-  "oracleCubeFilename": "src/test/resources/milan_oracle_cubed.csv",
-  "momentCubeFilename": "src/test/resources/milan_12M_6H_cubed.csv",
+  "numMoments": 10,
+  "momentCubeFilename": "/lfs/0/jding/datasets/milan_1month_4H_cubed.csv",
   "attributes": [
     "Grid",
     "Country",
     "Time"
   ],
-  "doContainment": false,
+  "doContainment": true,
   "verbose": false,
-  "groupsFile": "src/test/resources/milan_grouped_12M_6H.csv",
-  "yahooFile": "src/test/resources/milan_yahoo_12M_6H"
+  "groupsFile": "/lfs/0/jding/datasets/milan_grouped_1month_4H.csv",
+  "yahooFile": "/lfs/0/jding/datasets/milan_yahoo_1month_4H",
+  "maxWarmupTime": 20.0,
+  "maxTrialTime": 60.0,
+  "useSupport": false,
+  "useGlobalRatio": true
 }

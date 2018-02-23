@@ -1,5 +1,5 @@
 {
-  "inputFile": "src/test/resources/milan_grouped_12M_6H.csv",
-  "outputFile": "src/test/resources/milan_yahoo_12M_6H",
-  "sizeParam": 16.0
+  "inputFile": "/lfs/0/jding/datasets/milan_grouped_1month_4H.csv",
+  "outputFile": "/lfs/0/jding/datasets/milan_yahoo_1month_4H",
+  "sizeParam": 32.0
 }
