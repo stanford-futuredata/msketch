@@ -1,6 +1,7 @@
 package sketches;
 
 import msketch.ChebyshevMomentSolver2;
+import msketch.LowPrecision;
 import msketch.MathUtil;
 import msketch.SimpleBoundSolver;
 
@@ -97,73 +98,18 @@ public class CMomentSketch implements QuantileSketch{
         this.logMax = logMax;
     }
 
-    /* Floating point */
     public void convertToLowPrecision(int bits) {
         if (bits >= 64) {
             return;
         }
 
-        System.out.println(Arrays.toString(totalSums));
-
-        double[] scaledChebyMoments = MathUtil.powerSumsToChebyMoments(
-                min, max, totalSums
-        );
-
-        int k = totalSums.length - 1;
-        double r = (max - min) / 2;
-        double xc = (max + min) / 2;
-        // First rescale the variables so that they lie in [-1,1]
-        double[] scaledPowerSums = MathUtil.shiftPowerSum(
-                totalSums,r,xc
-        );
-
-        System.out.println(Arrays.toString(scaledPowerSums));
-        System.out.println(Arrays.toString(scaledChebyMoments));
-
-        double minVal = min;
-        double maxVal = max;
-        for (double val : scaledPowerSums) {
-            if (val < Math.abs(minVal)) minVal = Math.abs(val);
-            if (val > maxVal) maxVal = val;
-        }
-
-        int logRange = (int)Math.ceil(log(maxVal, 2)) - (int)Math.floor(log(minVal, 2));
-        int EL = (int)Math.ceil(log(logRange + 1, 2));
-        int SL = bits - EL - 1;
-        int emax = (int)Math.ceil(log(maxVal, 2));
-        int emin = (int)Math.floor(log(minVal, 2));
-        int maxSignificand = (int)Math.pow(2, SL) - 1;
-//        int max = maxSignificand * (int)Math.pow(2, emax);
-//        int min = (int)Math.pow(2, emin);
-
-        System.out.format("%f %f %d\n", minVal, maxVal, bits);
-        System.out.format("%d %d %d %d\n", logRange, EL, SL, maxSignificand);
-
-        max = encode(max, maxSignificand);
-        min = encode(min, maxSignificand);
-        for (int i = 0; i < scaledPowerSums.length; i++) {
-            scaledPowerSums[i] = encode(scaledPowerSums[i], maxSignificand);
-        }
-
-        totalSums = MathUtil.shiftPowerSum(
-                scaledPowerSums,1/r, 0
-        );
-        totalSums = MathUtil.shiftPowerSum(
-                totalSums,1, -xc
-        );
-
-        System.out.println(Arrays.toString(totalSums));
-    }
-
-    private double encode(double val, int maxSignificand) {
-        int exponent = (int)Math.ceil(log(Math.abs(val) / (maxSignificand + 1), 2));
-        double eps = Math.pow(2, exponent);
-        System.out.format("%d %f %d\n", exponent, eps, Math.round(val / eps));
-        return Math.round(val / eps) * eps;
-    }
-
-    private double log(double val, int base) {
-        return Math.log(val) / Math.log(base);
+        LowPrecision lp = new LowPrecision(bits);
+        lp.encode(min, max, logMin, logMax, totalSums);
+        min = lp.min;
+        max = lp.max;
+        logMin = lp.logMin;
+        logMax = lp.logMax;
+        totalSums = lp.totalSums;
     }
 
     @Override

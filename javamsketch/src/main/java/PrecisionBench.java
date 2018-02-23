@@ -1,6 +1,7 @@
 import io.CSVOutput;
 import io.DataSource;
 import io.SimpleCSVDataSource;
+import sketches.CMomentSketch;
 import sketches.MomentSketch;
 import sketches.QuantileSketch;
 import sketches.SketchLoader;
@@ -64,7 +65,7 @@ public class PrecisionBench {
                         if (verbose) {
                             System.out.println(sketchName + ":" + curTrial + "@" + (int) sParam + "p" + precision);
                         }
-                        MomentSketch curSketch = (MomentSketch)SketchLoader.load(sketchName);
+                        CMomentSketch curSketch = (CMomentSketch)SketchLoader.load(sketchName);
                         curSketch.setVerbose(verbose);
                         curSketch.setCalcError(calcError);
                         curSketch.setSizeParam(sParam);

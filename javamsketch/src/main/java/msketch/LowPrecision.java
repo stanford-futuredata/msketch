@@ -13,9 +13,16 @@ public class LowPrecision {
     public double logMax;
     public double[] powerSums;
     public double[] logSums;
+    public double[] totalSums;
 
     public LowPrecision(int bits) {
         this.bits = bits;
+    }
+
+    /* Kind of a hack but whatever. */
+    public void encode(double min, double max, double logMin, double logMax, double[] totalSums) {
+        encode(min, max, logMin, logMax, totalSums, new double[]{});
+        this.totalSums = this.powerSums;
     }
 
     public void encode(double min, double max, double logMin, double logMax, double[] powerSums, double[] logSums) {
