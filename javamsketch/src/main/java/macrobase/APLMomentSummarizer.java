@@ -20,6 +20,8 @@ public class APLMomentSummarizer extends APLSummarizer {
     private Logger log = LoggerFactory.getLogger("APLMomentSummarizer");
     private String minColumn = null;
     private String maxColumn = null;
+    private String logMinColumn = null;
+    private String logMaxColumn = null;
     private List<String> momentColumns;
     private List<String> logMomentColumns;
     private double percentile;
@@ -47,6 +49,8 @@ public class APLMomentSummarizer extends APLSummarizer {
         ArrayList<String> aggregateNames = new ArrayList<>();
         aggregateNames.add("Minimum");
         aggregateNames.add("Maximum");
+        aggregateNames.add("Log Minimum");
+        aggregateNames.add("Log Maximum");
         aggregateNames.addAll(momentColumns);
         aggregateNames.addAll(logMomentColumns);
         return aggregateNames;
@@ -54,10 +58,12 @@ public class APLMomentSummarizer extends APLSummarizer {
 
     @Override
     public double[][] getAggregateColumns(DataFrame input) {
-        double[][] aggregateColumns = new double[2+momentColumns.size()+logMomentColumns.size()][];
+        double[][] aggregateColumns = new double[4+momentColumns.size()+logMomentColumns.size()][];
         int curCol = 0;
         aggregateColumns[curCol++] = input.getDoubleColumnByName(minColumn);
         aggregateColumns[curCol++] = input.getDoubleColumnByName(maxColumn);
+        aggregateColumns[curCol++] = input.getDoubleColumnByName(logMinColumn);
+        aggregateColumns[curCol++] = input.getDoubleColumnByName(logMaxColumn);
         for (int i = 0; i < momentColumns.size(); i++) {
             aggregateColumns[curCol++] = input.getDoubleColumnByName(momentColumns.get(i));
         }
@@ -72,9 +78,9 @@ public class APLMomentSummarizer extends APLSummarizer {
     @Override
     public Map<String, int[]> getAggregationOps() {
         Map<String, int[]> aggregationOps = new HashMap<>();
-        aggregationOps.put("add", IntStream.range(2, 2+momentColumns.size()+logMomentColumns.size()).toArray());
-        aggregationOps.put("min", new int[]{0});
-        aggregationOps.put("max", new int[]{1});
+        aggregationOps.put("add", IntStream.range(4, 4+momentColumns.size()+logMomentColumns.size()).toArray());
+        aggregationOps.put("min", new int[]{0, 2});
+        aggregationOps.put("max", new int[]{1, 3});
         return aggregationOps;
     }
 
@@ -82,15 +88,15 @@ public class APLMomentSummarizer extends APLSummarizer {
     public List<QualityMetric> getQualityMetricList() {
         List<QualityMetric> qualityMetricList = new ArrayList<>();
         if (useSupport) {
-            EstimatedSupportMetric metric = new EstimatedSupportMetric(0, 1, 2, 2+momentColumns.size(),
-                    (100.0 - percentile) / 100.0, 1e-10, true);
+            EstimatedSupportMetric metric = new EstimatedSupportMetric(0, 1, 2, 3, 4,
+                    4+momentColumns.size(),(100.0 - percentile) / 100.0, 1e-9, true);
             metric.setCascadeStages(useStages);
             metric.setVerbose(verbose);
             qualityMetricList.add(metric);
         }
         if (useGlobalRatio) {
-            EstimatedGlobalRatioMetric metric = new EstimatedGlobalRatioMetric(0, 1, 2, 2+momentColumns.size(),
-                    (100.0 - percentile) / 100.0, 1e-10, true);
+            EstimatedGlobalRatioMetric metric = new EstimatedGlobalRatioMetric(0, 1, 2, 3, 4,
+                    4+momentColumns.size(),(100.0 - percentile) / 100.0, 1e-9, true);
             metric.setCascadeStages(useStages);
             metric.setVerbose(verbose);
             qualityMetricList.add(metric);
@@ -180,6 +186,12 @@ public class APLMomentSummarizer extends APLSummarizer {
     }
     public void setMaxColumn(String maxColumn) {
         this.maxColumn = maxColumn;
+    }
+    public void setLogMinColumn(String logMinColumn) {
+        this.logMinColumn = logMinColumn;
+    }
+    public void setLogMaxColumn(String logMaxColumn) {
+        this.logMaxColumn = logMaxColumn;
     }
     public List<String> getMomentColumns() {
         return momentColumns;
