@@ -171,7 +171,7 @@ public class EstimatedSupportMetric extends CascadeQualityMetric implements Qual
 
     @Override
     public boolean isMonotonic() {
-        return false;
+        return true;
     }
 
     public void setCascadeStages(boolean[] useStages) { this.useStages = useStages; }
