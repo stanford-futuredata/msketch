@@ -1,9 +1,7 @@
 package macrobase;
 
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.metrics.QualityMetric;
-import msketch.MathUtil;
 import sketches.CMomentSketch;
-import sketches.MomentSketch;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,8 +12,10 @@ import java.util.Collections;
 public class EstimatedSupportMetric extends CascadeQualityMetric implements QualityMetric {
     private int minIdx = 0;
     private int maxIdx = 1;
-    private int momentsBaseIdx = 2;
-    private int logMomentsBaseIdx = 2 + 6;
+    private int logMinIdx = 2;
+    private int logMaxIdx = 3;
+    private int momentsBaseIdx = 4;
+    private int logMomentsBaseIdx = 4 + 9;
     private double quantile;  // eg, 0.99
     private double cutoff;
     private double globalCount;
@@ -35,10 +35,12 @@ public class EstimatedSupportMetric extends CascadeQualityMetric implements Qual
 //    public long momentBoundTime = 0;
 //    public long maxentTime = 0;
 
-    public EstimatedSupportMetric(int minIdx, int maxIdx, int momentsBaseIdx,
+    public EstimatedSupportMetric(int minIdx, int maxIdx, int logMinIdx, int logMaxIdx, int momentsBaseIdx,
                                   int logMomentsBaseIdx, double quantile, double tolerance, boolean useCascade) {
         this.minIdx = minIdx;
         this.maxIdx = maxIdx;
+        this.logMinIdx = logMinIdx;
+        this.logMaxIdx = logMaxIdx;
         this.momentsBaseIdx = momentsBaseIdx;
         this.logMomentsBaseIdx = logMomentsBaseIdx;  // points to the first log moment (not zeroth)
         this.quantile = quantile;
@@ -55,12 +57,10 @@ public class EstimatedSupportMetric extends CascadeQualityMetric implements Qual
         CMomentSketch ms = new CMomentSketch(tolerance);
         double min = aggregates[minIdx];
         double max = aggregates[maxIdx];
-        double logMin = Math.log(min);
-        double logMax = Math.log(max);
+        double logMin = aggregates[logMinIdx];
+        double logMax = aggregates[logMaxIdx];
         double[] powerSums = Arrays.copyOfRange(aggregates, momentsBaseIdx, logMomentsBaseIdx);
-        double[] logSums = new double[aggregates.length - logMomentsBaseIdx + 1];
-        logSums[0] = aggregates[momentsBaseIdx];
-        System.arraycopy(aggregates, logMomentsBaseIdx, logSums, 1, aggregates.length - logMomentsBaseIdx);
+        double[] logSums = Arrays.copyOfRange(aggregates, logMomentsBaseIdx, aggregates.length);
         ms.setStats(min, max, logMin, logMax, powerSums, logSums);
         return ms;
     }
@@ -112,36 +112,34 @@ public class EstimatedSupportMetric extends CascadeQualityMetric implements Qual
         }
         numAfterNaiveCheck++;
 
+        double min = aggregates[minIdx];
+        double max = aggregates[maxIdx];
+        double logMin = aggregates[logMinIdx];
+        double logMax = aggregates[logMaxIdx];
+        double[] powerSums = Arrays.copyOfRange(aggregates, momentsBaseIdx, logMomentsBaseIdx);
+        double[] logSums = Arrays.copyOfRange(aggregates, logMomentsBaseIdx, aggregates.length);
+
         if (useStages[1]) {
             // Markov bounds
             long markovStart = System.nanoTime();
-            double min = aggregates[minIdx];
-            double max = aggregates[maxIdx];
-            double[] powerSums = Arrays.copyOfRange(aggregates, momentsBaseIdx, logMomentsBaseIdx);
-            double[] xMinusMinMoments = MathUtil.shiftPowerSum(powerSums, 1, min);
-            double[] maxMinusXMoments = MathUtil.shiftPowerSum(powerSums, -1, max);
-            for (int i = 1; i < logMomentsBaseIdx - momentsBaseIdx; i++) {
-                double cutoffLowerBound = Math.max(0.0, 1 - (xMinusMinMoments[i] / powerSums[0]) / Math.pow(cutoff - min, i));
-                double cutoffUpperBound = Math.min(1.0, (maxMinusXMoments[i] / powerSums[0]) / Math.pow(max - cutoff, i));
-                double outlierRateUpperBound = 1.0 - cutoffLowerBound;
-                double outlierRateLowerBound = 1.0 - cutoffUpperBound;
-                if (outlierRateUpperBound < outlierRateNeeded) {
-                    markovBoundTime += System.nanoTime() - markovStart;
-                    return Action.PRUNE;
-                }
-                if (outlierRateLowerBound >= outlierRateNeeded) {
-                    markovBoundTime += System.nanoTime() - markovStart;
-                    return Action.KEEP;
-                }
+            double[] outlierRateBounds = MarkovBound.getOutlierRateBounds(cutoff, min, max, logMin, logMax, powerSums, logSums);
+
+            if (outlierRateBounds[1] < outlierRateNeeded) {
+                markovBoundTime += System.nanoTime() - markovStart;
+                return Action.PRUNE;
             }
+            if (outlierRateBounds[0] >= outlierRateNeeded) {
+                markovBoundTime += System.nanoTime() - markovStart;
+                return Action.KEEP;
+            }
+
             markovBoundTime += System.nanoTime() - markovStart;
         }
-
-        // TODO: can we do Markov bounds with log moments? According to Wikipedia, since log is not a
-        // non-negative function over the non-negative reals, it cannot be used as an extension to Markov.
         numAfterMarkovBound++;
 
-        CMomentSketch ms = sketchFromAggregates(aggregates);
+        CMomentSketch ms = new CMomentSketch(tolerance);
+        ms.setStats(min, max, logMin, logMax, powerSums, logSums);
+
         if (useStages[2]) {
             // Moments-based bounds
             long momentStart = System.nanoTime();
@@ -179,7 +177,7 @@ public class EstimatedSupportMetric extends CascadeQualityMetric implements Qual
 
     @Override
     public boolean isMonotonic() {
-        return true;
+        return false;
     }
 
     public void setCascadeStages(boolean[] useStages) { this.useStages = useStages; }

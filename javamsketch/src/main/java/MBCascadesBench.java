@@ -84,15 +84,19 @@ public class MBCascadesBench {
             momentColumns.add("m" + i);
         }
         List<String> logMomentColumns = new ArrayList<>();
-        for (int i = 1; i <= numMoments; i++) {
+        for (int i = 0; i <= numMoments; i++) {
             colTypes.put("lm" + i, Schema.ColType.DOUBLE);
             requiredColumns.add("lm" + i);
             logMomentColumns.add("lm" + i);
         }
         colTypes.put("min", Schema.ColType.DOUBLE);
         colTypes.put("max", Schema.ColType.DOUBLE);
+        colTypes.put("lmin", Schema.ColType.DOUBLE);
+        colTypes.put("lmax", Schema.ColType.DOUBLE);
         requiredColumns.add("min");
         requiredColumns.add("max");
+        requiredColumns.add("lmin");
+        requiredColumns.add("lmax");
         CSVDataFrameParser loader = new CSVDataFrameParser(momentCubeFilename, requiredColumns);
         loader.setColumnTypes(colTypes);
         DataFrame df = loader.load();
@@ -103,6 +107,8 @@ public class MBCascadesBench {
         summ.setAttributes(attributes);
         summ.setMinColumn("min");
         summ.setMaxColumn("max");
+        summ.setLogMinColumn("lmin");
+        summ.setLogMaxColumn("lmax");
         summ.setMomentColumns(momentColumns);
         summ.setLogMomentColumns(logMomentColumns);
         summ.setPercentile(percentile);

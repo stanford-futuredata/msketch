@@ -13,8 +13,10 @@ import java.util.Collections;
 public class EstimatedGlobalRatioMetric extends CascadeQualityMetric implements QualityMetric {
     private int minIdx = 0;
     private int maxIdx = 1;
-    private int momentsBaseIdx = 2;
-    private int logMomentsBaseIdx = 2 + 6;
+    private int logMinIdx = 2;
+    private int logMaxIdx = 3;
+    private int momentsBaseIdx = 4;
+    private int logMomentsBaseIdx = 4 + 9;
     private double quantile;  // eg, 0.99
     private double cutoff;
     private double globalCount;
@@ -34,10 +36,12 @@ public class EstimatedGlobalRatioMetric extends CascadeQualityMetric implements 
 //    public long momentBoundTime = 0;
 //    public long maxentTime = 0;
 
-    public EstimatedGlobalRatioMetric(int minIdx, int maxIdx, int momentsBaseIdx,
+    public EstimatedGlobalRatioMetric(int minIdx, int maxIdx, int logMinIdx, int logMaxIdx, int momentsBaseIdx,
                                       int logMomentsBaseIdx, double quantile, double tolerance, boolean useCascade) {
         this.minIdx = minIdx;
         this.maxIdx = maxIdx;
+        this.logMinIdx = logMinIdx;
+        this.logMaxIdx = logMaxIdx;
         this.momentsBaseIdx = momentsBaseIdx;
         this.logMomentsBaseIdx = logMomentsBaseIdx;  // points to the first log moment (not zeroth)
         this.quantile = quantile;
@@ -54,12 +58,10 @@ public class EstimatedGlobalRatioMetric extends CascadeQualityMetric implements 
         CMomentSketch ms = new CMomentSketch(tolerance);
         double min = aggregates[minIdx];
         double max = aggregates[maxIdx];
-        double logMin = Math.log(min);
-        double logMax = Math.log(max);
+        double logMin = aggregates[logMinIdx];
+        double logMax = aggregates[logMaxIdx];
         double[] powerSums = Arrays.copyOfRange(aggregates, momentsBaseIdx, logMomentsBaseIdx);
-        double[] logSums = new double[aggregates.length - logMomentsBaseIdx + 1];
-        logSums[0] = aggregates[momentsBaseIdx];
-        System.arraycopy(aggregates, logMomentsBaseIdx, logSums, 1, aggregates.length - logMomentsBaseIdx);
+        double[] logSums = Arrays.copyOfRange(aggregates, logMomentsBaseIdx, aggregates.length);
         ms.setStats(min, max, logMin, logMax, powerSums, logSums);
         return ms;
     }
@@ -111,17 +113,16 @@ public class EstimatedGlobalRatioMetric extends CascadeQualityMetric implements 
         }
         numAfterNaiveCheck++;
 
+        double min = aggregates[minIdx];
+        double max = aggregates[maxIdx];
+        double logMin = aggregates[logMinIdx];
+        double logMax = aggregates[logMaxIdx];
+        double[] powerSums = Arrays.copyOfRange(aggregates, momentsBaseIdx, logMomentsBaseIdx);
+        double[] logSums = Arrays.copyOfRange(aggregates, logMomentsBaseIdx, aggregates.length);
+
         if (useStages[1]) {
             // Markov bounds
             long markovStart = System.nanoTime();
-            double min = aggregates[minIdx];
-            double max = aggregates[maxIdx];
-            double logMin = Math.log(min);
-            double logMax = Math.log(max);
-            double[] powerSums = Arrays.copyOfRange(aggregates, momentsBaseIdx, logMomentsBaseIdx);
-            double[] logSums = new double[aggregates.length - logMomentsBaseIdx + 1];
-            logSums[0] = aggregates[momentsBaseIdx];
-            System.arraycopy(aggregates, logMomentsBaseIdx, logSums, 1, aggregates.length - logMomentsBaseIdx);
             double[] outlierRateBounds = MarkovBound.getOutlierRateBounds(cutoff, min, max, logMin, logMax, powerSums, logSums);
 
             if (outlierRateBounds[1] < outlierRateNeeded) {
@@ -137,7 +138,9 @@ public class EstimatedGlobalRatioMetric extends CascadeQualityMetric implements 
         }
         numAfterMarkovBound++;
 
-        CMomentSketch ms = sketchFromAggregates(aggregates);
+        CMomentSketch ms = new CMomentSketch(tolerance);
+        ms.setStats(min, max, logMin, logMax, powerSums, logSums);
+
         if (useStages[2]) {
             // Moments-based bounds
             long momentStart = System.nanoTime();
