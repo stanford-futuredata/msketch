@@ -119,7 +119,7 @@ public class APLYahooSummarizer {
 
         List<String> aggregateNames = getAggregateNames();
         long start = System.nanoTime();
-        aplResults = aplKernel.explain(encoded, aggregateColumns);
+        aplResults = aplKernel.explain(encoded, aggregateColumns, encoder.getNextKey());
         aplTime += System.nanoTime() - start;
         mergeTime += aplKernel.mergeTime;
         queryTime += aplKernel.queryTime;

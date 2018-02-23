@@ -75,12 +75,15 @@ public class APLMomentSummarizer extends APLSummarizer {
         return aggregateColumns;
     }
 
-    @Override
-    public Map<String, int[]> getAggregationOps() {
-        Map<String, int[]> aggregationOps = new HashMap<>();
-        aggregationOps.put("add", IntStream.range(4, 4+momentColumns.size()+logMomentColumns.size()).toArray());
-        aggregationOps.put("min", new int[]{0, 2});
-        aggregationOps.put("max", new int[]{1, 3});
+    public List<APrioriLinear.AggregationOp> getSimpleAggregationOps() {
+        List<APrioriLinear.AggregationOp> aggregationOps = new ArrayList<>();
+        aggregationOps.add(APrioriLinear.AggregationOp.MIN);
+        aggregationOps.add(APrioriLinear.AggregationOp.MAX);
+        aggregationOps.add(APrioriLinear.AggregationOp.MIN);
+        aggregationOps.add(APrioriLinear.AggregationOp.MAX);
+        for (int i = 0; i < momentColumns.size() + logMomentColumns.size(); i++) {
+            aggregationOps.add(APrioriLinear.AggregationOp.SUM);
+        }
         return aggregationOps;
     }
 
@@ -146,9 +149,9 @@ public class APLMomentSummarizer extends APLSummarizer {
 
         double[][] aggregateColumns = getAggregateColumns(input);
         List<String> aggregateNames = getAggregateNames();
-        Map<String, int[]> aggregationOps = getAggregationOps();
+        List<APrioriLinear.AggregationOp> aggregationOps = getSimpleAggregationOps();
         long start = System.nanoTime();
-        List<APLExplanationResult> aplResults = aplKernel.explain(encoded, aggregateColumns, aggregationOps);
+        List<APLExplanationResult> aplResults = aplKernel.explain(encoded, aggregateColumns, encoder.getNextKey(), aggregationOps);
         aplTime += System.nanoTime() - start;
         mergeTime += aplKernel.mergeTime;
         queryTime += aplKernel.queryTime;
