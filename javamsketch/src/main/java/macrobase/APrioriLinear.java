@@ -31,6 +31,10 @@ public class APrioriLinear {
 
     public List<Integer> o1results;
 
+    public enum AggregationOp {
+        MIN, MAX, SUM;
+    }
+
     public APrioriLinear(
             List<QualityMetric> qualityMetrics,
             List<Double> thresholds
@@ -44,15 +48,17 @@ public class APrioriLinear {
 
     public List<APLExplanationResult> explain(
             final List<int[]> attributes,
-            double[][] aggregateColumns
+            double[][] aggregateColumns,
+            int numSingletons
     ) {
-        return explain(attributes, aggregateColumns, null);
+        return explain(attributes, aggregateColumns, numSingletons, Collections.nCopies(aggregateColumns.length, AggregationOp.SUM));
     }
 
     public List<APLExplanationResult> explain(
             final List<int[]> attributes,
             double[][] aggregateColumns,
-            Map<String, int[]> aggregationOps
+            int numSingletons,
+            List<AggregationOp> aggregationOps
     ) {
         final int numAggregates = aggregateColumns.length;
         final int numRows = aggregateColumns[0].length;
@@ -61,35 +67,25 @@ public class APrioriLinear {
         // allow them to determine the appropriate relative thresholds
         double[] globalAggregates = new double[numAggregates];
         start = System.nanoTime();
-        if (aggregationOps == null) {
-            for (int j = 0; j < numAggregates; j++) {
-                globalAggregates[j] = 0;
-                double[] curColumn = aggregateColumns[j];
-                for (int i = 0; i < numRows; i++) {
-                    globalAggregates[j] += curColumn[i];
-                }
-            }
-        } else {
-            for (int j : aggregationOps.getOrDefault("add", new int[0])) {
-                globalAggregates[j] = 0;
-                double[] curColumn = aggregateColumns[j];
-                for (int i = 0; i < numRows; i++) {
-                    globalAggregates[j] += curColumn[i];
-                }
-            }
-            for (int j : aggregationOps.getOrDefault("min", new int[0])) {
-                double[] curColumn = aggregateColumns[j];
-                globalAggregates[j] = curColumn[0];
-                for (int i = 0; i < numRows; i++) {
-                    globalAggregates[j] = Math.min(globalAggregates[j], curColumn[i]);
-                }
-            }
-            for (int j : aggregationOps.getOrDefault("max", new int[0])) {
-                double[] curColumn = aggregateColumns[j];
-                globalAggregates[j] = curColumn[0];
-                for (int i = 0; i < numRows; i++) {
-                    globalAggregates[j] = Math.max(globalAggregates[j], curColumn[i]);
-                }
+        for (int j = 0; j < numAggregates; j++) {
+            globalAggregates[j] = 0;
+            double[] curColumn = aggregateColumns[j];
+            switch (aggregationOps.get(j)) {
+                case MIN:
+                    for (int i = 0; i < numRows; i++) {
+                        globalAggregates[j] = Math.min(globalAggregates[j], curColumn[i]);
+                    }
+                    break;
+                case MAX:
+                    for (int i = 0; i < numRows; i++) {
+                        globalAggregates[j] = Math.max(globalAggregates[j], curColumn[i]);
+                    }
+                    break;
+                case SUM:
+                    for (int i = 0; i < numRows; i++) {
+                        globalAggregates[j] += curColumn[i];
+                    }
+                    break;
             }
         }
         mergeTime += System.nanoTime() - start;
@@ -108,38 +104,35 @@ public class APrioriLinear {
         }
 
         start = System.nanoTime();
-        HashMap<Integer, double[]> aggregates = new HashMap<>();
+        List<double[]> aggregates = new ArrayList<>();
+        for (int i = 0; i < numSingletons; i++) {
+            aggregates.add(new double[numAggregates]);
+        }
         for (int i = 0; i < numRows; i++) {
             int[] curRowAttributes = attributes.get(i);
             for (int c = 0; c < curRowAttributes.length; c++) {
                 int curCandidate = curRowAttributes[c];
                 double[] candidateVal = aggregates.get(curCandidate);
-                if (candidateVal == null) {
-                    aggregates.put(curCandidate, Arrays.copyOf(aRows[i], numAggregates));
-                } else if (aggregationOps == null) {
-                    for (int a = 0; a < numAggregates; a++) {
-                        candidateVal[a] += aRows[i][a];
-                    }
-                } else {
-                    for (int a : aggregationOps.getOrDefault("add", new int[0])) {
-                        candidateVal[a] += aRows[i][a];
-                    }
-                    for (int a : aggregationOps.getOrDefault("min", new int[0])) {
-                        candidateVal[a] = Math.min(candidateVal[a], aRows[i][a]);
-                    }
-                    for (int a : aggregationOps.getOrDefault("max", new int[0])) {
-                        candidateVal[a] = Math.max(candidateVal[a], aRows[i][a]);
+                for (int a = 0; a < numAggregates; a++) {
+                    switch (aggregationOps.get(a)) {
+                        case MIN:
+                            candidateVal[a] = Math.min(candidateVal[a], aRows[i][a]);
+                            break;
+                        case MAX:
+                            candidateVal[a] = Math.max(candidateVal[a], aRows[i][a]);
+                            break;
+                        case SUM:
+                            candidateVal[a] += aRows[i][a];
+                            break;
                     }
                 }
             }
         }
-
         mergeTime += System.nanoTime() - start;
 
         HashSet<Integer> curOrderSaved = new HashSet<>();
-        int pruned = 0;
         start = System.nanoTime();
-        for (int curCandidate: aggregates.keySet()) {
+        for (int curCandidate = 0; curCandidate < numSingletons; curCandidate++) {
             double[] curAggregates = aggregates.get(curCandidate);
             QualityMetric.Action action = QualityMetric.Action.KEEP;
             for (int i = 0; i < qualityMetrics.length; i++) {
@@ -149,8 +142,6 @@ public class APrioriLinear {
             }
             if (action == QualityMetric.Action.KEEP) {
                 curOrderSaved.add(curCandidate);
-            } else {
-                pruned++;
             }
         }
         queryTime += System.nanoTime() - start;
@@ -174,16 +165,6 @@ public class APrioriLinear {
             );
         }
         return results;
-    }
-
-    private ArrayList<IntSet> getCandidates(
-            int[] set
-    ) {
-        ArrayList<IntSet> candidates = new ArrayList<>();
-        for (int i : set) {
-            candidates.add(new IntSet(i));
-        }
-        return candidates;
     }
 
     public void setDoContainment(boolean doContainment) { this.doContainment = doContainment; }

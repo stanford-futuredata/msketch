@@ -107,9 +107,8 @@ public class APLOutlierSummarizer extends APLSummarizer {
 
         double[][] aggregateColumns = getAggregateColumns(input);
         List<String> aggregateNames = getAggregateNames();
-        Map<String, int[]> aggregationOps = getAggregationOps();
         long start = System.nanoTime();
-        List<APLExplanationResult> aplResults = aplKernel.explain(encoded, aggregateColumns, aggregationOps);
+        List<APLExplanationResult> aplResults = aplKernel.explain(encoded, aggregateColumns, encoder.getNextKey());
         aplTime += System.nanoTime() - start;
         mergeTime += aplKernel.mergeTime;
         queryTime += aplKernel.queryTime;

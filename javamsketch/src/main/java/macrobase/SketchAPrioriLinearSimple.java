@@ -43,7 +43,8 @@ public class SketchAPrioriLinearSimple {
 
     public List<APLSketchExplanationResult> explain(
             final List<int[]> attributes,
-            YahooSketch[][] aggregateColumns
+            YahooSketch[][] aggregateColumns,
+            int numSingletons
     ) throws Exception {
         final int numAggregates = aggregateColumns.length;
         final int numRows = aggregateColumns[0].length;
@@ -78,36 +79,29 @@ public class SketchAPrioriLinearSimple {
         }
 
         start = System.nanoTime();
-        HashMap<Integer, YahooSketch[]> setAggregates = new HashMap<>();
-
+        List<YahooSketch[]> aggregates = new ArrayList<>();
+        for (int i = 0; i < numSingletons; i++) {
+            YahooSketch agg = new YahooSketch();
+            agg.setSizeParam(sizeParam);
+            agg.initialize();
+            aggregates.add(new YahooSketch[]{agg});
+        }
         for (int i = 0; i < numRows; i++) {
             int[] curRowAttributes = attributes.get(i);
             for (int c = 0; c < curRowAttributes.length; c++) {
                 int curCandidate = curRowAttributes[c];
-                YahooSketch[] candidateVal = setAggregates.get(curCandidate);
-                if (candidateVal == null) {
-                    YahooSketch[] aggregates = new YahooSketch[numAggregates];
-                    for (int a = 0; a < numAggregates; a++) {
-                        YahooSketch agg = new YahooSketch();
-                        agg.setSizeParam(sizeParam);
-                        agg.initialize();
-                        aggregates[a] = agg.mergeYahoo(aRows[i][0]);
-                    }
-                    setAggregates.put(curCandidate, aggregates);
-                } else {
-                    for (int a = 0; a < numAggregates; a++) {
-                        candidateVal[a] = candidateVal[a].mergeYahoo(aRows[i][a]);
-                    }
+                YahooSketch[] candidateVal = aggregates.get(curCandidate);
+                for (int a = 0; a < numAggregates; a++) {
+                    candidateVal[a] = candidateVal[a].mergeYahoo(aRows[i][a]);
                 }
             }
         }
         mergeTime += System.nanoTime() - start;
 
         HashSet<Integer> curOrderSaved = new HashSet<>();
-        int pruned = 0;
         start = System.nanoTime();
-        for (int curCandidate: setAggregates.keySet()) {
-            YahooSketch[] curAggregates = setAggregates.get(curCandidate);
+        for (int curCandidate = 0; curCandidate < numSingletons; curCandidate++) {
+            YahooSketch[] curAggregates = aggregates.get(curCandidate);
             QualityMetric.Action action = QualityMetric.Action.KEEP;
             for (int i = 0; i < qualityMetrics.length; i++) {
                 SketchQualityMetric q = qualityMetrics[i];
@@ -118,26 +112,24 @@ public class SketchAPrioriLinearSimple {
                 // if a set is already past the threshold on all metrics,
                 // save it and no need for further exploration if we do containment
                 curOrderSaved.add(curCandidate);
-            } else {
-                pruned++;
             }
         }
         queryTime += System.nanoTime() - start;
 
         HashMap<Integer, YahooSketch[]> curSavedAggregates = new HashMap<>(curOrderSaved.size());
         for (int curSaved : curOrderSaved) {
-            curSavedAggregates.put(curSaved, setAggregates.get(curSaved));
+            curSavedAggregates.put(curSaved, aggregates.get(curSaved));
         }
 
         List<APLSketchExplanationResult> results = new ArrayList<>();
         for (int curSet : curSavedAggregates.keySet()) {
-            YahooSketch[] aggregates = curSavedAggregates.get(curSet);
+            YahooSketch[] savedAggregates = curSavedAggregates.get(curSet);
             double[] metrics = new double[qualityMetrics.length];
             for (int i = 0; i < metrics.length; i++) {
-                metrics[i] = qualityMetrics[i].value(aggregates);
+                metrics[i] = qualityMetrics[i].value(savedAggregates);
             }
             results.add(
-                    new APLSketchExplanationResult(qualityMetrics, new IntSet(curSet), aggregates, metrics)
+                    new APLSketchExplanationResult(qualityMetrics, new IntSet(curSet), savedAggregates, metrics)
             );
         }
         return results;
