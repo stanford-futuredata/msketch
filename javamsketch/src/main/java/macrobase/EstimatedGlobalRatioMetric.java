@@ -116,28 +116,25 @@ public class EstimatedGlobalRatioMetric extends CascadeQualityMetric implements 
             long markovStart = System.nanoTime();
             double min = aggregates[minIdx];
             double max = aggregates[maxIdx];
+            double logMin = Math.log(min);
+            double logMax = Math.log(max);
             double[] powerSums = Arrays.copyOfRange(aggregates, momentsBaseIdx, logMomentsBaseIdx);
-            double[] xMinusMinMoments = MathUtil.shiftPowerSum(powerSums, 1, min);
-            double[] maxMinusXMoments = MathUtil.shiftPowerSum(powerSums, -1, max);
-            for (int i = 1; i < logMomentsBaseIdx - momentsBaseIdx; i++) {
-                double cutoffLowerBound = Math.max(0.0, 1 - (xMinusMinMoments[i] / powerSums[0]) / Math.pow(cutoff - min, i));
-                double cutoffUpperBound = Math.min(1.0, (maxMinusXMoments[i] / powerSums[0]) / Math.pow(max - cutoff, i));
-                double outlierRateUpperBound = 1.0 - cutoffLowerBound;
-                double outlierRateLowerBound = 1.0 - cutoffUpperBound;
-                if (outlierRateUpperBound < outlierRateNeeded) {
-                    markovBoundTime += System.nanoTime() - markovStart;
-                    return Action.PRUNE;
-                }
-                if (outlierRateLowerBound >= outlierRateNeeded) {
-                    markovBoundTime += System.nanoTime() - markovStart;
-                    return Action.KEEP;
-                }
+            double[] logSums = new double[aggregates.length - logMomentsBaseIdx + 1];
+            logSums[0] = aggregates[momentsBaseIdx];
+            System.arraycopy(aggregates, logMomentsBaseIdx, logSums, 1, aggregates.length - logMomentsBaseIdx);
+            double[] outlierRateBounds = MarkovBound.getOutlierRateBounds(cutoff, min, max, logMin, logMax, powerSums, logSums);
+
+            if (outlierRateBounds[1] < outlierRateNeeded) {
+                markovBoundTime += System.nanoTime() - markovStart;
+                return Action.PRUNE;
             }
+            if (outlierRateBounds[0] >= outlierRateNeeded) {
+                markovBoundTime += System.nanoTime() - markovStart;
+                return Action.KEEP;
+            }
+
             markovBoundTime += System.nanoTime() - markovStart;
         }
-
-        // TODO: can we do Markov bounds with log moments? According to Wikipedia, since log is not a
-        // non-negative function over the non-negative reals, it cannot be used as an extension to Markov.
         numAfterMarkovBound++;
 
         CMomentSketch ms = sketchFromAggregates(aggregates);
