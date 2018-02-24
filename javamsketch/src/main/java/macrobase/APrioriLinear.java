@@ -80,6 +80,7 @@ public class APrioriLinear {
             }
         }
 
+        // TODO: for some reason globalAggregates[0] comes out to 0 when it should be positive
         double[] globalAggregates = Arrays.copyOf(initialAggregate, numAggregates);
         start = System.nanoTime();
         for (int j = 0; j < numAggregates; j++) {
