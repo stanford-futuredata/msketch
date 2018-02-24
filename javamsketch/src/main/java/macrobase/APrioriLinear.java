@@ -66,6 +66,10 @@ public class APrioriLinear {
         // Quality metrics are initialized with global aggregates to
         // allow them to determine the appropriate relative thresholds
         double[] globalAggregates = new double[numAggregates];
+        globalAggregates[0] = Double.MAX_VALUE;
+        globalAggregates[1] = -Double.MAX_VALUE;
+        globalAggregates[2] = Double.MAX_VALUE;
+        globalAggregates[3] = -Double.MAX_VALUE;
         start = System.nanoTime();
         for (int j = 0; j < numAggregates; j++) {
             globalAggregates[j] = 0;
