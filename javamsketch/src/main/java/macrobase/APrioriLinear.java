@@ -105,8 +105,13 @@ public class APrioriLinear {
 
         start = System.nanoTime();
         List<double[]> aggregates = new ArrayList<>();
+        double[] initialAggregate = new double[numAggregates];
+        initialAggregate[0] = Double.MAX_VALUE;
+        initialAggregate[1] = -Double.MAX_VALUE;
+        initialAggregate[2] = Double.MAX_VALUE;
+        initialAggregate[3] = -Double.MAX_VALUE;
         for (int i = 0; i < numSingletons; i++) {
-            aggregates.add(new double[numAggregates]);
+            aggregates.add(Arrays.copyOf(initialAggregate, numAggregates));
         }
         for (int i = 0; i < numRows; i++) {
             int[] curRowAttributes = attributes.get(i);
