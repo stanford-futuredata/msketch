@@ -34,7 +34,7 @@ public class PrecisionBench {
 
         verbose = conf.get("verbose", false);
         calcError = conf.get("calcError", false);
-        appendTimeStamp = conf.get("appendTimeStamp", false);
+        appendTimeStamp = conf.get("appendTimeStamp", true);
     }
 
     public static void main(String[] args) throws Exception {
@@ -65,7 +65,7 @@ public class PrecisionBench {
                         if (verbose) {
                             System.out.println(sketchName + ":" + curTrial + "@" + (int) sParam + "p" + precision);
                         }
-                        CMomentSketch curSketch = (CMomentSketch)SketchLoader.load(sketchName);
+                        CMomentSketch curSketch = new CMomentSketch(1e-9);
                         curSketch.setVerbose(verbose);
                         curSketch.setCalcError(calcError);
                         curSketch.setSizeParam(sParam);
@@ -83,6 +83,7 @@ public class PrecisionBench {
                         try {
                             qs = curSketch.getQuantiles(quantiles);
                         } catch (Exception e) {
+                            e.printStackTrace();
                             continue;
                         }
                         endTime = System.nanoTime();

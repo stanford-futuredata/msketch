@@ -106,6 +106,9 @@ public class NewtonOptimizer {
             for (int i = 0; i < k; i++) {
                 newX[i] = x[i] + stepScaleFactor * stepVector.getEntry(i);
             }
+            if (Double.isNaN(newX[0])) {
+                break;
+            }
             // Warning: this overwrites grad and hess
             P.computeAll(newX, requiredPrecision);
 
@@ -121,6 +124,10 @@ public class NewtonOptimizer {
                     }
                     for (int i = 0; i < k; i++) {
                         newX[i] = x[i] + stepScaleFactor * stepVector.getEntry(i);
+                    }
+                    if (Double.isNaN(newX[0])) {
+                        stepCount = step;
+                        return x;
                     }
                     P.computeAll(newX, requiredPrecision);
                 }
