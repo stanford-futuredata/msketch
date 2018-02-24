@@ -65,11 +65,22 @@ public class APrioriLinear {
 
         // Quality metrics are initialized with global aggregates to
         // allow them to determine the appropriate relative thresholds
-        double[] globalAggregates = new double[numAggregates];
-        globalAggregates[0] = Double.MAX_VALUE;
-        globalAggregates[1] = -Double.MAX_VALUE;
-        globalAggregates[2] = Double.MAX_VALUE;
-        globalAggregates[3] = -Double.MAX_VALUE;
+
+        double[] initialAggregate = new double[numAggregates];
+        for (int a = 0; a < numAggregates; a++) {
+            switch (aggregationOps.get(a)) {
+                case MIN:
+                    initialAggregate[a] = Double.MAX_VALUE;
+                    break;
+                case MAX:
+                    initialAggregate[a] = -Double.MAX_VALUE;
+                    break;
+                case SUM:
+                    break;
+            }
+        }
+
+        double[] globalAggregates = Arrays.copyOf(initialAggregate, numAggregates);
         start = System.nanoTime();
         for (int j = 0; j < numAggregates; j++) {
             globalAggregates[j] = 0;
@@ -109,11 +120,6 @@ public class APrioriLinear {
 
         start = System.nanoTime();
         List<double[]> aggregates = new ArrayList<>();
-        double[] initialAggregate = new double[numAggregates];
-        initialAggregate[0] = Double.MAX_VALUE;
-        initialAggregate[1] = -Double.MAX_VALUE;
-        initialAggregate[2] = Double.MAX_VALUE;
-        initialAggregate[3] = -Double.MAX_VALUE;
         for (int i = 0; i < numSingletons; i++) {
             aggregates.add(Arrays.copyOf(initialAggregate, numAggregates));
         }
