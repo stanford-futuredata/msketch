@@ -1,5 +1,5 @@
 {
-  "testName": "find_hepmass",
+  "testName": "find_hepmass_r",
   "fileName": "../../datasets/hepmass_l.csv",
   "columnIdx": 0,
   "numTrials": 20,
