@@ -20,6 +20,11 @@ public class SlidingWindowBench {
 
     ArrayList<double[]> panes;
 
+    class Timing {
+        long mergeTime = 0;
+        long queryTime = 0;
+    }
+
     public SlidingWindowBench(String confFile) throws IOException {
         RunConfig conf = RunConfig.fromJsonFile(confFile);
         testName = conf.get("testName");
@@ -58,23 +63,27 @@ public class SlidingWindowBench {
 
     public Map<String, String> runCascade(boolean[] cascadeStages) throws Exception {
         List<Boolean> alerts = new ArrayList<>();
+        Timing warmupTiming = new Timing();
         long warmupStart = System.nanoTime();
         while (System.nanoTime() - warmupStart < maxWarmupTime * 1.e9) {
             System.gc();
-            alerts = cascadeTrial(cascadeStages);
+            alerts = cascadeTrial(cascadeStages, warmupTiming);
         }
         System.out.println("Warmup finished");
         int trialsDone = 0;
+        Timing timing = new Timing();
         long start = System.nanoTime();
         while (System.nanoTime() - start < maxTrialTime * 1.e9) {
             System.gc();
-            alerts = cascadeTrial(cascadeStages);
+            alerts = cascadeTrial(cascadeStages, timing);
             trialsDone++;
         }
         long timeElapsed = System.nanoTime() - start;
         int numAlerts = Collections.frequency(alerts, true);
 
         System.out.format("Avg runtime: %f\n", timeElapsed / (1.e9 * trialsDone));
+        System.out.format("Avg merge time: %f\n", timing.mergeTime / (1.e9 * trialsDone));
+        System.out.format("Avg query time: %f\n", timing.queryTime / (1.e9 * trialsDone));
         System.out.format("Num alerts: %d\n\n", numAlerts);
 
         Map<String, String> result = new HashMap<String, String>();
@@ -82,10 +91,12 @@ public class SlidingWindowBench {
         result.put("markov", String.format("%b", cascadeStages[1]));
         result.put("racz", String.format("%b", cascadeStages[2]));
         result.put("avg_runtime", String.format("%f", timeElapsed / (1.e9 * trialsDone)));
+        result.put("avg_mergetime", String.format("%f", timing.mergeTime / (1.e9 * trialsDone)));
+        result.put("avg_querytime", String.format("%f", timing.queryTime / (1.e9 * trialsDone)));
         return result;
     }
 
-    private List<Boolean> cascadeTrial(boolean[] cascadeStages) {
+    private List<Boolean> cascadeTrial(boolean[] cascadeStages, Timing timing) {
         CMomentSketch sketch = new CMomentSketch(1e-9);
         sketch.setCalcError(false);
         sketch.setSizeParam(sizeParamMSketch);
@@ -96,6 +107,7 @@ public class SlidingWindowBench {
         alerter.setCascadeStages(cascadeStages);
 
         // Create the initial window
+        long mergeStart = System.nanoTime();
         List<CMomentSketch> paneSketches = new ArrayList<>();
         Queue<Double> paneMins = new LinkedList<>();
         Queue<Double> paneMaxs = new LinkedList<>();
@@ -116,12 +128,16 @@ public class SlidingWindowBench {
             paneLogMins.add(paneSketch.getLogMin());
             paneLogMaxs.add(paneSketch.getLogMax());
         }
+        timing.mergeTime += System.nanoTime() - mergeStart;
 
+        long queryStart = System.nanoTime();
         alerts.add(alerter.checkAlert(sketch));
+        timing.queryTime += System.nanoTime() - queryStart;
 
         // Begin sliding window
         int firstPaneSketchIdx = 0;
         for (; curPane < panes.size(); curPane++) {
+            mergeStart = System.nanoTime();
             CMomentSketch paneSketch = paneSketches.get(firstPaneSketchIdx);
 
             // Remove oldest pane
@@ -153,8 +169,11 @@ public class SlidingWindowBench {
             sketch.setLogMax(Collections.max(paneLogMaxs));
 
             firstPaneSketchIdx = (firstPaneSketchIdx + 1) % windowSize;
+            timing.mergeTime += System.nanoTime() - mergeStart;
 
+            queryStart = System.nanoTime();
             alerts.add(alerter.checkAlert(sketch));
+            timing.queryTime += System.nanoTime() - queryStart;
         }
 
         return alerts;
@@ -162,34 +181,41 @@ public class SlidingWindowBench {
 
     public Map<String, String> runYahoo() throws Exception {
         List<Boolean> alerts = new ArrayList<>();
+        Timing warmupTiming = new Timing();
         long warmupStart = System.nanoTime();
         while (System.nanoTime() - warmupStart < maxWarmupTime * 1.e9) {
             System.gc();
-            alerts = yahooTrial();
+            alerts = yahooTrial(warmupTiming);
         }
         System.out.println("Warmup finished");
         int trialsDone = 0;
+        Timing timing = new Timing();
         long start = System.nanoTime();
         while (System.nanoTime() - start < maxTrialTime * 1.e9) {
             System.gc();
-            alerts = yahooTrial();
+            alerts = yahooTrial(timing);
             trialsDone++;
         }
         long timeElapsed = System.nanoTime() - start;
         int numAlerts = Collections.frequency(alerts, true);
 
         System.out.format("Avg runtime: %f\n", timeElapsed / (1.e9 * trialsDone));
+        System.out.format("Avg merge time: %f\n", timing.mergeTime / (1.e9 * trialsDone));
+        System.out.format("Avg query time: %f\n", timing.queryTime / (1.e9 * trialsDone));
         System.out.format("Num alerts: %d\n\n", numAlerts);
 
         Map<String, String> result = new HashMap<String, String>();
         result.put("avg_runtime", String.format("%f", timeElapsed / (1.e9 * trialsDone)));
+        result.put("avg_mergetime", String.format("%f", timing.mergeTime / (1.e9 * trialsDone)));
+        result.put("avg_querytime", String.format("%f", timing.queryTime / (1.e9 * trialsDone)));
         return result;
     }
 
-    private List<Boolean> yahooTrial() throws Exception {
+    private List<Boolean> yahooTrial(Timing timing) throws Exception {
         List<Boolean> alerts = new ArrayList<>();
 
         // Create the initial window
+        long mergeStart = System.nanoTime();
         ArrayList<YahooSketch> paneSketches = new ArrayList<>();
         int curPane = 0;
         for (; curPane < windowSize; curPane++) {
@@ -207,12 +233,16 @@ public class SlidingWindowBench {
         sketch.setSizeParam(sizeParamYahoo);
         sketch.initialize();
         sketch.mergeYahoo(paneSketches);
+        timing.mergeTime += System.nanoTime() - mergeStart;
 
+        long queryStart = System.nanoTime();
         alerts.add(sketch.getQuantile(quantile) >= threshold);
+        timing.queryTime += System.nanoTime() - queryStart;
 
         // Begin sliding window
         int firstPaneSketchIdx = 0;
         for (; curPane < panes.size(); curPane++) {
+            mergeStart = System.nanoTime();
             YahooSketch paneSketch = paneSketches.get(firstPaneSketchIdx);
 
             // Remove oldest pane
@@ -226,8 +256,11 @@ public class SlidingWindowBench {
             sketch.mergeYahoo(paneSketches);
 
             firstPaneSketchIdx = (firstPaneSketchIdx + 1) % windowSize;
+            timing.mergeTime += System.nanoTime() - mergeStart;
 
+            queryStart = System.nanoTime();
             alerts.add(sketch.getQuantile(quantile) >= threshold);
+            timing.queryTime += System.nanoTime() - queryStart;
         }
 
         return alerts;
