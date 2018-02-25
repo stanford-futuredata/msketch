@@ -51,8 +51,6 @@ public class ChebyshevMomentSolver2 {
         double[] posLogMoments = MathUtil.powerSumsToPosMoments(
                 logPowerSums, logMin, logMax
         );
-        System.out.println(Arrays.toString(posPowerMoments));
-        System.out.println(Arrays.toString(posLogMoments));
 
         // compare whether log moments or standard moments are closer to uniform distribution
         double powerDelta = MathUtil.deltaFromUniformMoments(posPowerMoments);

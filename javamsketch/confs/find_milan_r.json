@@ -1,5 +1,5 @@
 {
-  "testName": "find_milan",
+  "testName": "find_milan_r",
   "fileName": "../../datasets/internet-mi-2013-11-01_09.csv",
   "columnIdx": 0,
   "numTrials": 10,
