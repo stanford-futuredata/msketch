@@ -1,6 +1,6 @@
 {
   "testName": "point_hepmass_m",
-  "fileName": "../../datasets/hepmass.csv",
+  "fileName": "../../datasets/hepmass_l.csv",
   "columnIdx": 0,
   "numTrials": 5,
   "numSolveTrials": 1000,
