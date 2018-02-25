@@ -1,5 +1,6 @@
 import milan
 import exponential
+import hepmass
 import estimator
 import cvx_estimator
 import gauss_estimator
@@ -16,10 +17,12 @@ def main():
     datasets = {
         "milan": milan.data,
         "exponential": exponential.data,
+        "hepmass": hepmass.data
     }
     isLog = {
         "milan": True,
-        "exponential": False
+        "exponential": False,
+        "hepmass": False
     }
     solvers = {
         "lp": cvx_estimator.CvxEstimator(k,1000,solver="lp"),

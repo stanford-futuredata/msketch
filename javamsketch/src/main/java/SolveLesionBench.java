@@ -2,6 +2,7 @@ import io.CSVOutput;
 import msketch.ChebyshevMomentSolver2;
 import msketch.MnatSolver;
 import msketch.data.ExponentialData;
+import msketch.data.HepData;
 import msketch.data.MilanData;
 import msketch.data.MomentData;
 
@@ -11,27 +12,25 @@ import java.util.*;
 public class SolveLesionBench {
     private String testName;
     private boolean verbose;
+    private int k;
 
     public SolveLesionBench(String confFile) throws IOException {
         RunConfig conf = RunConfig.fromJsonFile(confFile);
         testName = conf.get("testName");
         verbose = conf.get("verbose", false);
+        k = conf.get("k");
     }
 
     public List<Map<String, String>> run() {
         ArrayList<Map<String, String>> results = new ArrayList<>();
 
-        Map<String, MomentData> dataset = new HashMap<>();
-        dataset.put("milan", new MilanData());
-        dataset.put("exponential", new ExponentialData());
-
-        List<String> datasetNames = Arrays.asList("milan", "exponential");
+        List<String> datasetNames = Arrays.asList("milan", "exponential", "hepmass");
         List<MomentData> datasets = Arrays.asList(
                 new MilanData(),
-                new ExponentialData()
+                new ExponentialData(),
+                new HepData()
         );
-        int k = 7;
-        List<Boolean> useStandardBasis = Arrays.asList(false, true);
+        List<Boolean> useStandardBasis = Arrays.asList(false, true, true);
 
         List<Double> ps = new ArrayList<>();
         int numQuantiles = 21;
@@ -50,6 +49,7 @@ public class SolveLesionBench {
         int numSolveTrials = 1;
         for (int di = 0; di < datasetNames.size(); di++) {
             String dname = datasetNames.get(di);
+            System.out.println(dname);
             MomentData mData = datasets.get(di);
             int ka = k;
             int kb = k;
