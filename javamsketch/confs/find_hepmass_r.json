@@ -2,16 +2,11 @@
   "testName": "find_hepmass",
   "fileName": "../../datasets/hepmass_l.csv",
   "columnIdx": 0,
-  "numTrials": 10,
+  "numTrials": 20,
   "numSolveTrials": 1,
   "methods": {
-    "cmoments": [5.0, 9.0, 13.0],
-    "tdigest": [1.0, 2.0, 4.0, 8.0],
-    "yahoo": [8.0, 16.0, 32.0],
-    "sampling": [500.0, 1000.0, 2000.0],
-    "spark_gk": [20.0, 30.0, 40.0, 50.0],
-    "approx_histogram":  [100.0, 200.0, 400.0, 1000.0],
-    "histogram":  [100.0, 200.0, 400.0, 1000.0]
+    "sampling": [500.0, 800.0, 1000.0],
+    "yahoo": [8.0, 16.0, 32.0]
   },
   "quantiles": [
     0.01, 0.05, 0.1, 0.15,
