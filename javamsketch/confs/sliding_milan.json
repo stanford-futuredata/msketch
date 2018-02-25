@@ -1,0 +1,12 @@
+{
+  "testName": "sliding_milan",
+  "inputFile": "src/test/resources/milan_grouped_2M_10min.csv",
+  "quantile": 0.99,
+  "threshold": 400.0,
+  "windowSize": 36,
+  "verbose": false,
+  "maxWarmupTime": 1.0,
+  "maxTrialTime": 1.0,
+  "sizeParamYahoo": 16.0,
+  "sizeParamMSketch": 9.0
+}
