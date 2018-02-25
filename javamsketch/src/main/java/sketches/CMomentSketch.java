@@ -165,8 +165,42 @@ public class CMomentSketch implements QuantileSketch{
         return this;
     }
 
+    public double[] boundGreaterThanThresholdMarkov(double cutoff) {
+        double[] outlierRateBounds = new double[2];
+        outlierRateBounds[0] = 0.0;
+        outlierRateBounds[1] = 1.0;
+        double[] powerSums = Arrays.copyOfRange(totalSums, 0, ka);
+        double[] logSums = Arrays.copyOfRange(totalSums, ka, ka+kb);
+
+        if (ka > 1) {
+            double[] xMinusMinMoments = MathUtil.shiftPowerSum(powerSums, 1, min);
+            double[] maxMinusXMoments = MathUtil.shiftPowerSum(powerSums, -1, max);
+            for (int i = 1; i < powerSums.length; i++) {
+                double outlierRateUpperBound = (xMinusMinMoments[i] / powerSums[0]) / Math.pow(cutoff - min, i);
+                double outlierRateLowerBound = 1.0 - (maxMinusXMoments[i] / powerSums[0]) / Math.pow(max - cutoff, i);
+                outlierRateBounds[0] = Math.max(outlierRateBounds[0], outlierRateLowerBound);
+                outlierRateBounds[1] = Math.min(outlierRateBounds[1], outlierRateUpperBound);
+            }
+        }
+
+        if (kb > 1 && logSums[0] != 0) {
+            double logCutoff = Math.log(cutoff);
+            double fracIncluded = logSums[0] / powerSums[0];
+            double[] xMinusMinLogMoments = MathUtil.shiftPowerSum(logSums, 1, logMin);
+            double[] maxMinusXLogMoments = MathUtil.shiftPowerSum(logSums, -1, logMax);
+            for (int i = 1; i < logSums.length; i++) {
+                double outlierRateUpperBound = (1.0 - fracIncluded) + fracIncluded * (xMinusMinLogMoments[i] / logSums[0]) / Math.pow(logCutoff - logMin, i);
+                double outlierRateLowerBound = 1.0 - fracIncluded * (maxMinusXLogMoments[i] / logSums[0]) / Math.pow(logMax - logCutoff, i);
+                outlierRateBounds[0] = Math.max(outlierRateBounds[0], outlierRateLowerBound);
+                outlierRateBounds[1] = Math.min(outlierRateBounds[1], outlierRateUpperBound);
+            }
+        }
+
+        return outlierRateBounds;
+    }
+
     /* Returns bounds for the number of values greater than a threshold. */
-    public double[] boundGreaterThanThreshold(double x) {
+    public double[] boundGreaterThanThresholdRacz(double x) {
         double[] xs = new double[]{x};
         double[] powerSums = Arrays.copyOfRange(totalSums, 0, ka);
         double[] logSums = Arrays.copyOfRange(totalSums, ka, ka+kb);
@@ -210,8 +244,14 @@ public class CMomentSketch implements QuantileSketch{
     public double estimateGreaterThanThreshold(double x) {
 //        if (x < min) return 1.0;
 //        if (x > max) return 0.0;
-        if (min == max) {
-            return (x > min) ? 0.0 : 1.0;
+        if (ka > 0) {
+            if (min == max) {
+                return (x > min) ? 0.0 : 1.0;
+            }
+        } else {
+            if (logMin == logMax) {
+                return (x > Math.exp(logMin)) ? 0.0 : 1.0;
+            }
         }
 
         double[] powerSums = Arrays.copyOfRange(totalSums, 0, ka);
