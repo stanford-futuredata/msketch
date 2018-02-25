@@ -3,7 +3,7 @@
   "fileName": "../../datasets/internet-mi-2013-11.csv",
   "columnIdx": 0,
   "cellSize": 100,
-  "numTrials": 10,
+  "numTrials": 5,
   "methods": {
     "cmoments": [2.0, 3.0, 5.0, 7.0, 9.0, 10.0, 11.0, 13.0, 15.0],
     "tdigest": [1.0, 1.3, 1.5, 2.0, 4.0, 5.0, 8.0, 16.0],
