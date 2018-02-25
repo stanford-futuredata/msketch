@@ -152,7 +152,7 @@ public class APLMomentSummarizer extends APLSummarizer {
         aplTime += System.nanoTime() - start;
         mergeTime += aplKernel.mergeTime;
         queryTime += aplKernel.queryTime;
-        CascadeQualityMetric metric = (CascadeQualityMetric)qualityMetricList.get(0);
+        CascadeObject metric = (CascadeObject)qualityMetricList.get(0);
         actionTime += metric.actionTime;
         markovBoundTime += metric.markovBoundTime;
         momentBoundTime += metric.momentBoundTime;

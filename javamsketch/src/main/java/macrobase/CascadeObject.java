@@ -6,7 +6,7 @@ import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.metrics.Quali
  * Measures how interesting a subgroup is as a function of its linear aggregates.
  * Risk ratio, support, and deviation from mean are examples.
  */
-public abstract class CascadeQualityMetric {
+public abstract class CascadeObject {
     public int numEnterCascade = 0;
     public int numAfterNaiveCheck = 0;
     public int numAfterMarkovBound = 0;

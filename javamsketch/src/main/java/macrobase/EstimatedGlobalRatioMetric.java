@@ -1,7 +1,6 @@
 package macrobase;
 
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.metrics.QualityMetric;
-import msketch.MathUtil;
 import sketches.CMomentSketch;
 
 import java.util.Arrays;
@@ -10,7 +9,7 @@ import java.util.Collections;
 /**
  * Measures the relative outlier rate w.r.t. the global outlier rate
  */
-public class EstimatedGlobalRatioMetric extends CascadeQualityMetric implements QualityMetric {
+public class EstimatedGlobalRatioMetric extends CascadeObject implements QualityMetric {
     private int minIdx = 0;
     private int maxIdx = 1;
     private int logMinIdx = 2;

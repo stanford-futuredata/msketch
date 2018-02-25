@@ -101,6 +101,21 @@ public class YahooSketch implements QuantileSketch, Serializable {
         return quantiles;
     }
 
+    public double getQuantile(double p) throws Exception {
+        if (!sketchIsUpdated) {
+            sketch = union.getResult();
+            sketchIsUpdated = true;
+        }
+
+        double quantile = sketch.getQuantile(p);
+
+        errors = new double[0];
+        if (calcError) {
+            errors[0] = sketch.getNormalizedRankError();
+        }
+        return quantile;
+    }
+
     @Override
     public double[] getErrors() {
         return errors;
@@ -122,6 +137,7 @@ public class YahooSketch implements QuantileSketch, Serializable {
         return sketch.getCDF(new double[]{x})[0];
     }
 
+    /* The following methods should only be used if add() is never called again. */
     public YahooSketch mergeYahoo(ArrayList<YahooSketch> sketches) {
         for (YahooSketch ys : sketches) {
             union.update(ys.sketch);

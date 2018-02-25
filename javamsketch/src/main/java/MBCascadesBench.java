@@ -1,7 +1,4 @@
-import com.yahoo.memory.Memory;
-import com.yahoo.sketches.quantiles.UpdateDoublesSketch;
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.APLExplanation;
-import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.metrics.QualityMetric;
 import edu.stanford.futuredata.macrobase.datamodel.DataFrame;
 import edu.stanford.futuredata.macrobase.datamodel.Schema;
 import edu.stanford.futuredata.macrobase.ingest.CSVDataFrameParser;
@@ -9,9 +6,7 @@ import io.CSVOutput;
 import macrobase.*;
 import sketches.YahooSketch;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.*;
 
 public class MBCascadesBench {
@@ -135,7 +130,7 @@ public class MBCascadesBench {
         long timeElapsed = System.nanoTime() - start;
 
         Map<String, String> result = new HashMap<String, String>();
-        CascadeQualityMetric metric = (CascadeQualityMetric)summ.qualityMetricList.get(0);
+        CascadeObject metric = (CascadeObject)summ.qualityMetricList.get(0);
         System.out.format("Overall time: %g\n", timeElapsed / (1.e9 * trialsDone));
         System.out.format("APL time: %g\n", summ.aplTime / (1.e9 * trialsDone));
         System.out.format("Query time: %g\n", summ.queryTime / (1.e9 * trialsDone));

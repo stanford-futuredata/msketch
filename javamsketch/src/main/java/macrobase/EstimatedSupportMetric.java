@@ -9,7 +9,7 @@ import java.util.Collections;
 /**
  * Measures the relative outlier rate w.r.t. the global outlier rate
  */
-public class EstimatedSupportMetric extends CascadeQualityMetric implements QualityMetric {
+public class EstimatedSupportMetric extends CascadeObject implements QualityMetric {
     private int minIdx = 0;
     private int maxIdx = 1;
     private int logMinIdx = 2;

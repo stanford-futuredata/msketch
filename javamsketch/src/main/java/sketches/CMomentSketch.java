@@ -68,6 +68,14 @@ public class CMomentSketch implements QuantileSketch{
         this.totalSums = new double[ka+kb];
     }
 
+    public void reset() {
+        this.min = Double.MAX_VALUE;
+        this.max = -Double.MAX_VALUE;
+        this.logMin = Double.MAX_VALUE;
+        this.logMax = -Double.MAX_VALUE;
+        Arrays.fill(this.totalSums, 0);
+    }
+
     @Override
     public void setCalcError(boolean flag) {
         errorBounds = flag;
@@ -300,4 +308,15 @@ public class CMomentSketch implements QuantileSketch{
     public double[] getErrors() {
         return errors;
     }
+
+    public double getMin() { return min; }
+    public double getMax() { return max; }
+    public double getLogMin() { return logMin; }
+    public double getLogMax() { return logMax; }
+    public double[] getTotalSums() { return totalSums; }
+
+    public void setMin(double min) { this.min = min; }
+    public void setMax(double max) { this.max = max; }
+    public void setLogMin(double logMin) { this.logMin = logMin; }
+    public void setLogMax(double logMax) { this.logMax = logMax; }
 }

@@ -2,6 +2,9 @@ package macrobase;
 
 import edu.stanford.futuredata.macrobase.analysis.summary.aplinear.metrics.QualityMetric;
 import msketch.MathUtil;
+import sketches.CMomentSketch;
+
+import java.util.Arrays;
 
 public class MarkovBound {
     public static double[] getOutlierRateBounds(double cutoff, double min, double max, double logMin, double logMax,
@@ -40,6 +43,15 @@ public class MarkovBound {
         }
 
         return outlierRateBounds;
+    }
+
+    public static QualityMetric.Action isPastThreshold(double outlierRateNeeded, double cutoff, CMomentSketch sketch) {
+        double[] totalSums = sketch.getTotalSums();
+        double[] powerSums = Arrays.copyOfRange(totalSums, 0, (int)sketch.getSizeParam());
+        double[] logSums = Arrays.copyOfRange(totalSums, (int)sketch.getSizeParam(), totalSums.length);
+
+        return isPastThreshold(outlierRateNeeded, cutoff, sketch.getMin(), sketch.getMax(), sketch.getLogMin(),
+                sketch.getLogMax(), powerSums, logSums, true);
     }
 
     public static QualityMetric.Action isPastThreshold(double outlierRateNeeded, double cutoff, double min, double max,
