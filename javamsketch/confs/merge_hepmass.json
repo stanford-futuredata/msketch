@@ -2,7 +2,7 @@
   "testName": "merge_hepmass",
   "fileName": "../../datasets/hepmass_l.csv",
   "columnIdx": 0,
-  "cellSize": 10,
+  "cellSize": 100,
   "numTrials": 10,
   "methods": {
     "cmoments": [2.0, 3.0, 5.0, 7.0, 9.0, 10.0, 11.0, 13.0, 15.0],
