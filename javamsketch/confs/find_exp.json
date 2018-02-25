@@ -5,10 +5,11 @@
   "numTrials": 10,
   "numSolveTrials": 1,
   "methods": {
-    "tdigest": [1.5, 2.0, 2.5, 3.0, 4.0],
+    "tdigest": [1.0, 1.5, 2.0, 2.5, 3.0, 4.0],
     "yahoo": [8.0, 16.0, 32.0],
     "sampling": [100.0, 250.0, 400.0],
     "spark_gk": [20.0, 30.0, 40.0, 50.0],
+    "approx_histogram":  [100.0, 200.0, 400.0, 1000.0],
     "histogram":  [20.0, 30.0, 40.0, 50.0, 60.0]
   },
   "quantiles": [
