@@ -21,6 +21,7 @@ public class SlidingWindowBench {
     ArrayList<double[]> panes;
 
     class Timing {
+        long createTime = 0;
         long mergeTime = 0;
         long queryTime = 0;
     }
@@ -82,6 +83,7 @@ public class SlidingWindowBench {
         int numAlerts = Collections.frequency(alerts, true);
 
         System.out.format("Avg runtime: %f\n", timeElapsed / (1.e9 * trialsDone));
+        System.out.format("Avg create time: %f\n", timing.createTime / (1.e9 * trialsDone));
         System.out.format("Avg merge time: %f\n", timing.mergeTime / (1.e9 * trialsDone));
         System.out.format("Avg query time: %f\n", timing.queryTime / (1.e9 * trialsDone));
         System.out.format("Num alerts: %d\n\n", numAlerts);
@@ -91,42 +93,46 @@ public class SlidingWindowBench {
         result.put("markov", String.format("%b", cascadeStages[1]));
         result.put("racz", String.format("%b", cascadeStages[2]));
         result.put("avg_runtime", String.format("%f", timeElapsed / (1.e9 * trialsDone)));
+        result.put("avg_createtime", String.format("%f", timing.createTime / (1.e9 * trialsDone)));
         result.put("avg_mergetime", String.format("%f", timing.mergeTime / (1.e9 * trialsDone)));
         result.put("avg_querytime", String.format("%f", timing.queryTime / (1.e9 * trialsDone)));
         return result;
     }
 
     private List<Boolean> cascadeTrial(boolean[] cascadeStages, Timing timing) {
-        CMomentSketch sketch = new CMomentSketch(1e-9);
-        sketch.setCalcError(false);
-        sketch.setSizeParam(sizeParamMSketch);
-        sketch.initialize();
-
         List<Boolean> alerts = new ArrayList<>();
         ThresholdAlerter alerter = new ThresholdAlerter(quantile, threshold, true);
         alerter.setCascadeStages(cascadeStages);
 
         // Create the initial window
-        long mergeStart = System.nanoTime();
+        long createStart = System.nanoTime();
         List<CMomentSketch> paneSketches = new ArrayList<>();
         Queue<Double> paneMins = new LinkedList<>();
         Queue<Double> paneMaxs = new LinkedList<>();
         Queue<Double> paneLogMins = new LinkedList<>();
         Queue<Double> paneLogMaxs = new LinkedList<>();
-        int curPane = 0;
-        for (; curPane < windowSize; curPane++) {
-            sketch.add(panes.get(curPane));
-
+        for (int i = 0; i < windowSize; i++) {
             CMomentSketch paneSketch = new CMomentSketch(1e-9);
             paneSketch.setCalcError(false);
             paneSketch.setSizeParam(sizeParamMSketch);
             paneSketch.initialize();
-            paneSketch.add(panes.get(curPane));
+            paneSketch.add(panes.get(i));
             paneSketches.add(paneSketch);
             paneMins.add(paneSketch.getMin());
             paneMaxs.add(paneSketch.getMax());
             paneLogMins.add(paneSketch.getLogMin());
             paneLogMaxs.add(paneSketch.getLogMax());
+        }
+        timing.createTime += System.nanoTime() - createStart;
+
+        long mergeStart = System.nanoTime();
+        CMomentSketch sketch = new CMomentSketch(1e-9);
+        sketch.setCalcError(false);
+        sketch.setSizeParam(sizeParamMSketch);
+        sketch.initialize();
+        int curPane = 0;
+        for (; curPane < windowSize; curPane++) {
+            sketch.add(panes.get(curPane));
         }
         timing.mergeTime += System.nanoTime() - mergeStart;
 
@@ -137,7 +143,7 @@ public class SlidingWindowBench {
         // Begin sliding window
         int firstPaneSketchIdx = 0;
         for (; curPane < panes.size(); curPane++) {
-            mergeStart = System.nanoTime();
+            createStart = System.nanoTime();
             CMomentSketch paneSketch = paneSketches.get(firstPaneSketchIdx);
 
             // Remove oldest pane
@@ -145,19 +151,28 @@ public class SlidingWindowBench {
             paneMaxs.remove();
             paneLogMins.remove();
             paneLogMaxs.remove();
+            timing.createTime += System.nanoTime() - createStart;
+            
+            mergeStart = System.nanoTime();
             double[] windowTotalSums = sketch.getTotalSums();
             double[] paneTotalSums = paneSketch.getTotalSums();
             for (int i = 0; i < windowTotalSums.length; i++) {
                 windowTotalSums[i] -= paneTotalSums[i];
             }
+            timing.mergeTime += System.nanoTime() - mergeStart;
 
             // Add new pane (by writing directly into the paneSketch object)
+            createStart = System.nanoTime();
             paneSketch.reset();
             paneSketch.add(panes.get(curPane));
             paneMins.add(paneSketch.getMin());
             paneMaxs.add(paneSketch.getMax());
             paneLogMins.add(paneSketch.getLogMin());
             paneLogMaxs.add(paneSketch.getLogMax());
+            firstPaneSketchIdx = (firstPaneSketchIdx + 1) % windowSize;
+            timing.createTime += System.nanoTime() - createStart;
+
+            mergeStart = System.nanoTime();
             paneTotalSums = paneSketch.getTotalSums();
             for (int i = 0; i < windowTotalSums.length; i++) {
                 windowTotalSums[i] += paneTotalSums[i];
@@ -167,8 +182,6 @@ public class SlidingWindowBench {
             sketch.setMax(Collections.max(paneMaxs));
             sketch.setLogMin(Collections.min(paneLogMins));
             sketch.setLogMax(Collections.max(paneLogMaxs));
-
-            firstPaneSketchIdx = (firstPaneSketchIdx + 1) % windowSize;
             timing.mergeTime += System.nanoTime() - mergeStart;
 
             queryStart = System.nanoTime();
@@ -200,12 +213,14 @@ public class SlidingWindowBench {
         int numAlerts = Collections.frequency(alerts, true);
 
         System.out.format("Avg runtime: %f\n", timeElapsed / (1.e9 * trialsDone));
+        System.out.format("Avg create time: %f\n", timing.createTime / (1.e9 * trialsDone));
         System.out.format("Avg merge time: %f\n", timing.mergeTime / (1.e9 * trialsDone));
         System.out.format("Avg query time: %f\n", timing.queryTime / (1.e9 * trialsDone));
         System.out.format("Num alerts: %d\n\n", numAlerts);
 
         Map<String, String> result = new HashMap<String, String>();
         result.put("avg_runtime", String.format("%f", timeElapsed / (1.e9 * trialsDone)));
+        result.put("avg_createtime", String.format("%f", timing.createTime / (1.e9 * trialsDone)));
         result.put("avg_mergetime", String.format("%f", timing.mergeTime / (1.e9 * trialsDone)));
         result.put("avg_querytime", String.format("%f", timing.queryTime / (1.e9 * trialsDone)));
         return result;
@@ -215,7 +230,7 @@ public class SlidingWindowBench {
         List<Boolean> alerts = new ArrayList<>();
 
         // Create the initial window
-        long mergeStart = System.nanoTime();
+        long createStart = System.nanoTime();
         ArrayList<YahooSketch> paneSketches = new ArrayList<>();
         int curPane = 0;
         for (; curPane < windowSize; curPane++) {
@@ -226,8 +241,10 @@ public class SlidingWindowBench {
             paneSketch.add(panes.get(curPane));
             paneSketches.add(paneSketch);
         }
+        timing.createTime += System.nanoTime() - createStart;
 
         // Create window sketch
+        long mergeStart = System.nanoTime();
         YahooSketch sketch = new YahooSketch();
         sketch.setCalcError(false);
         sketch.setSizeParam(sizeParamYahoo);
@@ -242,7 +259,7 @@ public class SlidingWindowBench {
         // Begin sliding window
         int firstPaneSketchIdx = 0;
         for (; curPane < panes.size(); curPane++) {
-            mergeStart = System.nanoTime();
+            createStart = System.nanoTime();
             YahooSketch paneSketch = paneSketches.get(firstPaneSketchIdx);
 
             // Remove oldest pane
@@ -250,12 +267,13 @@ public class SlidingWindowBench {
 
             // Add new pane (by writing directly into the paneSketch object)
             paneSketch.add(panes.get(curPane));
+            firstPaneSketchIdx = (firstPaneSketchIdx + 1) % windowSize;
+            timing.createTime += System.nanoTime() - createStart;
 
             // Update window sketch
+            mergeStart = System.nanoTime();
             sketch.initialize();
             sketch.mergeYahoo(paneSketches);
-
-            firstPaneSketchIdx = (firstPaneSketchIdx + 1) % windowSize;
             timing.mergeTime += System.nanoTime() - mergeStart;
 
             queryStart = System.nanoTime();
