@@ -1,0 +1,6 @@
+{
+  "testName": "log_lesion",
+  "ks": [3, 5, 7, 9, 11, 13, 15],
+  "numSolveTrials": 2,
+  "verbose": false
+}
