@@ -3,20 +3,19 @@ import sketches.QuantileSketch;
 import sketches.SketchLoader;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MergeBench {
     private String testName;
     private String fileName;
     private int columnIdx;
     private int cellSize;
+    private List<Double> cellFractions;
 
     private Map<String, List<Double>> methods;
     private List<Double> quantiles;
     private int numTrials;
+    private int numSolveTrials;
 
     private boolean verbose;
     private boolean calcError;
@@ -28,10 +27,13 @@ public class MergeBench {
         fileName = conf.get("fileName");
         columnIdx = conf.get("columnIdx");
         cellSize = conf.get("cellSize");
+        List<Double> defaultCellFractions = Arrays.asList(1.0);
+        cellFractions = conf.get("cellFractions", defaultCellFractions);
 
         methods = conf.get("methods");
         quantiles = conf.get("quantiles");
         numTrials = conf.get("numTrials");
+        numSolveTrials = conf.get("numSolveTrials", 1);
 
         verbose = conf.get("verbose", false);
         calcError = conf.get("calcError", false);
@@ -86,47 +88,59 @@ public class MergeBench {
                 endTime = System.nanoTime();
                 long trainTime = endTime - startTime;
 
-                for (int curTrial = 0; curTrial < numTrials; curTrial++) {
-                    System.gc();
-                    System.out.println(sketchName+":"+(int)sParam+"#"+curTrial);
+                for (int mergeFractionIdx = 0; mergeFractionIdx < cellFractions.size(); mergeFractionIdx++) {
+                    double curFraction = cellFractions.get(mergeFractionIdx);
+                    int numCellSketchesToMerge = (int) (curFraction * numCells);
+                    ArrayList<QuantileSketch> cellSketchesToMerge = new ArrayList<>(numCellSketchesToMerge);
+                    for (int i = 0; i < numCellSketchesToMerge; i++) {
+                        cellSketchesToMerge.add(cellSketches.get(i));
+                    }
 
-                    startTime = System.nanoTime();
-                    QuantileSketch mergedSketch = SketchLoader.load(sketchName);
-                    mergedSketch.setCalcError(calcError);
-                    mergedSketch.setSizeParam(sParam);
-                    mergedSketch.setVerbose(verbose);
-                    mergedSketch.initialize();
-                    mergedSketch.merge(cellSketches);
-                    endTime = System.nanoTime();
-                    long mergeTime = endTime - startTime;
+                    for (int curTrial = 0; curTrial < numTrials; curTrial++) {
+                        System.gc();
+                        System.out.println(sketchName + ":" + (int) sParam + "#" + curTrial);
 
-                    System.gc();
+                        startTime = System.nanoTime();
+                        QuantileSketch mergedSketch = SketchLoader.load(sketchName);
+                        mergedSketch.setCalcError(calcError);
+                        mergedSketch.setSizeParam(sParam);
+                        mergedSketch.setVerbose(verbose);
+                        mergedSketch.initialize();
+                        mergedSketch.merge(cellSketchesToMerge);
+                        endTime = System.nanoTime();
+                        long mergeTime = endTime - startTime;
 
-                    startTime = System.nanoTime();
-                    double[] qs = mergedSketch.getQuantiles(quantiles);
-                    endTime = System.nanoTime();
-                    long queryTime = endTime - startTime;
-                    double[] errors = mergedSketch.getErrors();
+                        System.gc();
 
-                    for (int i = 0; i < qs.length; i++) {
-                        double curP = quantiles.get(i);
-                        double curQ = qs[i];
-                        double curError = errors[i];
+                        double[] qs = new double[1];
+                        startTime = System.nanoTime();
+                        for (int i = 0; i < numSolveTrials; i++) {
+                            qs = mergedSketch.getQuantiles(quantiles);
+                        }
+                        endTime = System.nanoTime();
+                        long queryTime = (endTime - startTime) / numSolveTrials;
+                        double[] errors = mergedSketch.getErrors();
 
-                        Map<String, String> curResults = new HashMap<>();
-                        curResults.put("dataset", fileName);
-                        curResults.put("sketch", mergedSketch.getName());
-                        curResults.put("trial", String.format("%d",curTrial));
-                        curResults.put("q", String.format("%f", curP));
-                        curResults.put("quantile_estimate", String.format("%f", curQ));
-                        curResults.put("bound_size", String.format("%f", curError));
-                        curResults.put("space", String.format("%d", mergedSketch.getSize()));
-                        curResults.put("size_param", String.format("%.2f", sParam));
-                        curResults.put("train_time", String.format("%d", trainTime));
-                        curResults.put("merge_time", String.format("%d", mergeTime));
-                        curResults.put("query_time", String.format("%d", queryTime));
-                        curResults.put("n", String.format("%d", numCells));
-                        results.add(curResults);
+                        for (int i = 0; i < qs.length; i++) {
+                            double curP = quantiles.get(i);
+                            double curQ = qs[i];
+                            double curError = errors[i];
+
+                            Map<String, String> curResults = new HashMap<>();
+                            curResults.put("dataset", fileName);
+                            curResults.put("sketch", mergedSketch.getName());
+                            curResults.put("trial", String.format("%d", curTrial));
+                            curResults.put("q", String.format("%f", curP));
+                            curResults.put("quantile_estimate", String.format("%f", curQ));
+                            curResults.put("bound_size", String.format("%f", curError));
+                            curResults.put("space", String.format("%d", mergedSketch.getSize()));
+                            curResults.put("size_param", String.format("%.2f", sParam));
+                            curResults.put("train_time", String.format("%d", trainTime));
+                            curResults.put("merge_time", String.format("%d", mergeTime));
+                            curResults.put("query_time", String.format("%d", queryTime));
+                            curResults.put("n", String.format("%d", cellSketchesToMerge.size()));
+                            results.add(curResults);
+                        }
                     }
                 }
             }
