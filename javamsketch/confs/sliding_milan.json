@@ -1,12 +1,12 @@
 {
   "testName": "sliding_milan",
-  "inputFile": "src/test/resources/milan_grouped_2M_10min.csv",
+  "inputFile": "/lfs/0/jding/datasets/milan_grouped_1month_10min_spike12_.csv",
   "quantile": 0.99,
-  "threshold": 400.0,
-  "windowSize": 36,
+  "threshold": 1500.0,
+  "windowSize": 24,
   "verbose": false,
-  "maxWarmupTime": 1.0,
-  "maxTrialTime": 1.0,
-  "sizeParamYahoo": 16.0,
-  "sizeParamMSketch": 9.0
+  "maxWarmupTime": 20.0,
+  "maxTrialTime": 60.0,
+  "sizeParamYahoo": 32.0,
+  "sizeParamMSketch": 11.0
 }
