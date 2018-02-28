@@ -1,5 +1,8 @@
 package msketch;
 
+import msketch.data.HepData;
+import msketch.data.MomentData;
+import msketch.data.OccupancyData;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -30,4 +33,22 @@ public class MathUtilTest {
         assertArrayEquals(expectedChebyshevMoments, convertedChebyshevMoments, 1e-14);
     }
 
+    @Test
+    public void testChebyAccuracy() {
+        MomentData data = new OccupancyData();
+        double[] chebys = MathUtil.powerSumsToChebyMoments(
+                data.getMin(), data.getMax(),
+                data.getPowerSums(20)
+        );
+//        chebys = MathUtil.powerSumsToChebyMoments(
+//                data.getLogMin(), data.getLogMax(),
+//                data.getLogSums(20)
+//        );
+        data = new HepData();
+        chebys = MathUtil.powerSumsToChebyMoments(
+                data.getMin(), data.getMax(),
+                data.getPowerSums(20)
+        );
+        System.out.println(Arrays.toString(chebys));
+    }
 }
