@@ -18,7 +18,7 @@ public class SolveBasisSelectorTest {
             false, new double[7], new double[7],
                 linscales[0], linscales[1], linscales[2], linscales[3]
         );
-        assertEquals(2, sel.getKb());
+        assertEquals(1, sel.getKb());
         assertEquals(7, sel.getKa());
     }
 }
