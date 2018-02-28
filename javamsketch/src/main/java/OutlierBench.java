@@ -1,109 +1,115 @@
 import io.CSVOutput;
+import io.DataSource;
+import io.SimpleCSVDataSource;
 import msketch.ChebyshevMomentSolver2;
 import msketch.MathUtil;
 import msketch.data.*;
 import org.apache.commons.math3.distribution.NormalDistribution;
+import sketches.QuantileSketch;
+import sketches.SketchLoader;
 
 import java.io.IOException;
 import java.util.*;
 
 public class OutlierBench {
     private String testName;
+    private String fileName;
+    private int columnIdx;
     private boolean verbose;
+
+    private Map<String, List<Double>> methods;
     private int numSolveTrials;
     private List<Double> distances;
     private List<Double> fractions;
+    private double scaleFactor;
     private List<Double> quantiles;
 
     public OutlierBench(String confFile) throws IOException {
         RunConfig conf = RunConfig.fromJsonFile(confFile);
         testName = conf.get("testName");
+        fileName = conf.get("fileName");
+        columnIdx = conf.get("columnIdx");
         verbose = conf.get("verbose", false);
+
+        methods = conf.get("methods");
         numSolveTrials = conf.get("numSolveTrials");
         distances = conf.get("distances");
         fractions = conf.get("fractions");
+        scaleFactor = conf.get("scaleFactor");
         quantiles = conf.get("quantiles");
     }
 
-    public List<Map<String, String>> run() {
-        ArrayList<Map<String, String>> results = new ArrayList<>();
-
-        MomentData m = new GaussianData();
-        int k = 11;
-
-        int numQuantiles = quantiles.size();
-        double[] psArray = new double[numQuantiles];
-        for (int i = 0; i < numQuantiles; i++) {
-            psArray[i] = quantiles.get(i);
-        }
-        double r = 10.0;
+    public List<Map<String, String>> run() throws Exception {
+        DataSource source = new SimpleCSVDataSource(fileName, columnIdx);
+        long startTime = System.currentTimeMillis();
+        double[] data = source.get();
+        long endTime = System.currentTimeMillis();
+        long loadTime = endTime - startTime;
+        System.out.println("Loaded Data in: "+loadTime);
+        List<Map<String, String>> results = new ArrayList<>();
 
         int numTests = distances.size();
         for (int di = 0; di < numTests; di++) {
             double curDistance = distances.get(di);
             double curFraction = fractions.get(di);
-            double aMin = m.getMin();
-            double aMax = Math.max(m.getMax(), (m.getMax())/r+curDistance);
-            double[] powerSums = m.getPowerSums(k);
-            double numPoints = powerSums[0];
-            double[] logSums = m.getLogSums(1);
 
-            double[] outlierPowerSums = MathUtil.shiftPowerSum(powerSums, r, -curDistance*r);
-            for (int i = 0; i < powerSums.length; i++) {
-                powerSums[i] += outlierPowerSums[i] * curFraction;
+            int numOutliers = (int)(curFraction * data.length);
+//            double[] outliers = new double[numOutliers];
+//            for (int i = 0; i < numOutliers; i++) {
+//                outliers[i] = data[i]*scaleFactor + curDistance;
+//            }
+            double[] combinedData = new double[numOutliers + data.length];
+            System.arraycopy(data, 0, combinedData, 0, data.length);
+            for (int i = 0; i < numOutliers; i++) {
+                combinedData[data.length+i] = data[i]*scaleFactor + curDistance;
             }
 
-            double[] qs = new double[1];
-            long startTime = 0, endTime = 0, timePerTrial = 0;
-            for (int warmUp = 0; warmUp < 2; warmUp++) {
-                startTime = System.nanoTime();
-                for (int curTrial = 0; curTrial < numSolveTrials; curTrial++) {
-                    ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
-                            aMin, aMax, powerSums,
-                            0, 1, logSums
-                    );
-                    solver.setHessianType(0);
-                    solver.setVerbose(verbose);
-                    solver.solve(1e-9);
-                    qs = solver.estimateQuantiles(psArray);
+
+            for (String sketchName : methods.keySet()) {
+                List<Double> sizeParams = methods.get(sketchName);
+                for (double sParam : sizeParams) {
+                    System.gc();
+                    System.out.println(sketchName + "@" + (int) sParam);
+                    QuantileSketch curSketch = SketchLoader.load(sketchName);
+                    curSketch.setVerbose(verbose);
+                    curSketch.setSizeParam(sParam);
+                    curSketch.initialize();
+
+                    startTime = System.nanoTime();
+                    curSketch.add(combinedData);
+                    endTime = System.nanoTime();
+                    long trainTime = endTime - startTime;
+                    System.out.println("Trained Sketch");
+
+                    startTime = System.nanoTime();
+                    double[] qs = new double[0];
+                    for (int curSolveTrial = 0; curSolveTrial < numSolveTrials; curSolveTrial++) {
+                        qs = curSketch.getQuantiles(quantiles);
+                    }
+                    endTime = System.nanoTime();
+                    long queryTime = (endTime - startTime) / numSolveTrials;
+
+                    for (int i = 0; i < qs.length; i++) {
+                        double curP = quantiles.get(i);
+                        double curQ = qs[i];
+
+                        Map<String, String> curResults = new HashMap<>();
+                        curResults.put("dataset", fileName);
+                        curResults.put("sketch", curSketch.getName());
+                        curResults.put("distance", String.format("%f",curDistance));
+                        curResults.put("fraction", String.format("%f",curFraction));
+                        curResults.put("scaleFactor", String.format("%f",scaleFactor));
+                        curResults.put("q", String.format("%f", curP));
+                        curResults.put("quantile_estimate", String.format("%f", curQ));
+                        curResults.put("space", String.format("%d", curSketch.getSize()));
+                        curResults.put("size_param", String.format("%.2f", sParam));
+                        curResults.put("train_time", String.format("%d", trainTime));
+                        curResults.put("query_time", String.format("%d", queryTime));
+                        curResults.put("n", String.format("%d", data.length));
+                        results.add(curResults);
+                    }
                 }
-                endTime = System.nanoTime();
-                timePerTrial = (endTime - startTime) / numSolveTrials;
             }
-            results.addAll(genResultMaps(
-                    k,
-                    curDistance,
-                    curFraction,
-                    psArray,
-                    qs,
-                    timePerTrial,
-                    (long) powerSums[0]
-            ));
-        }
-        return results;
-    }
-
-    private List<Map<String, String>> genResultMaps(
-            int k,
-            double distance,
-            double fraction,
-            double[] ps,
-            double[] qEstimates,
-            long queryTime,
-            long n
-    ) {
-        List<Map<String,String>> results = new ArrayList<>();
-        for (int i = 0; i < ps.length; i++) {
-            Map<String, String> curResults = new HashMap<>();
-            curResults.put("dataset", "gaussian");
-            curResults.put("distance", String.format("%f",distance));
-            curResults.put("fraction", String.format("%f",fraction));
-            curResults.put("size_param", String.format("%d", k));
-            curResults.put("q", String.format("%f", ps[i]));
-            curResults.put("quantile_estimate", String.format("%f", qEstimates[i]));
-            curResults.put("query_time", String.format("%d", queryTime));
-            curResults.put("n", String.format("%d", n));
-            results.add(curResults);
         }
         return results;
     }
