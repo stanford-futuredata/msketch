@@ -145,6 +145,16 @@ public class MathUtil {
         return Math.sqrt(l2Sum / posMoments.length);
     }
 
+    public static int numSmallerThan(double[] moments, double t) {
+        for (int i = 0; i < moments.length; i++) {
+            double x = moments[i];
+            if (Math.abs(x) > t) {
+                return i;
+            }
+        }
+        return moments.length;
+    }
+
     public static double minAbs(double[] xs) {
         double curMin = Double.MAX_VALUE;
         for (double x : xs) {

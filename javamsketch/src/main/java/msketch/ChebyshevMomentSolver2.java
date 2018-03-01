@@ -51,22 +51,26 @@ public class ChebyshevMomentSolver2 {
         double[] posLogMoments = MathUtil.powerSumsToPosMoments(
                 logPowerSums, logMin, logMax
         );
-
-        // compare whether log moments or standard moments are closer to uniform distribution
-        double powerDelta = MathUtil.deltaFromUniformMoments(posPowerMoments);
-        double logDelta = MathUtil.deltaFromUniformMoments(posLogMoments);
-
-        boolean useStandardBasis = true;
-        if (logDelta < powerDelta) {
-            useStandardBasis = false;
-        }
-
         double[] powerChebyMoments = MathUtil.powerSumsToChebyMoments(
                 min, max, powerSums
         );
         double[] logChebyMoments = MathUtil.powerSumsToChebyMoments(
                 logMin, logMax, logPowerSums
         );
+
+        // compare whether log moments or standard moments are closer to uniform distribution
+        double powerDelta = MathUtil.deltaFromUniformMoments(posPowerMoments);
+        double logDelta = MathUtil.deltaFromUniformMoments(posLogMoments);
+        int powerSmall = MathUtil.numSmallerThan(powerChebyMoments, 1.1);
+        int logSmall = MathUtil.numSmallerThan(logChebyMoments, 1.1);
+
+        boolean useStandardBasis = true;
+        if (logSmall >= powerSmall) {
+            if (logDelta < powerDelta) {
+                useStandardBasis = false;
+            }
+        }
+
         double[] aMoments, bMoments;
         double aMin, aMax, bMin, bMax;
         if (useStandardBasis) {

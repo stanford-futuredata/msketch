@@ -22,17 +22,18 @@ public class MSketchBench {
     }
 
     public static void newSolverBench() throws IOException {
-        MomentData data = new OccupancyData();
+        MomentData data = new MilanData();
         double[] range = {data.getMin(), data.getMax()};
         double[] logRange = {data.getLogMin(), data.getLogMax()};
-        double[] powerSums = data.getPowerSums(7);
-        double[] logSums = data.getLogSums(1);
+        double[] powerSums = data.getPowerSums(1);
+        double[] logSums = data.getLogSums(15);
 
         ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
                 range[0], range[1], powerSums,
                 logRange[0], logRange[1], logSums
         );
 
+        System.in.read();
         int numIters = 20000;
         long startTime = System.nanoTime();
         for (int i = 0; i < numIters; i++) {
