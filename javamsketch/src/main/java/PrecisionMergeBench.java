@@ -83,11 +83,13 @@ public class PrecisionMergeBench {
                     ArrayList<QuantileSketch> cellSketches = new ArrayList<>(numCells);
                     for (int i = 0; i < numCells; i++) {
                         double[] cellData = cells.get(i);
-                        QuantileSketch curSketch = SketchLoader.load(sketchName);
+                        CMomentSketch curSketch = new CMomentSketch(1e-9);
+                        curSketch.setVerbose(verbose);
                         curSketch.setCalcError(calcError);
                         curSketch.setSizeParam(sParam);
                         curSketch.initialize();
                         curSketch.add(cellData);
+                        curSketch.convertToLowPrecision(precision);
                         cellSketches.add(curSketch);
                     }
                     endTime = System.nanoTime();
@@ -108,8 +110,6 @@ public class PrecisionMergeBench {
                         long mergeTime = endTime - startTime;
 
                         System.gc();
-
-                        mergedSketch.convertToLowPrecision(precision);
 
                         startTime = System.nanoTime();
                         double[] qs = mergedSketch.getQuantiles(quantiles);
