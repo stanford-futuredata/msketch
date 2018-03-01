@@ -111,8 +111,14 @@ public class PrecisionMergeBench {
 
                         System.gc();
 
+                        double[] qs;
                         startTime = System.nanoTime();
-                        double[] qs = mergedSketch.getQuantiles(quantiles);
+                        try {
+                            qs = mergedSketch.getQuantiles(quantiles);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            continue;
+                        }
                         endTime = System.nanoTime();
                         long queryTime = endTime - startTime;
                         double[] errors = mergedSketch.getErrors();

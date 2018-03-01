@@ -1,11 +1,15 @@
 package msketch;
 
+import java.util.Random;
+
 public class LowPrecision {
     private int bits;
     private int bitsForExponent;
     private int bitsForSignificand;
     private int bitsForSign = 1;
     private int minExponent; // base power of 2
+
+    private Random rand;
 
     public double min;
     public double max;
@@ -17,6 +21,7 @@ public class LowPrecision {
 
     public LowPrecision(int bits) {
         this.bits = bits;
+        this.rand = new Random();
     }
 
     /* Kind of a hack but whatever. */
@@ -97,7 +102,14 @@ public class LowPrecision {
             exponent = minPower2;
         }
         double eps = Math.pow(2, exponent);
-        return Math.round(val / eps) * eps; // TODO: randomized rounding
+//        return Math.round(val / eps) * eps; // TODO: randomized rounding
+
+        double probability = val / eps - (int)(val / eps);
+        if (rand.nextDouble() < probability) {
+            return Math.floor(val / eps) * eps;
+        } else {
+            return Math.ceil(val / eps) * eps;
+        }
     }
 
     private int numExponentBitsForRange(int minPower2, int maxPower2) {
