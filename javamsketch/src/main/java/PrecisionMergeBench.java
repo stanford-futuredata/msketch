@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MergeMergeBench {
+public class PrecisionMergeBench {
     private String testName;
     private String fileName;
     private int columnIdx;
@@ -27,7 +27,7 @@ public class MergeMergeBench {
     private boolean calcError;
     private boolean appendTimeStamp;
 
-    public MergeMergeBench(String confFile) throws IOException{
+    public PrecisionMergeBench(String confFile) throws IOException{
         RunConfig conf = RunConfig.fromJsonFile(confFile);
         testName = conf.get("testName");
         fileName = conf.get("fileName");
@@ -46,7 +46,7 @@ public class MergeMergeBench {
 
     public static void main(String[] args) throws Exception {
         String confFile = args[0];
-        MergeMergeBench bench = new MergeMergeBench(confFile);
+        PrecisionMergeBench bench = new PrecisionMergeBench(confFile);
 
         List<Map<String, String>> results = bench.run();
         CSVOutput output = new CSVOutput();
