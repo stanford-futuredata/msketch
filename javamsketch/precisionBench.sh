@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-java -Xmx8g -Xms8g -cp target/java-msketch-1.0-SNAPSHOT.jar:$(cat cp.txt) PrecisionBench $@
+java -Xmx32g -Xms32g -cp target/java-msketch-1.0-SNAPSHOT.jar:$(cat cp.txt) PrecisionBench $@

@@ -1,13 +1,13 @@
 {
-  "testName": "precision_merge_milan",
-  "fileName": "/lfs/1/egan1/datasets/internet-mi-2013-11.csv",
+  "testName": "precision_merge_hepmass",
+  "fileName": "/lfs/1/egan1/datasets/hepmass_l.csv",
   "columnIdx": 0,
-  "cellSize": 811,
+  "cellSize": 105,
   "numTrials": 1,
   "methods": {
     "cmoments": [3.0, 7.0, 11.0, 15.0]
   },
-  "precisions": [64, 48, 32, 24, 20, 16, 14, 12, 10,  8],
+  "precisions": [64, 32, 24, 20, 16, 14, 12, 10,  8],
   "quantiles": [
     0.01, 0.05, 0.1, 0.15,
     0.2, 0.25 ,0.3, 0.35,
