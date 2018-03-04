@@ -1,5 +1,6 @@
 package sketches;
 
+import msketch.ChebyshevMomentSolver;
 import msketch.ChebyshevMomentSolver2;
 import msketch.MathUtil;
 import msketch.SimpleBoundSolver;
@@ -164,6 +165,128 @@ public class CMomentSketch implements QuantileSketch{
         return this;
     }
 
+    public double[] boundGreaterThanThresholdMarkov(double cutoff) {
+        double[] outlierRateBounds = new double[2];
+        outlierRateBounds[0] = 0.0;
+        outlierRateBounds[1] = 1.0;
+        double[] powerSums = Arrays.copyOfRange(totalSums, 0, ka);
+        double[] logSums = Arrays.copyOfRange(totalSums, ka, ka+kb);
+
+        if (ka > 1) {
+            double[] xMinusMinMoments = MathUtil.shiftPowerSum(powerSums, 1, min);
+            double[] maxMinusXMoments = MathUtil.shiftPowerSum(powerSums, -1, max);
+            for (int i = 1; i < powerSums.length; i++) {
+                double outlierRateUpperBound = (xMinusMinMoments[i] / powerSums[0]) / Math.pow(cutoff - min, i);
+                double outlierRateLowerBound = 1.0 - (maxMinusXMoments[i] / powerSums[0]) / Math.pow(max - cutoff, i);
+                outlierRateBounds[0] = Math.max(outlierRateBounds[0], outlierRateLowerBound);
+                outlierRateBounds[1] = Math.min(outlierRateBounds[1], outlierRateUpperBound);
+            }
+        }
+
+        if (kb > 1 && logSums[0] != 0) {
+            double logCutoff = Math.log(cutoff);
+            double fracIncluded = logSums[0] / powerSums[0];
+            double[] xMinusMinLogMoments = MathUtil.shiftPowerSum(logSums, 1, logMin);
+            double[] maxMinusXLogMoments = MathUtil.shiftPowerSum(logSums, -1, logMax);
+            for (int i = 1; i < logSums.length; i++) {
+                double outlierRateUpperBound = (1.0 - fracIncluded) + fracIncluded * (xMinusMinLogMoments[i] / logSums[0]) / Math.pow(logCutoff - logMin, i);
+                double outlierRateLowerBound = 1.0 - fracIncluded * (maxMinusXLogMoments[i] / logSums[0]) / Math.pow(logMax - logCutoff, i);
+                outlierRateBounds[0] = Math.max(outlierRateBounds[0], outlierRateLowerBound);
+                outlierRateBounds[1] = Math.min(outlierRateBounds[1], outlierRateUpperBound);
+            }
+        }
+
+        return outlierRateBounds;
+    }
+
+    /* Returns bounds for the number of values greater than a threshold. */
+    public double[] boundGreaterThanThresholdRacz(double x) {
+        double[] xs = new double[]{x};
+        double[] powerSums = Arrays.copyOfRange(totalSums, 0, ka);
+        double[] logSums = Arrays.copyOfRange(totalSums, ka, ka+kb);
+        double[] gttBounds = new double[]{0.0, 1.0};
+        double[] moments;
+        SimpleBoundSolver boundSolver;
+        double[] boundSizes;
+
+        // Standard basis
+        moments = MathUtil.powerSumsToMoments(powerSums);
+        boundSolver = new SimpleBoundSolver(ka);
+        try {
+            boundSizes = boundSolver.solveBounds(moments, xs);
+            double[] standardBounds = boundSolver.getBoundEndpoints(moments, x, boundSizes[0]);
+            if (1.0 - standardBounds[1] > gttBounds[0]) {
+                gttBounds[0] = 1.0 - standardBounds[1];
+            }
+            if (1.0 - standardBounds[0] < gttBounds[1]) {
+                gttBounds[1] = 1.0 - standardBounds[0];
+            }
+        } catch (Exception e) {}
+
+        // Log basis
+        double[] logXs = new double[]{Math.log(x)};
+        moments = MathUtil.powerSumsToMoments(logSums);
+        try {
+            boundSolver = new SimpleBoundSolver(kb);
+            boundSizes = boundSolver.solveBounds(moments, logXs);
+            double[] logBounds = boundSolver.getBoundEndpoints(moments, Math.log(x), boundSizes[0]);
+            if (1.0 - logBounds[1] > gttBounds[0]) {
+                gttBounds[0] = 1.0 - logBounds[1];
+            }
+            if (1.0 - logBounds[0] < gttBounds[1]) {
+                gttBounds[1] = 1.0 - logBounds[0];
+            }
+        } catch (Exception e) {}
+
+        return gttBounds;
+    }
+
+    public double estimateGreaterThanThreshold(double x) {
+//        if (x < min) return 1.0;
+//        if (x > max) return 0.0;
+        if (ka > 0) {
+            if (min == max) {
+                return (x > min) ? 0.0 : 1.0;
+            }
+        } else {
+            if (logMin == logMax) {
+                return (x > Math.exp(logMin)) ? 0.0 : 1.0;
+            }
+        }
+
+        double[] powerSums = Arrays.copyOfRange(totalSums, 0, ka);
+        double[] logSums = Arrays.copyOfRange(totalSums, ka, ka+kb);
+
+        ChebyshevMomentSolver2 solver;
+        boolean useStandardBasis = true;
+        if (min > 0) {
+            solver = ChebyshevMomentSolver2.fromPowerSums(
+                    min, max, powerSums,
+                    logMin, logMax, logSums
+            );
+            useStandardBasis = solver.isUseStandardBasis();
+        } else {
+            useStandardBasis = true;
+            logSums = new double[1];
+            solver = ChebyshevMomentSolver2.fromPowerSums(
+                    min, max, powerSums,
+                    logMin, logMax, logSums
+            );
+        }
+        solver.setVerbose(verbose);
+        solver.solve(tolerance);
+
+        double scaledX;
+        if (useStandardBasis) {
+            scaledX = 2.0 * (x - min) / (max - min) - 1.0;
+        } else {
+            scaledX = 2.0 * (Math.log(x) - logMin) / (logMax - logMin) - 1.0;
+        }
+        if (scaledX < -1.0) return 1.0;
+        if (scaledX > 1.0) return 0.0;
+        double quantile = solver.estimateCDF(scaledX);
+        return 1.0 - quantile;
+    }
 
     @Override
     public double[] getQuantiles(List<Double> pList) throws Exception {
