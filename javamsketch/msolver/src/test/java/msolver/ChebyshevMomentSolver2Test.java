@@ -1,9 +1,6 @@
 package msolver;
 
-import msolver.data.MilanData;
-import msolver.data.MomentData;
-import msolver.data.OccupancyData;
-import msolver.data.RetailQuantityData;
+import msolver.data.*;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -11,6 +8,24 @@ import java.util.Arrays;
 import static org.junit.Assert.assertEquals;
 
 public class ChebyshevMomentSolver2Test {
+    @Test
+    public void testGetCDF() {
+        MomentData data = new ExponentialData();
+        double[] range = {data.getMin(), data.getMax()};
+        double[] logRange = {data.getLogMin(), data.getLogMax()};
+        double[] powerSums = data.getPowerSums(9);
+        double[] logSums = data.getLogSums(9);
+
+        ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
+                range[0], range[1], powerSums,
+                logRange[0], logRange[1], logSums
+        );
+        solver.solve(1e-9);
+
+        double cdf = solver.estimateCDF(4);
+        assertEquals(0.98, cdf, 0.01);
+    }
+
     @Test
     public void testMilan() {
         MomentData data = new MilanData();

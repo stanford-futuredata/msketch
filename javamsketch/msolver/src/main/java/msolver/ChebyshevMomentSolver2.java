@@ -195,7 +195,13 @@ public class ChebyshevMomentSolver2 {
     }
 
     public double estimateCDF(double x) {
-        return approxCDF.value(x);
+        double y;
+        if (useStandardBasis) {
+            y = (x - aCenter) / aScale;
+        } else {
+            y = (Math.log(x) - aCenter) / aScale;
+        }
+        return approxCDF.value(y);
     }
 
     public double[] getLambdas() {
