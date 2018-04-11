@@ -3,8 +3,6 @@ package msolver.thresholds;
 import msolver.ChebyshevMomentSolver2;
 import msolver.struct.MomentStruct;
 
-import java.util.Arrays;
-
 public class ThresholdCascade {
     private MomentStruct ms;
     private MomentThreshold[] cascade;

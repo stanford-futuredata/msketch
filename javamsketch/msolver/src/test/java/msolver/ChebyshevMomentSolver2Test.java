@@ -2,6 +2,7 @@ package msolver;
 
 import msolver.data.*;
 import org.junit.Test;
+import org.junit.experimental.theories.suppliers.TestedOn;
 
 import java.util.Arrays;
 
@@ -25,6 +26,25 @@ public class ChebyshevMomentSolver2Test {
         double cdf = solver.estimateCDF(4);
         assertEquals(0.98, cdf, 0.01);
     }
+
+    @Test
+    public void testExpMix() {
+        double[] range = {0.00016239676113615254, 11.080746252112679, -8.7254680741784778, 2.4052090303248499};
+        double[] powerSums = {10000.0, 15132.848519412149, 60833.256862142742, 364446.70116487902, 2516373.8493943713};
+//        double[] logSums = {10000.0, -3545.2047275402342, 21064.084600982864, -42730.224929083415, 222739.56454899674};
+        double[] logSums = {10000.0};
+        ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
+                range[0], range[1], powerSums,
+                range[2], range[1], logSums
+        );
+        solver.setVerbose(true);
+        solver.solve(1e-9);
+        double[] ps = {.1, .5, .9, .99};
+        double[] qs = solver.estimateQuantiles(ps);
+        System.out.println(Arrays.toString(qs));
+
+    }
+
 
     @Test
     public void testMilan() {
