@@ -67,7 +67,11 @@ class CSolver:
             ])
             grad = e_mu[:k] - d_mus
             grad_norm = np.linalg.norm(grad)
+
+            grad_norm_old = grad_norm
             Pval_old = e_mu[0] - lambd.dot(d_mus)
+
+
             if self.verbose:
                 print("Step: {}, Grad: {}, P: {}".format(
                     i_step, grad_norm, Pval_old
@@ -91,9 +95,18 @@ class CSolver:
                 cs = fit_cheby(fvals)
                 fpoly = np.polynomial.chebyshev.Chebyshev(cs)
 
+                e_mu = np.array([
+                    (fpoly * cb(i)).integ(lbnd=-1)(1)
+                    for i in range(2 * k)
+                ])
+                grad = e_mu[:k] - d_mus
+                grad_norm = np.linalg.norm(grad)
+
                 Pval_new = fpoly.integ(lbnd=-1)(1) - newX.dot(d_mus)
                 delta_change = Pval_old + alpha * stepScaleFactor * dfdx - Pval_new
-                if delta_change > -1e-6 or stepScaleFactor < 1e-3:
+
+                # if (delta_change > -1e-6 and grad_norm < grad_norm_old) or stepScaleFactor < 1e-5:
+                if (delta_change > -1e-6 or stepScaleFactor < 1e-5):
                     break
                 else:
                     stepScaleFactor *= beta

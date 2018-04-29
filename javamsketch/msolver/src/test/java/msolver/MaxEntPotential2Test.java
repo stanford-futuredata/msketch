@@ -1,5 +1,6 @@
 package msolver;
 
+import msolver.optimizer.GenericOptimizer;
 import msolver.optimizer.NewtonOptimizer;
 import org.junit.Test;
 
@@ -25,7 +26,7 @@ public class MaxEntPotential2Test {
         assertEquals(0, P.getGradient()[1], 1e-8);
 
         double[] l0 = {0, 0, 0};
-        NewtonOptimizer optimizer = new NewtonOptimizer(P);
+        GenericOptimizer optimizer = new NewtonOptimizer(P);
         l0 = optimizer.solve(l0, 1e-6);
         assertArrayEquals(lambdas, l0, 1e-6);
     }
@@ -45,7 +46,7 @@ public class MaxEntPotential2Test {
         );
         P.computeAll(lambdas, 1e-8);
         double[] l0 = {0, 0, 0};
-        NewtonOptimizer optimizer = new NewtonOptimizer(P);
+        GenericOptimizer optimizer = new NewtonOptimizer(P);
         l0 = optimizer.solve(l0, 1e-6);
         assertArrayEquals(lambdas, l0, 1e-6);
     }

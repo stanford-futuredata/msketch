@@ -1,6 +1,8 @@
 package msolver;
 
 import msolver.chebyshev.ChebyshevPolynomial;
+import msolver.optimizer.BFGSOptimizer;
+import msolver.optimizer.GenericOptimizer;
 import msolver.optimizer.NewtonOptimizer;
 import org.apache.commons.math3.analysis.solvers.BrentSolver;
 import org.apache.commons.math3.analysis.solvers.UnivariateSolver;
@@ -11,6 +13,8 @@ public class ChebyshevMomentSolver2 {
     private double[] d_mus;
 
     private int hessianType = 0;
+    private int solverType = 0;
+
     private int numNormalPowers;
     private boolean useStandardBasis = true;
     private boolean verbose = false;
@@ -20,7 +24,7 @@ public class ChebyshevMomentSolver2 {
     private ChebyshevPolynomial approxCDF;
     private boolean isConverged;
 
-    private NewtonOptimizer optimizer;
+    private GenericOptimizer optimizer;
     private int cumFuncEvals;
 
     public ChebyshevMomentSolver2(
@@ -137,7 +141,12 @@ public class ChebyshevMomentSolver2 {
                 bScale
         );
         potential.setHessianType(hessianType);
-        optimizer = new NewtonOptimizer(potential);
+        if (solverType == 1) {
+            optimizer = new BFGSOptimizer(potential);
+            optimizer.setMaxIter(5000);
+        } else {
+            optimizer = new NewtonOptimizer(potential);
+        }
         optimizer.setVerbose(verbose);
         if (verbose) {
             System.out.println("Beginning solve with order: "+numNormalPowers+","+(d_mus.length-numNormalPowers+1));
@@ -208,7 +217,7 @@ public class ChebyshevMomentSolver2 {
         return lambdas;
     }
 
-    public NewtonOptimizer getOptimizer() {
+    public GenericOptimizer getOptimizer() {
         return optimizer;
     }
     public int getCumFuncEvals() {
@@ -228,5 +237,8 @@ public class ChebyshevMomentSolver2 {
 
     public void setHessianType(int hessianType) {
         this.hessianType = hessianType;
+    }
+    public void setSolverType(int solverType) {
+        this.solverType = solverType;
     }
 }

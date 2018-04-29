@@ -32,7 +32,22 @@ class TestPointSolver(unittest.TestCase):
 
         ps = pointsolver.PointSolver(len(pmus))
         locs, weights = ps.solve(pmus)
+        print(locs)
+        print(weights)
         self.assertFalse(ps.is_discrete)
         p50 = processor.invert(ps.get_quantile(.5))
         self.assertTrue(p50 > 40)
         self.assertTrue(p50 < 60)
+
+    def test_exponential(self):
+        k = 11
+        xs = np.random.exponential(scale=1, size=100000)
+        processor = preprocess.Shifter(compress=False)
+        processor.set_xs(xs, k=k)
+        pmus = processor.get_pmus()
+
+        ps = pointsolver.PointSolver(len(pmus))
+        locs, weights = ps.solve(pmus)
+        print(np.min(xs), np.max(xs))
+        print(repr(processor.invert(locs)))
+        print(repr(weights))

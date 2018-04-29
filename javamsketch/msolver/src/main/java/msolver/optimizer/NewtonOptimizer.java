@@ -5,7 +5,7 @@ import org.apache.commons.math3.linear.*;
 /**
  * Minimizes a convex function using damped Newton's method.
  */
-public class NewtonOptimizer {
+public class NewtonOptimizer implements GenericOptimizer {
     protected FunctionWithHessian P;
     protected int maxIter;
 
@@ -24,15 +24,19 @@ public class NewtonOptimizer {
         this.dampedStepCount = 0;
         this.converged = false;
     }
+    @Override
     public void setVerbose(boolean flag) {
         this.verbose = flag;
     }
+    @Override
     public void setMaxIter(int maxIter) {
         this.maxIter = maxIter;
     }
+    @Override
     public int getStepCount() {
         return stepCount;
     }
+    @Override
     public boolean isConverged() {
         return converged;
     }
@@ -40,6 +44,7 @@ public class NewtonOptimizer {
         return dampedStepCount;
     }
 
+    @Override
     public FunctionWithHessian getP() {
         return P;
     }
@@ -52,6 +57,7 @@ public class NewtonOptimizer {
         return sum / error.length;
     }
 
+    @Override
     public double[] solve(double[] start, double gradTol) {
         int k = P.dim();
 

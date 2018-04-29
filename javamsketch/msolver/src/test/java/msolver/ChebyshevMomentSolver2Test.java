@@ -1,6 +1,7 @@
 package msolver;
 
 import msolver.data.*;
+import msolver.optimizer.FunctionWithHessian;
 import org.junit.Test;
 import org.junit.experimental.theories.suppliers.TestedOn;
 
@@ -21,7 +22,12 @@ public class ChebyshevMomentSolver2Test {
                 range[0], range[1], powerSums,
                 logRange[0], logRange[1], logSums
         );
-        solver.solve(1e-9);
+        solver.setVerbose(false);
+        solver.setSolverType(0);
+        solver.solve(1e-8);
+        double[] lambdas = solver.getLambdas();
+        FunctionWithHessian P = solver.getOptimizer().getP();
+        P.computeAll(lambdas, 1e-8);
 
         double cdf = solver.estimateCDF(4);
         assertEquals(0.98, cdf, 0.01);
@@ -33,16 +39,30 @@ public class ChebyshevMomentSolver2Test {
         double[] powerSums = {10000.0, 15132.848519412149, 60833.256862142742, 364446.70116487902, 2516373.8493943713};
 //        double[] logSums = {10000.0, -3545.2047275402342, 21064.084600982864, -42730.224929083415, 222739.56454899674};
         double[] logSums = {10000.0};
+
+
         ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
                 range[0], range[1], powerSums,
                 range[2], range[1], logSums
         );
-        solver.setVerbose(true);
+        solver.setVerbose(false);
+        solver.setSolverType(0);
         solver.solve(1e-9);
         double[] ps = {.1, .5, .9, .99};
         double[] qs = solver.estimateQuantiles(ps);
-        System.out.println(Arrays.toString(qs));
 
+        ChebyshevMomentSolver2 solver2 = ChebyshevMomentSolver2.fromPowerSums(
+                range[0], range[1], powerSums,
+                range[2], range[1], logSums
+        );
+        solver2.setVerbose(false);
+        solver2.setSolverType(1);
+        solver2.solve(1e-9);
+        double[] qs2 = solver.estimateQuantiles(ps);
+
+        for (int i = 0; i < qs.length; i++) {
+            assertEquals(qs[i], qs2[i], 1e-5);
+        }
     }
 
 
@@ -51,14 +71,29 @@ public class ChebyshevMomentSolver2Test {
         MomentData data = new MilanData();
         double[] range = {data.getMin(), data.getMax()};
         double[] logRange = {data.getLogMin(), data.getLogMax()};
-        double[] powerSums = data.getPowerSums(9);
-        double[] logSums = data.getLogSums(9);
+        double[] powerSums = data.getPowerSums(11);
+        double[] logSums = data.getLogSums(11);
 
         ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
                 range[0], range[1], powerSums,
                 logRange[0], logRange[1], logSums
         );
-        solver.solve(1e-9);
+        solver.setVerbose(false);
+        solver.setSolverType(0);
+
+        long startTime = System.nanoTime();
+        int numIters = 1;
+        for (int i = 0; i < numIters; i++) {
+            solver.solve(1e-9);
+        }
+        long elapsed = System.nanoTime() - startTime;
+//        System.out.println("Elapsed: "+(elapsed/numIters));
+
+        double[] lambd = solver.getLambdas();
+        FunctionWithHessian P = solver.getOptimizer().getP();
+        P.computeAll(lambd, 1e-9);
+        double[] grad = P.getGradient();
+
         double[] ps = {.1, .5, .9, .99};
         double[] qs = solver.estimateQuantiles(ps);
         assertEquals(3.0, qs[1], 1.0);

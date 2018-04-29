@@ -68,11 +68,9 @@ def main():
         "sentiment", "apilogs", "batchprocess",
         "cube2star", "cube2nostar", "cube31"
     ]
-    ks = [5, 11, 15]
+    ks = [5, 7, 9, 11, 13]
 
-    dnames = ["cube31"]
-    ks = [11]
-    ps = np.array([0.001, .01, .1, .5, .9, .99, 0.999])
+    ps = np.array([0.001, .01, .1, .3, .5, .7, .9, .99, 0.999])
 
     result_rows = []
     for di in range(len(dnames)):
@@ -107,12 +105,12 @@ def main():
             s.solve(psums=axs_powers, amin=amin, amax=amax)
             q_ests = np.array([s.get_quantile(p) for p in ps])
             errors = calc_errors(ps, q_ests, xvals)
-            import matplotlib.pyplot as plt
-            plt.figure()
-            xs = np.linspace(-1, 1, 1000)
-            ys = s.csolver.f_poly(xs)
-            plt.plot(xs, ys)
-            plt.show()
+            # import matplotlib.pyplot as plt
+            # plt.figure()
+            # xs = np.linspace(-1, 1, 1000)
+            # ys = s.csolver.f_poly(xs)
+            # plt.plot(xs, ys)
+            # plt.show()
             print(q_true)
             print(q_ests)
             print(errors)

@@ -101,57 +101,6 @@ public class MaxEntFunction2 implements UnivariateFunction {
         return pApprox.integrate();
     }
 
-    private class WeightedFunction implements UnivariateFunction{
-        private int i, j;
-        private boolean iType, jType;
-        private MaxEntFunction2 f2;
-        public WeightedFunction(
-                MaxEntFunction2 f2,
-                int i,
-                int j
-        ) {
-            this.f2 = f2;
-            if (i < f2.aCoeffs.length) {
-                this.i = i;
-                this.iType = true;
-            } else {
-                this.i = i - f2.aCoeffs.length;
-                this.iType = false;
-            }
-            if (j < f2.aCoeffs.length) {
-                this.j = j;
-                this.jType = true;
-            } else {
-                this.j = j - f2.aCoeffs.length;
-                this.jType = false;
-            }
-        }
-
-        @Override
-        public double value(double y) {
-            double x = y * aScale + aCenter;
-            double gX;
-            if (isLog) {
-                gX = Math.log(x);
-            } else {
-                gX = Math.exp(x);
-            }
-            double scaledBGX = (gX - bCenter) / bScale;
-            double wi, wj;
-            if (iType) {
-                wi = bases[i].value(y);
-            } else {
-                wi = bases[i].value(scaledBGX);
-            }
-            if (jType) {
-                wj = bases[j].value(y);
-            } else {
-                wj = bases[j].value(scaledBGX);
-            }
-            return wi*wj*f2.value(y);
-        }
-    }
-
     private class WeightedMultiFunction implements CosScaledFunction {
         private int k;
         private MaxEntFunction2 f2;
@@ -309,6 +258,7 @@ public class MaxEntFunction2 implements UnivariateFunction {
         }
         return hess;
     }
+
 
     public double[][] getPairwiseMoments(double tol) {
         WeightedMultiFunction multiFunction = new WeightedMultiFunction(2*bCoeffs.length-1, this);
