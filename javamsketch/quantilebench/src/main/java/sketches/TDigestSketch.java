@@ -61,7 +61,7 @@ public class TDigestSketch implements QuantileSketch {
     }
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches, int startIndex, int endIndex) {
+    public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
         TDigest newTD = this.td;
         for (int i = startIndex; i < endIndex; i++) {
             TDigestSketch ts = (TDigestSketch) sketches.get(i);

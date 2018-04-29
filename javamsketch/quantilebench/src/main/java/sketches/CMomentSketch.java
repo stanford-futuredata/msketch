@@ -133,7 +133,7 @@ public class CMomentSketch implements QuantileSketch{
     }
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches, int startIndex, int endIndex) {
+    public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
         double mMin = this.min;
         double mMax = this.max;
         double mLogMin = this.logMin;
@@ -170,7 +170,7 @@ public class CMomentSketch implements QuantileSketch{
     public QuantileSketch parallelMerge(ArrayList<QuantileSketch> sketches, int numThreads) {
         int numSketches = sketches.size();
         final CountDownLatch doneSignal = new CountDownLatch(numThreads);
-        ArrayList<QuantileSketch> mergedSketches = new ArrayList<QuantileSketch>(numThreads);
+        QuantileSketch[] mergedSketches = new QuantileSketch[numThreads];
         for (int threadNum = 0; threadNum < numThreads; threadNum++) {
             final int curThreadNum = threadNum;
             final int startIndex = (numSketches * threadNum) / numThreads;
@@ -179,7 +179,7 @@ public class CMomentSketch implements QuantileSketch{
                 CMomentSketch ms = new CMomentSketch(this.tolerance);
                 ms.setSizeParam(this.getSizeParam());
                 ms.initialize();
-                mergedSketches.set(curThreadNum, ms.merge(sketches, startIndex, endIndex));
+                mergedSketches[curThreadNum] = ms.merge(sketches, startIndex, endIndex);
                 doneSignal.countDown();
             };
             Thread ParallelMergeThread = new Thread(ParallelMergeRunnable);
@@ -189,7 +189,7 @@ public class CMomentSketch implements QuantileSketch{
             doneSignal.await();
         } catch (InterruptedException ex) {ex.printStackTrace();}
 
-        return merge(mergedSketches, 0, mergedSketches.size());
+        return merge(Arrays.asList(mergedSketches), 0, mergedSketches.length);
     }
 
 

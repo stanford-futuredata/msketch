@@ -85,7 +85,7 @@ public class HistogramSketch implements QuantileSketch{
     }
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches, int startIndex, int endIndex) {
+    public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
         double min = Double.MAX_VALUE;
         double max = -Double.MAX_VALUE;
 

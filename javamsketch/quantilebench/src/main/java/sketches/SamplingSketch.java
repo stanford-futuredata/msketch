@@ -54,7 +54,7 @@ public class SamplingSketch implements QuantileSketch {
 
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches, int startIndex, int endIndex) {
+    public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
         ReservoirItemsUnion<Double> newUnion = ReservoirItemsUnion.newInstance(this.size);
         newUnion.update(this.reservoir);
         for (int i = startIndex; i < endIndex; i++) {

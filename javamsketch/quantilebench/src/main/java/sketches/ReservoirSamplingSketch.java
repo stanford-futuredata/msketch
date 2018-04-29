@@ -67,7 +67,7 @@ public class ReservoirSamplingSketch implements QuantileSketch {
     }
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches, int startIndex, int endIndex) {
+    public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
         double[] randomDoubles = new double[size];
         for (int i = 0; i < size; i++) {
             randomDoubles[i] = r.nextDouble();

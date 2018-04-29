@@ -61,7 +61,7 @@ public class YahooSketch implements QuantileSketch {
     }
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches, int startIndex, int endIndex) {
+    public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
         DoublesUnion union = DoublesUnion.builder().setMaxK(k).build();
         union.update(this.sketch);
         for (int i = startIndex; i < endIndex; i++) {
