@@ -3,10 +3,12 @@ package sketches;
 import msolver.ChebyshevMomentSolver2;
 import msolver.MathUtil;
 import msolver.SimpleBoundSolver;
+import scala.xml.PrettyPrinter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Tracks both the moments and the log-moments and solves for both
@@ -131,7 +133,7 @@ public class CMomentSketch implements QuantileSketch{
     }
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
+    public QuantileSketch merge(ArrayList<QuantileSketch> sketches, int startIndex, int endIndex) {
         double mMin = this.min;
         double mMax = this.max;
         double mLogMin = this.logMin;
@@ -139,8 +141,8 @@ public class CMomentSketch implements QuantileSketch{
         double[] mSums = this.totalSums;
         final int l = this.totalSums.length;
 
-        for (QuantileSketch s : sketches) {
-            CMomentSketch ms = (CMomentSketch) s;
+        for (int i = startIndex; i < endIndex; i++) {
+            CMomentSketch ms = (CMomentSketch) sketches.get(i);
             if (ms.min < mMin) {
                 mMin = ms.min;
             }
@@ -153,7 +155,7 @@ public class CMomentSketch implements QuantileSketch{
             if (ms.logMax > mLogMax) {
                 mLogMax = ms.logMax;
             }
-            for (int i = 0; i < l; i++) {
+            for (int j = 0; j < l; i++) {
                 mSums[i] += ms.totalSums[i];
             }
         }
@@ -162,6 +164,32 @@ public class CMomentSketch implements QuantileSketch{
         this.logMin = mLogMin;
         this.logMax = mLogMax;
         return this;
+    }
+
+    @Override
+    public QuantileSketch parallelMerge(ArrayList<QuantileSketch> sketches, int numThreads) {
+        int numSketches = sketches.size();
+        final CountDownLatch doneSignal = new CountDownLatch(numThreads);
+        ArrayList<QuantileSketch> mergedSketches = new ArrayList<QuantileSketch>(numThreads);
+        for (int threadNum = 0; threadNum < numThreads; threadNum++) {
+            final int curThreadNum = threadNum;
+            final int startIndex = (numSketches * threadNum) / numThreads;
+            final int endIndex = (numSketches * (threadNum + 1)) / numThreads;
+            Runnable ParallelMergeRunnable = () -> {
+                CMomentSketch ms = new CMomentSketch(this.tolerance);
+                ms.setSizeParam(this.getSizeParam());
+                ms.initialize();
+                mergedSketches.set(curThreadNum, ms.merge(sketches, startIndex, endIndex));
+                doneSignal.countDown();
+            };
+            Thread ParallelMergeThread = new Thread(ParallelMergeRunnable);
+            ParallelMergeThread.start();
+        }
+        try {
+            doneSignal.await();
+        } catch (InterruptedException ex) {ex.printStackTrace();}
+
+        return merge(mergedSketches, 0, mergedSketches.size());
     }
 
 

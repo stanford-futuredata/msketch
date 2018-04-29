@@ -4,8 +4,10 @@ import com.tdunning.math.stats.Centroid;
 import com.tdunning.math.stats.TDigest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class TDigestSketch implements QuantileSketch {
     private TDigest td;
@@ -59,10 +61,10 @@ public class TDigestSketch implements QuantileSketch {
     }
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
+    public QuantileSketch merge(ArrayList<QuantileSketch> sketches, int startIndex, int endIndex) {
         TDigest newTD = this.td;
-        for (QuantileSketch s : sketches) {
-            TDigestSketch ts = (TDigestSketch)s;
+        for (int i = startIndex; i < endIndex; i++) {
+            TDigestSketch ts = (TDigestSketch) sketches.get(i);
             newTD.add(ts.td);
         }
         return this;

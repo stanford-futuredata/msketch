@@ -54,11 +54,11 @@ public class SamplingSketch implements QuantileSketch {
 
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
+    public QuantileSketch merge(ArrayList<QuantileSketch> sketches, int startIndex, int endIndex) {
         ReservoirItemsUnion<Double> newUnion = ReservoirItemsUnion.newInstance(this.size);
         newUnion.update(this.reservoir);
-        for (QuantileSketch s :sketches) {
-            SamplingSketch ss = (SamplingSketch)s;
+        for (int i = startIndex; i < endIndex; i++) {
+            SamplingSketch ss = (SamplingSketch) sketches.get(i);
             newUnion.update(ss.reservoir);
         }
         this.reservoir = newUnion.getResult();

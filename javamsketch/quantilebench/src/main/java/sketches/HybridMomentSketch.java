@@ -132,7 +132,7 @@ public class HybridMomentSketch implements QuantileSketch{
     }
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
+    public QuantileSketch merge(ArrayList<QuantileSketch> sketches, int startIndex, int endIndex) {
         double mMin = this.min;
         double mMax = this.max;
         double mLogMin = this.logMin;
@@ -140,8 +140,8 @@ public class HybridMomentSketch implements QuantileSketch{
         double[] mSums = this.totalSums;
         final int k2 = this.k * 2;
 
-        for (QuantileSketch s : sketches) {
-            HybridMomentSketch ms = (HybridMomentSketch) s;
+        for (int i = startIndex; i < endIndex; i++) {
+            HybridMomentSketch ms = (HybridMomentSketch) sketches.get(i);
             if (ms.min < mMin) {
                 mMin = ms.min;
             }
@@ -154,8 +154,8 @@ public class HybridMomentSketch implements QuantileSketch{
             if (ms.logMax > mLogMax) {
                 mLogMax = ms.logMax;
             }
-            for (int i = 0; i < k2; i++) {
-                mSums[i] += ms.totalSums[i];
+            for (int j = 0; j < k2; j++) {
+                mSums[j] += ms.totalSums[j];
             }
         }
         this.min = mMin;

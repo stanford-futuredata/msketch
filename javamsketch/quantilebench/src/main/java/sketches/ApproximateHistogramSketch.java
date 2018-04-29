@@ -50,9 +50,9 @@ public class ApproximateHistogramSketch implements QuantileSketch{
     }
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
-        for (QuantileSketch rawSketch : sketches) {
-            ApproximateHistogramSketch s = (ApproximateHistogramSketch) rawSketch;
+    public QuantileSketch merge(ArrayList<QuantileSketch> sketches, int startIndex, int endIndex) {
+        for (int i = startIndex; i < endIndex; i++) {
+            ApproximateHistogramSketch s = (ApproximateHistogramSketch) sketches.get(i);
             this.hist.foldFast(s.hist);
         }
         return this;

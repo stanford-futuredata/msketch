@@ -93,20 +93,20 @@ public class MomentSketch implements QuantileSketch {
     }
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
+    public QuantileSketch merge(ArrayList<QuantileSketch> sketches, int startIndex, int endIndex) {
         double mMin = this.min;
         double mMax = this.max;
         double[] mPowerSums = this.powerSums;
-        for (QuantileSketch s : sketches) {
-            MomentSketch ms = (MomentSketch)s;
+        for (int i = startIndex; i < endIndex; i++) {
+            MomentSketch ms = (MomentSketch) sketches.get(i);
             if (ms.min < mMin) {
                 mMin = ms.min;
             }
             if (ms.max > mMax) {
                 mMax = ms.max;
             }
-            for (int i = 0; i < k; i++) {
-                mPowerSums[i] += ms.powerSums[i];
+            for (int j = 0; j < k; j++) {
+                mPowerSums[j] += ms.powerSums[j];
             }
         }
         this.min = mMin;

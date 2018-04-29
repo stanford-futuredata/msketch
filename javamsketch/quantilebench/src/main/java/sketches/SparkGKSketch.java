@@ -56,10 +56,10 @@ public class SparkGKSketch implements QuantileSketch{
     }
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
+    public QuantileSketch merge(ArrayList<QuantileSketch> sketches, int startIndex, int endIndex) {
         QuantileSummaries newSumm = this.summary;
-        for (QuantileSketch s : sketches) {
-            SparkGKSketch gks = (SparkGKSketch) s;
+        for (int i = startIndex; i < endIndex; i++) {
+            SparkGKSketch gks = (SparkGKSketch) sketches.get(i);
             newSumm = newSumm.merge(gks.summary);
         }
         this.summary = newSumm.compress();
