@@ -156,7 +156,7 @@ public class CMomentSketch implements QuantileSketch{
                 mLogMax = ms.logMax;
             }
             for (int j = 0; j < l; i++) {
-                mSums[i] += ms.totalSums[i];
+                mSums[j] += ms.totalSums[j];
             }
         }
         this.min = mMin;
