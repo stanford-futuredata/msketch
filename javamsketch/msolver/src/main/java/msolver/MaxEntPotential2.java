@@ -91,7 +91,6 @@ public class MaxEntPotential2 implements FunctionWithHessian {
         int k = lambd.length;
         setFunction(lambd);
         // experimental code paths
-        int type = 2;
         switch (hessianType) {
             case 0: {
                 double[][] pairwiseMoments = func.getPairwiseMoments(tol);
@@ -138,6 +137,16 @@ public class MaxEntPotential2 implements FunctionWithHessian {
                     this.grad[i] = this.mus[i] - this.d_mus[i];
                 }
                 this.hess = hess;
+                break;
+            }
+            // Only calculate gradient
+            case 3: {
+                this.mus = func.getMoments(tol);
+                for (int i = 0; i < k; i++) {
+                    this.grad[i] = this.mus[i] - this.d_mus[i];
+                }
+                this.hess = new double[k][k];
+                break;
             }
         }
     }

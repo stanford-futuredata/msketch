@@ -224,6 +224,23 @@ public class MaxEntFunction2 implements UnivariateFunction {
         return hess;
     }
 
+    public double[] getMoments(double tol) {
+        WeightedMultiFunction multiFunction = new WeightedMultiFunction( bCoeffs.length, this);
+        ChebyshevPolynomial[] bApproxs = ChebyshevPolynomial.fitMulti(multiFunction, tol);
+        numFuncEvals += multiFunction.getNumFuncEvals();
+
+        int k = aCoeffs.length + bCoeffs.length - 1;
+        double[] singleMoments = new double[k];
+        for (int i = 0; i < aCoeffs.length; i++) {
+            singleMoments[i] = bApproxs[0].multiplyByBasis(i).integrate();
+        }
+        for (int i = 1; i < bCoeffs.length; i++) {
+            singleMoments[i+aCoeffs.length-1] = bApproxs[i].integrate();
+        }
+//        System.out.println(Arrays.toString(singleMoments));
+        return singleMoments;
+    }
+
     public double[][] getHessian(double tol) {
         int ka = aCoeffs.length;
         int kb = bCoeffs.length-1;

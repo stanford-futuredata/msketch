@@ -23,7 +23,8 @@ public class ChebyshevMomentSolver2Test {
                 logRange[0], logRange[1], logSums
         );
         solver.setVerbose(false);
-        solver.setSolverType(0);
+        solver.setHessianType(3);
+        solver.setSolverType(1);
         solver.solve(1e-8);
         double[] lambdas = solver.getLambdas();
         FunctionWithHessian P = solver.getOptimizer().getP();
