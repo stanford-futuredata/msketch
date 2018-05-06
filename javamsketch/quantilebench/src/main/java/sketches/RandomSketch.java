@@ -269,6 +269,19 @@ public class RandomSketch implements QuantileSketch{
             }
         }
 
+//        // Determine new active level, be liberal in allocating buffers (ie we
+//        // might end up with more buffers than we should
+//        int numBuffersAboveLevel = 0;
+//        ArrayList<Integer> levels = new ArrayList<>(usedBuffers.keySet());
+//        Collections.sort(levels, Collections.reverseOrder());
+//        for (int level : levels) {
+//            numBuffersAboveLevel += usedBuffers.get(level).size();
+//            if (numBuffersAboveLevel >= b) {
+//                activeLevel = level;
+//                break;
+//            }
+//        }
+
         // Merge until b buffers remain
         for (int i = numBuffers; i > b; i--) {
             collapseForMerge();

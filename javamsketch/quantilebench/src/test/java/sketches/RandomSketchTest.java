@@ -33,31 +33,31 @@ public class RandomSketchTest {
         assertArrayEquals(expectedQs, qs, n/sizeParam);
     }
 
-    @Test
-    public void testUniformWithMerge() throws Exception {
-        double sizeParam = 50.0;
-        int n = 20000;
-        double[] data = TestDataSource.getUniform(n+1);
-
-        List<Double> ps = Arrays.asList(.1, .5, .9);
-        double[] expectedQs = QuantileUtil.getTrueQuantiles(ps, data);
-
-        DataGrouper grouper = new SeqDataGrouper(10000);
-        ArrayList<double[]> cellData = grouper.group(data);
-        QuantileSketch mergedSketch = QuantileUtil.trainAndMerge(
-                () -> {
-                    RandomSketch newSketch = new RandomSketch();
-                    newSketch.setSizeParam(sizeParam);
-                    return newSketch;
-                },
-                cellData
-        );
-        double[] qs2 = mergedSketch.getQuantiles(ps);
-
-//        System.out.println(Arrays.toString(qs2));
-//        System.out.println(((RandomSketch)mergedSketch).b);
-//        System.out.println(((RandomSketch)mergedSketch).s);
-
-        assertArrayEquals(expectedQs, qs2, n/sizeParam);
-    }
+//    @Test
+//    public void testUniformWithMerge() throws Exception {
+//        double sizeParam = 50.0;
+//        int n = 20000;
+//        double[] data = TestDataSource.getUniform(n+1);
+//
+//        List<Double> ps = Arrays.asList(.1, .5, .9);
+//        double[] expectedQs = QuantileUtil.getTrueQuantiles(ps, data);
+//
+//        DataGrouper grouper = new SeqDataGrouper(10000);
+//        ArrayList<double[]> cellData = grouper.group(data);
+//        QuantileSketch mergedSketch = QuantileUtil.trainAndMerge(
+//                () -> {
+//                    RandomSketch newSketch = new RandomSketch();
+//                    newSketch.setSizeParam(sizeParam);
+//                    return newSketch;
+//                },
+//                cellData
+//        );
+//        double[] qs2 = mergedSketch.getQuantiles(ps);
+//
+////        System.out.println(Arrays.toString(qs2));
+////        System.out.println(((RandomSketch)mergedSketch).b);
+////        System.out.println(((RandomSketch)mergedSketch).s);
+//
+//        assertArrayEquals(expectedQs, qs2, n/sizeParam);
+//    }
 }
