@@ -7,6 +7,8 @@ import msolver.SimpleBoundSolver;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
+import static java.lang.Integer.MAX_VALUE;
+
 /**
  * Tracks both the moments and the log-moments and solves for both
  * simultaneously when possible.
@@ -180,6 +182,38 @@ public class RandomSketch implements QuantileSketch{
         }
     }
 
+    private void collapseForMerge() {
+        ArrayList<ArrayList<Double>> usedBuffersInLevel = usedBuffers.get(activeLevel);
+        if (usedBuffersInLevel.size() < 2) {
+            usedBuffers.remove(activeLevel);
+            activeLevel = Collections.min(this.usedBuffers.keySet());
+            sampleBlockLength = (int) Math.pow(2, activeLevel);
+        } else {
+            ArrayList<Double> bufferOne = usedBuffersInLevel.remove(usedBuffersInLevel.size() - 1);
+            ArrayList<Double> bufferTwo = usedBuffersInLevel.remove(usedBuffersInLevel.size() - 1);
+
+            // Merge the buffers: bufferOne becomes the merged buffer, bufferTwo becomes free
+            ArrayList<Double> mergedBuffer = bufferOne;
+            mergedBuffer.addAll(bufferTwo);
+            Collections.sort(mergedBuffer);
+            int offset = rand.nextInt(2);
+            for (int i = 0; i < s; i++) {
+                mergedBuffer.set(i, mergedBuffer.get(2 * i + offset));
+            }
+            mergedBuffer.subList(s, 2 * s).clear();
+            insertBuffer(mergedBuffer, activeLevel + 1);
+
+            bufferTwo.clear();
+
+            // If all buffers in the active level have been merged, then the active level increases
+            if (usedBuffersInLevel.size() == 0) {
+                usedBuffers.remove(activeLevel);
+                activeLevel++;
+                sampleBlockLength = (int) Math.pow(2, activeLevel);
+            }
+        }
+    }
+
     private void constructQuantileEntries() {
         quantileEntries = new ArrayList<>();
 
@@ -213,7 +247,37 @@ public class RandomSketch implements QuantileSketch{
     }
 
     @Override
+    // TODO: how to deal with curBuffer
     public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
+        int numBuffers = 0;
+        activeLevel = MAX_VALUE;
+
+        // Insert all buffers into the tree
+        for (int i = startIndex; i < endIndex; i++) {
+            RandomSketch rs = (RandomSketch) sketches.get(i);
+            for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> entry : rs.usedBuffers.entrySet()) {
+                int level = entry.getKey();
+                numBuffers += entry.getValue().size();
+                if (usedBuffers.containsKey(level)) {
+                    usedBuffers.get(level).addAll(entry.getValue());
+                } else {
+                    usedBuffers.put(level, entry.getValue());
+                    if (level < activeLevel) {
+                        activeLevel = level;
+                    }
+                }
+            }
+        }
+
+        // Merge until b buffers remain
+        for (int i = numBuffers; i > b; i--) {
+            collapseForMerge();
+        }
+
+        // One buffer remains, becomes the curBuffer
+        freeBuffers.clear();
+        curBuffer = new ArrayList<>();
+
         return this;
     }
 
@@ -233,12 +297,20 @@ public class RandomSketch implements QuantileSketch{
             if (quantileEntryIdx >= 0) {
                 quantiles[i] = quantileEntries.get(quantileEntryIdx).value;
             } else {
-                // linearly interpolate between the closest quantile entries.
-                QuantileEntry lowerEntry = quantileEntries.get(-quantileEntryIdx-2);
-                QuantileEntry higherEntry = quantileEntries.get(-quantileEntryIdx-1);
-                double quantileDiff = higherEntry.quantile - lowerEntry.quantile;
-                quantiles[i] = (p - lowerEntry.quantile) / quantileDiff * lowerEntry.value
-                        + (higherEntry.quantile - p) / quantileDiff * higherEntry.value;
+                if (quantileEntryIdx == -1) {
+                    // less than smallest value
+                    quantiles[i] = quantileEntries.get(0).quantile;
+                } else if (quantileEntryIdx == -quantileEntries.size()-1) {
+                    // greater than largest value
+                    quantiles[i] = quantileEntries.get(quantileEntries.size()-1).quantile;
+                } else {
+                    // linearly interpolate between the closest quantile entries.
+                    QuantileEntry lowerEntry = quantileEntries.get(-quantileEntryIdx - 2);
+                    QuantileEntry higherEntry = quantileEntries.get(-quantileEntryIdx - 1);
+                    double quantileDiff = higherEntry.quantile - lowerEntry.quantile;
+                    quantiles[i] = (p - lowerEntry.quantile) / quantileDiff * lowerEntry.value
+                            + (higherEntry.quantile - p) / quantileDiff * higherEntry.value;
+                }
             }
         }
 
