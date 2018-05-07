@@ -26,6 +26,8 @@ public class SketchLoader {
             return new HybridMomentSketch(1e-9);
         } else if (sketchName.startsWith("approx_histogram")) {
             return new ApproximateHistogramSketch();
+        } else if (sketchName.startsWith("random")) {
+            return new RandomSketch();
         }
         throw new IOException("Invalid Sketch");
     }
