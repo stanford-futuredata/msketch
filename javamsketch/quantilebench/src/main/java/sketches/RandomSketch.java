@@ -26,6 +26,7 @@ public class RandomSketch implements QuantileSketch{
     private ArrayList<ArrayList<Double>> freeBuffers;
     private HashMap<Integer, ArrayList<ArrayList<Double>>> usedBuffers;
     private ArrayList<Double> curBuffer;
+    private HashMap<Integer, ArrayList<Double>> orphanBuffers;
 
     private Random rand;
     private int nextToSample;
@@ -94,6 +95,7 @@ public class RandomSketch implements QuantileSketch{
         this.activeLevel = 0;
         this.freeBuffers = new ArrayList<>();
         this.usedBuffers = new HashMap<>();
+        this.orphanBuffers = new HashMap<>();
         for (int i = 0; i < b; i++) {
             freeBuffers.add(new ArrayList<>());
         }
@@ -155,6 +157,7 @@ public class RandomSketch implements QuantileSketch{
         }
     }
 
+    // TODO: better merging
     private void collapse() {
         ArrayList<ArrayList<Double>> usedBuffersInLevel = usedBuffers.get(activeLevel);
         ArrayList<Double> bufferOne = usedBuffersInLevel.remove(usedBuffersInLevel.size() - 1);
@@ -185,6 +188,7 @@ public class RandomSketch implements QuantileSketch{
     private void collapseForMerge() {
         ArrayList<ArrayList<Double>> usedBuffersInLevel = usedBuffers.get(activeLevel);
         if (usedBuffersInLevel.size() < 2) {
+            orphanBuffers.put(activeLevel, usedBuffersInLevel.get(0));
             usedBuffers.remove(activeLevel);
             activeLevel = Collections.min(this.usedBuffers.keySet());
             sampleBlockLength = (int) Math.pow(2, activeLevel);
@@ -247,8 +251,8 @@ public class RandomSketch implements QuantileSketch{
     }
 
     @Override
-    // TODO: how to deal with curBuffer
     public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
+        orphanBuffers.clear();
         int numBuffers = 0;
         activeLevel = MAX_VALUE;
 
@@ -269,27 +273,48 @@ public class RandomSketch implements QuantileSketch{
             }
         }
 
-//        // Determine new active level, be liberal in allocating buffers (ie we
-//        // might end up with more buffers than we should
-//        int numBuffersAboveLevel = 0;
-//        ArrayList<Integer> levels = new ArrayList<>(usedBuffers.keySet());
-//        Collections.sort(levels, Collections.reverseOrder());
-//        for (int level : levels) {
-//            numBuffersAboveLevel += usedBuffers.get(level).size();
-//            if (numBuffersAboveLevel >= b) {
-//                activeLevel = level;
-//                break;
-//            }
-//        }
-
         // Merge until b buffers remain
         for (int i = numBuffers; i > b; i--) {
             collapseForMerge();
         }
 
+        // Incorporate curBuffer and orphan buffers
+        int numNewBuffers = 0;
+        ArrayList<Double> newBuffer = new ArrayList<>();
+        for (int i = startIndex; i < endIndex; i++) {
+            RandomSketch rs = (RandomSketch) sketches.get(i);
+            // TODO: better sampling?
+            for (double value : rs.curBuffer) {
+                if (rand.nextDouble() < Math.pow(2, rs.activeLevel - activeLevel)) {
+                    newBuffer.add(value);
+                    if (newBuffer.size() == s) {
+                        usedBuffers.get(activeLevel).add(newBuffer);
+                        numNewBuffers++;
+                        newBuffer = new ArrayList<>();
+                    }
+                }
+            }
+        }
+        for (Map.Entry<Integer, ArrayList<Double>> entry : orphanBuffers.entrySet()) {
+            for (double value : entry.getValue()) {
+                if (rand.nextDouble() < Math.pow(2, entry.getKey() - activeLevel)) {
+                    newBuffer.add(value);
+                    if (newBuffer.size() == s) {
+                        usedBuffers.get(activeLevel).add(newBuffer);
+                        numNewBuffers++;
+                        newBuffer = new ArrayList<>();
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < numNewBuffers; i++) {
+            collapseForMerge();
+        }
+
         // One buffer remains, becomes the curBuffer
         freeBuffers.clear();
-        curBuffer = new ArrayList<>();
+        curBuffer = newBuffer;
 
         return this;
     }
