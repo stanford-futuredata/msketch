@@ -70,7 +70,7 @@ public class ParallelMergeBench {
         long loadTime = endTime - startTime;
         System.out.println("Loaded Data in: "+loadTime);
 
-
+//        System.in.read();
         List<Map<String, String>> results = new ArrayList<>();
 
         int m = quantiles.size();

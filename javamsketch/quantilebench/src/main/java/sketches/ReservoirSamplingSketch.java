@@ -18,7 +18,7 @@ public class ReservoirSamplingSketch implements QuantileSketch {
 
     @Override
     public String getName() {
-        return "sampling";
+        return "reservoir_sampling";
     }
 
     @Override

@@ -1,10 +1,9 @@
 package sketches;
 
-import com.yahoo.sketches.sampling.ReservoirItemsSketch;
-import com.yahoo.sketches.sampling.ReservoirItemsUnion;
+import sampling.ReservoirItemsSketch;
+import sampling.ReservoirItemsUnion;
 import org.apache.commons.math3.util.FastMath;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class SamplingSketch implements QuantileSketch {

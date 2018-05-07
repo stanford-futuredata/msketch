@@ -16,6 +16,8 @@ public class SketchLoader {
             return new SparkGKSketch();
         } else if (sketchName.startsWith("sampling")) {
             return new SamplingSketch();
+        } else if (sketchName.startsWith("reservoir_sampling")) {
+            return new ReservoirSamplingSketch();
         } else if (sketchName.startsWith("histogram")) {
             return new HistogramSketch();
         } else if (sketchName.startsWith("moment")) {
