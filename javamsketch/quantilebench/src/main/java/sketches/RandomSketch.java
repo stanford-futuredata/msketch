@@ -4,6 +4,7 @@ import msolver.ChebyshevMomentSolver2;
 import msolver.MathUtil;
 import msolver.SimpleBoundSolver;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
@@ -266,13 +267,14 @@ public class RandomSketch implements QuantileSketch{
             for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> entry : rs.usedBuffers.entrySet()) {
                 int level = entry.getKey();
                 numBuffers += entry.getValue().size();
-                if (usedBuffers.containsKey(level)) {
-                    usedBuffers.get(level).addAll(entry.getValue());
-                } else {
-                    usedBuffers.put(level, entry.getValue());
+                if (!usedBuffers.containsKey(level)) {
+                    usedBuffers.put(level, new ArrayList<>());
                     if (level < activeLevel) {
                         activeLevel = level;
                     }
+                }
+                for (ArrayList<Double> buffer : entry.getValue()) {
+                    usedBuffers.get(level).add(new ArrayList<>(buffer));
                 }
             }
         }
