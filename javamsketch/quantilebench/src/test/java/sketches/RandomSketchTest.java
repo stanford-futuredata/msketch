@@ -28,7 +28,7 @@ public class RandomSketchTest {
 
         double[] expectedQs = QuantileUtil.getTrueQuantiles(ps, data);
 
-        System.out.println(Arrays.toString(qs));
+//        System.out.println(Arrays.toString(qs));
 
         assertArrayEquals(expectedQs, qs, n/sizeParam);
     }
@@ -54,7 +54,7 @@ public class RandomSketchTest {
         );
         double[] qs2 = mergedSketch.getQuantiles(ps);
 
-        System.out.println(Arrays.toString(qs2));
+//        System.out.println(Arrays.toString(qs2));
 //        System.out.println(((RandomSketch)mergedSketch).b);
 //        System.out.println(((RandomSketch)mergedSketch).s);
 

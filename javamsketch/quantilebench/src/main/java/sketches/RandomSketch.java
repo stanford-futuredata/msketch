@@ -187,7 +187,7 @@ public class RandomSketch implements QuantileSketch{
 
     private void collapseForMerge() {
         ArrayList<ArrayList<Double>> usedBuffersInLevel = usedBuffers.get(activeLevel);
-        if (usedBuffersInLevel.size() < 2) {
+        if (usedBuffersInLevel.size() == 1) {
             orphanBuffers.put(activeLevel, usedBuffersInLevel.get(0));
             usedBuffers.remove(activeLevel);
             activeLevel = Collections.min(this.usedBuffers.keySet());
@@ -195,6 +195,10 @@ public class RandomSketch implements QuantileSketch{
         } else {
             ArrayList<Double> bufferOne = usedBuffersInLevel.remove(usedBuffersInLevel.size() - 1);
             ArrayList<Double> bufferTwo = usedBuffersInLevel.remove(usedBuffersInLevel.size() - 1);
+
+            if (bufferOne.size() != s || bufferTwo.size() != s) {
+                System.out.println("buffer not full!");
+            }
 
             // Merge the buffers: bufferOne becomes the merged buffer, bufferTwo becomes free
             ArrayList<Double> mergedBuffer = bufferOne;
@@ -274,8 +278,22 @@ public class RandomSketch implements QuantileSketch{
         }
 
         // Merge until b buffers remain
-        for (int i = numBuffers; i > b; i--) {
+        for (; numBuffers > b; numBuffers--) {
             collapseForMerge();
+        }
+
+        // Edge case: no full buffers were inserted into the hierarchy
+        // TODO: how to choose active level? This works for our benchmarks because
+        // activeLevel will be similar across merged sketches, but might not work
+        // in practice.
+        activeLevel = -1;
+        if (numBuffers == 0) {
+            for (int i = startIndex; i < endIndex; i++) {
+                RandomSketch rs = (RandomSketch) sketches.get(i);
+                if (rs.activeLevel > activeLevel) {
+                    activeLevel = rs.activeLevel;
+                }
+            }
         }
 
         // Incorporate curBuffer and orphan buffers
@@ -288,7 +306,8 @@ public class RandomSketch implements QuantileSketch{
                 if (rand.nextDouble() < Math.pow(2, rs.activeLevel - activeLevel)) {
                     newBuffer.add(value);
                     if (newBuffer.size() == s) {
-                        usedBuffers.get(activeLevel).add(newBuffer);
+//                        usedBuffers.get(activeLevel).add(newBuffer);
+                        insertBuffer(newBuffer, activeLevel);
                         numNewBuffers++;
                         newBuffer = new ArrayList<>();
                     }
@@ -300,7 +319,8 @@ public class RandomSketch implements QuantileSketch{
                 if (rand.nextDouble() < Math.pow(2, entry.getKey() - activeLevel)) {
                     newBuffer.add(value);
                     if (newBuffer.size() == s) {
-                        usedBuffers.get(activeLevel).add(newBuffer);
+//                        usedBuffers.get(activeLevel).add(newBuffer);
+                        insertBuffer(newBuffer, activeLevel);
                         numNewBuffers++;
                         newBuffer = new ArrayList<>();
                     }
@@ -308,13 +328,22 @@ public class RandomSketch implements QuantileSketch{
             }
         }
 
-        for (int i = 0; i < numNewBuffers; i++) {
+        numBuffers += numNewBuffers;
+
+        for (; numBuffers > b; numBuffers--) {
             collapseForMerge();
         }
 
-        // One buffer remains, becomes the curBuffer
+        // New buffer becomes the curBuffer
         freeBuffers.clear();
         curBuffer = newBuffer;
+
+        // Fill up freeBuffers
+        if (numBuffers < b) {
+            for (; numBuffers < b; numBuffers++) {
+                freeBuffers.add(new ArrayList<>());
+            }
+        }
 
         return this;
     }
