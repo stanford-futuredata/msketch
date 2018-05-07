@@ -62,7 +62,9 @@ public class SolveLesionBench {
 
             long startTime=0, endTime=0, timePerTrial=0;
 
+            System.out.println("clenshaw");
             numSolveTrials = 1000;
+//            numSolveTrials = 1;
             for (int warmUp = 0; warmUp < 2; warmUp++) {
                 startTime = System.nanoTime();
                 for (int curTrial = 0; curTrial < numSolveTrials; curTrial++) {
@@ -87,7 +89,9 @@ public class SolveLesionBench {
                     (long)mData.getPowerSums(1)[0]
             ));
 
+            System.out.println("newton");
             numSolveTrials = 100;
+//            numSolveTrials = 1;
             for (int warmUp = 0; warmUp < 2; warmUp++) {
                 startTime = System.nanoTime();
                 for (int curTrial = 0; curTrial < numSolveTrials; curTrial++) {
@@ -112,7 +116,36 @@ public class SolveLesionBench {
                     (long)mData.getPowerSums(1)[0]
             ));
 
+            System.out.println("bfgs");
+            numSolveTrials = 100;
+//            numSolveTrials = 1;
+            for (int warmUp = 0; warmUp < 2; warmUp++) {
+                startTime = System.nanoTime();
+                for (int curTrial = 0; curTrial < numSolveTrials; curTrial++) {
+                    ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
+                            mData.getMin(), mData.getMax(), mData.getPowerSums(ka),
+                            mData.getLogMin(), mData.getLogMax(), mData.getLogSums(kb)
+                    );
+                    solver.setHessianType(3);
+                    solver.setSolverType(1);
+                    solver.setVerbose(verbose);
+                    solver.solve(1e-9);
+                    qs = solver.estimateQuantiles(psArray);
+                }
+                endTime = System.nanoTime();
+                timePerTrial = (endTime - startTime) / numSolveTrials;
+            }
+            results.addAll(genResultMaps(
+                    dname,
+                    "bfgs",
+                    psArray,
+                    qs,
+                    timePerTrial,
+                    (long)mData.getPowerSums(1)[0]
+            ));
 
+
+            System.out.println("mnat");
             numSolveTrials = 20000;
             for (int warmUp = 0; warmUp < 2; warmUp++) {
                 if (useStandardBasis.get(di)) {
