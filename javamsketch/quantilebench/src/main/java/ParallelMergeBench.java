@@ -15,6 +15,7 @@ public class ParallelMergeBench {
     private int cellSize;
     private List<Double> cellFractions;
     private List<Integer> numMergeThreads;
+    private int numDuplications;
 
     private Map<String, List<Double>> methods;
     private List<Double> quantiles;
@@ -34,6 +35,7 @@ public class ParallelMergeBench {
         List<Double> defaultCellFractions = Arrays.asList(1.0);
         cellFractions = conf.get("cellFractions", defaultCellFractions);
         numMergeThreads = conf.get("numMergeThreads");
+        numDuplications = conf.get("numDuplications", 1);
 
         methods = conf.get("methods");
         quantiles = conf.get("quantiles");
@@ -58,6 +60,13 @@ public class ParallelMergeBench {
     private ArrayList<double[]> getCells() throws IOException {
         DataSource source = new SimpleCSVDataSource(fileName, columnIdx);
         double[] data = source.get();
+        if (numDuplications > 1) {
+            double[] dupData = new double[data.length * numDuplications];
+            for (int i = 0; i < numDuplications; i++) {
+                System.arraycopy(data, 0, dupData, data.length * i, data.length);
+            }
+            data = dupData;
+        }
         SeqDataGrouper grouper = new SeqDataGrouper(cellSize);
         return grouper.group(data);
     }
