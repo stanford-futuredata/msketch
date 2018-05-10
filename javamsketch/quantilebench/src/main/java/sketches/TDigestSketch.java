@@ -1,7 +1,7 @@
 package sketches;
 
-import com.tdunning.math.stats.Centroid;
-import com.tdunning.math.stats.TDigest;
+import tdigest.Centroid;
+import tdigest.TDigest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
