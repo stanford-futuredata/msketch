@@ -16,8 +16,8 @@ public class GKSketchTest {
         GKSketch s = new GKSketch(.05);
         s.add(xs);
         s.add(xs);
-        System.out.println(s.toString());
-        System.out.println(s.quantile(.5));
+//        System.out.println(s.toString());
+//        System.out.println(s.quantile(.5));
     }
 
     @Test
@@ -56,8 +56,8 @@ public class GKSketchTest {
         double qhh = p.evaluate(totalData, (targetP+2*eps)*100);
         System.out.println(qll+","+ql+",["+q+"],"+qh+","+qhh);
 
-        System.out.println("Global Size: "+globalSummary.getTuples().size());
-        System.out.println("Global Quantile: "+globalSummary.quantile(targetP));
+//        System.out.println("Global Size: "+globalSummary.getTuples().size());
+//        System.out.println("Global Quantile: "+globalSummary.quantile(targetP));
 
         ArrayList<GKSketch> summaries = new ArrayList<>();
         for (double[] curData : cellData) {
@@ -71,9 +71,9 @@ public class GKSketchTest {
             merged.merge(toMerge);
         }
 
-        System.out.println("Merged Size: "+merged.getTuples().size());
-        System.out.println("Merged Quantile: "+merged.quantile(targetP));
-        System.out.println(merged.toString());
+//        System.out.println("Merged Size: "+merged.getTuples().size());
+//        System.out.println("Merged Quantile: "+merged.quantile(targetP));
+//        System.out.println(merged.toString());
     }
 
 }

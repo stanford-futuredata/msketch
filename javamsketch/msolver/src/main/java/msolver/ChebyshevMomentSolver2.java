@@ -49,24 +49,34 @@ public class ChebyshevMomentSolver2 {
             double min, double max, double[] powerSums,
             double logMin, double logMax, double[] logPowerSums
     ) {
-        double[] posPowerMoments = MathUtil.powerSumsToPosMoments(
-                powerSums, min, max
-        );
-        double[] posLogMoments = MathUtil.powerSumsToPosMoments(
-                logPowerSums, logMin, logMax
-        );
+//        double[] posPowerMoments = MathUtil.powerSumsToPosMoments(
+//                powerSums, min, max
+//        );
+//        double[] posLogMoments = MathUtil.powerSumsToPosMoments(
+//                logPowerSums, logMin, logMax
+//        );
+//        double powerDelta = MathUtil.deltaFromUniformMoments(posPowerMoments);
+//        double logDelta = MathUtil.deltaFromUniformMoments(posLogMoments);
         double[] powerChebyMoments = MathUtil.powerSumsToChebyMoments(
                 min, max, powerSums
         );
         double[] logChebyMoments = MathUtil.powerSumsToChebyMoments(
                 logMin, logMax, logPowerSums
         );
+        double[] powerMoments = MathUtil.powerSumsToZerodMoments(powerSums, min, max);
+        double[] logMoments = MathUtil.powerSumsToZerodMoments(logPowerSums, logMin, logMax);
 
         // compare whether log moments or standard moments are closer to uniform distribution
-        double powerDelta = MathUtil.deltaFromUniformMoments(posPowerMoments);
-        double logDelta = MathUtil.deltaFromUniformMoments(posLogMoments);
+        double powerDelta = MathUtil.deltaFromUniformZerodMoments(powerMoments);
+        double logDelta = MathUtil.deltaFromUniformZerodMoments(logMoments);
         int powerSmall = MathUtil.numSmallerThan(powerChebyMoments, 1.1);
         int logSmall = MathUtil.numSmallerThan(logChebyMoments, 1.1);
+
+//        System.out.println(Arrays.toString(powerMoments));
+//        System.out.println(Arrays.toString(logMoments));
+//        System.out.println(String.format("%g,%g,%s", min, max, Arrays.toString(powerSums)));
+//        System.out.println(String.format("%g,%g,%s", logMin, logMax, Arrays.toString(logPowerSums)));
+//        System.out.println("power delta: "+powerDelta+", logDelta: "+logDelta);
 
         boolean useStandardBasis = true;
         if (logSmall >= powerSmall) {
@@ -175,14 +185,17 @@ public class ChebyshevMomentSolver2 {
         for (int i = 0; i < n; i++) {
             double p = ps[i];
             double q;
-            if (p <= 0.0) {
+
+            double pMax = approxCDF.value(1);
+            double pAdj = p * pMax;
+            if (pAdj <= 0) {
                 q = -1;
-            } else if (p >= 1.0) {
+            } else if (pAdj >= pMax) {
                 q = 1;
             } else {
                 q = bSolver.solve(
                         100,
-                        (x) -> approxCDF.value(x) - p,
+                        (x) -> approxCDF.value(x) - pAdj,
                         -1,
                         1,
                         0

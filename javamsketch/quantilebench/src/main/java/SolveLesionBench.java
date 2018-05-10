@@ -197,7 +197,7 @@ public class SolveLesionBench {
             curResults.put("dataset", dataset);
             curResults.put("sketch", sketch);
             curResults.put("q", String.format("%f", ps[i]));
-            curResults.put("quantile_estimate", String.format("%f", qEstimates[i]));
+            curResults.put("quantile_estimate", Double.toString(qEstimates[i]));
             curResults.put("query_time", String.format("%d", queryTime));
             curResults.put("n", String.format("%d", n));
             results.add(curResults);

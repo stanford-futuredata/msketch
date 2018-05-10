@@ -127,7 +127,7 @@ public class ChebyshevPolynomial implements UnivariateFunction {
             if (e3 > error) {error = e3;}
 //            System.out.println("cheby n: "+N+" error: "+error);
 
-            if (error < tol || N > 1000) {
+            if (error < tol || N > 20000) {
                 break;
             } else {
                 N *= 2;

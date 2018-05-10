@@ -100,7 +100,7 @@ public class AccuracyBench {
                         curResults.put("sketch", curSketch.getName());
                         curResults.put("trial", String.format("%d",curTrial));
                         curResults.put("q", String.format("%f", curP));
-                        curResults.put("quantile_estimate", String.format("%f", curQ));
+                        curResults.put("quantile_estimate", Double.toString(curQ));
                         curResults.put("bound_size", String.format("%f", curError));
                         curResults.put("space", String.format("%d", curSketch.getSize()));
                         curResults.put("size_param", String.format("%.2f", sParam));

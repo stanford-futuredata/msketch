@@ -95,6 +95,24 @@ public class MathUtil {
         return shiftedPowerSums;
     }
 
+    public static double[] powerSumsToZerodMoments(
+            double[] powerSums,
+            double min,
+            double max
+    ) {
+        double r = (max - min) / 2;
+        double xc = (max + min) / 2;
+        double[] scaledPowerSums = MathUtil.shiftPowerSum(
+                powerSums,r,xc
+        );
+        double count = scaledPowerSums[0];
+        for (int i = 0; i < powerSums.length; i++) {
+            scaledPowerSums[i] /= count;
+        }
+        return scaledPowerSums;
+    }
+
+
     public static double[] powerSumsToChebyMoments(
             double min,
             double max,
@@ -130,6 +148,22 @@ public class MathUtil {
             xs[i] = xList.get(i);
         }
         return xs;
+    }
+
+    public static double deltaFromUniformZerodMoments(double[] zMoments) {
+        if (zMoments.length <= 1) {
+            return Double.POSITIVE_INFINITY;
+        }
+        double l2Sum = 0;
+        for (int i = 0; i < zMoments.length; i++) {
+            double expected = 0;
+            if (i % 2 == 0) {
+                expected = 1/(i+1);
+            }
+            double delta = zMoments[i] - expected;
+            l2Sum += delta*delta;
+        }
+        return Math.sqrt(l2Sum / zMoments.length);
     }
 
     public static double deltaFromUniformMoments(double[] posMoments) {

@@ -99,7 +99,7 @@ public class OutlierBench {
                         curResults.put("fraction", String.format("%f",curFraction));
                         curResults.put("scaleFactor", String.format("%f",scaleFactor));
                         curResults.put("q", String.format("%f", curP));
-                        curResults.put("quantile_estimate", String.format("%f", curQ));
+                        curResults.put("quantile_estimate", Double.toString(curQ));
                         curResults.put("space", String.format("%d", curSketch.getSize()));
                         curResults.put("size_param", String.format("%.2f", sParam));
                         curResults.put("train_time", String.format("%d", trainTime));

@@ -11,6 +11,24 @@ import static org.junit.Assert.assertEquals;
 
 public class ChebyshevMomentSolver2Test {
     @Test
+    public void testGamma() {
+        double[] range = {4.31480e-59,11.4711};
+        double[] powerSums = {1000000.0, 100509.18656514234, 110981.88029554467, 234118.97288250603};
+        double[] logRange = {-134.390,2.43983};
+        double[] logSums = {1000000.0, -1.0408048756874071E7, 2.0951288546948197E8, -6.287612745164015E9};
+
+        ChebyshevMomentSolver2 solver = ChebyshevMomentSolver2.fromPowerSums(
+                range[0], range[1], powerSums,
+                logRange[0], logRange[1], logSums
+        );
+        solver.setVerbose(true);
+        solver.solve(1e-13);
+        double[] ps = {.1};
+        double[] qs = solver.estimateQuantiles(ps);
+        System.out.println(Arrays.toString(qs));
+    }
+
+    @Test
     public void testGetCDF() {
         MomentData data = new ExponentialData();
         double[] range = {data.getMin(), data.getMax()};

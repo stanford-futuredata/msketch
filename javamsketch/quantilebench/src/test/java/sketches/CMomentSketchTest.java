@@ -3,6 +3,7 @@ package sketches;
 import data.TestDataSource;
 import io.DataGrouper;
 import io.SeqDataGrouper;
+import msolver.MathUtil;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -12,6 +13,38 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class CMomentSketchTest {
+    @Test
+    public void testDiscrete() throws Exception {
+        CMomentSketch ms = new CMomentSketch(1e-10);
+        ms.setSizeParam(11);
+        ms.initialize();
+
+        int n = 100;
+        double[] data = new double[n+1];
+        for (int i = 0; i <= n; i++) {
+            data[i] = (double)i*1.0/(n);
+        }
+
+        ms.add(data);
+
+        int nP = 20;
+        List<Double> ps = new ArrayList<Double>(nP+1);
+        for (int i = 1; i <= nP; i++) {
+            ps.add(i*1.0/nP);
+        }
+        ms.setVerbose(false);
+        double[] qs = ms.getQuantiles(ps);
+        double[] expectedQs = QuantileUtil.getTrueQuantiles(ps, data);
+
+        double[] errors = new double[qs.length];
+        for (int i = 0; i < errors.length; i++) {
+            errors[i] = Math.abs(qs[i] - expectedQs[i]);
+        }
+//        System.out.println(Arrays.toString(errors));
+        double avgError = MathUtil.arrayMean(errors);
+        assertTrue(avgError < .01);
+    }
+
     @Test
     public void testUniform() throws Exception {
         CMomentSketch ms = new CMomentSketch(1e-10);
