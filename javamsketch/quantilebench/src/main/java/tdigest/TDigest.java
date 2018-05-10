@@ -14,6 +14,9 @@ public abstract class TDigest implements Serializable {
     double min = 1.0D / 0.0;
     double max = -1.0D / 0.0;
 
+    public double compressionTime = 0.0;
+    public double mergeTime = 0.0;
+
     public TDigest() {
     }
 

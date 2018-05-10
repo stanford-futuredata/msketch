@@ -148,6 +148,7 @@ public class AVLTreeDigest extends AbstractTDigest {
     }
 
     public void compress() {
+        long start = System.nanoTime();
         if (this.summary.size() > 1) {
             AVLGroupTree centroids = this.summary;
             this.summary = new AVLGroupTree(this.recordAllData);
@@ -181,6 +182,7 @@ public class AVLTreeDigest extends AbstractTDigest {
             }
 
         }
+        this.compressionTime += (System.nanoTime() - start) / 1.e6;
     }
 
     public long size() {
