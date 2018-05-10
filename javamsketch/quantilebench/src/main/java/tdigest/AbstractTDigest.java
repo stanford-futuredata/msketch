@@ -101,10 +101,12 @@ public abstract class AbstractTDigest extends TDigest {
             centroid = (Centroid)var3.next();
             tmp.add(centroid);
         }
+        insertionTime = (System.nanoTime() - start) / 1.e6;
 
+        start = System.nanoTime();
         Collections.shuffle(tmp, ThreadLocalRandom.current());
-        var3 = tmp.iterator();
         shuffleTime += (System.nanoTime() - start) / 1.e6;
+        var3 = tmp.iterator();
 
         start = System.nanoTime();
         while(var3.hasNext()) {
