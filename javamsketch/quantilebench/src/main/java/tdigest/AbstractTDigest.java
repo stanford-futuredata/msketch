@@ -92,7 +92,6 @@ public abstract class AbstractTDigest extends TDigest {
     }
 
     public void add(TDigest other) {
-        long start = System.nanoTime();
         List<Centroid> tmp = new ArrayList();
         Iterator var3 = other.centroids().iterator();
 
@@ -101,19 +100,14 @@ public abstract class AbstractTDigest extends TDigest {
             centroid = (Centroid)var3.next();
             tmp.add(centroid);
         }
-        insertionTime = (System.nanoTime() - start) / 1.e6;
 
-        start = System.nanoTime();
         Collections.shuffle(tmp, ThreadLocalRandom.current());
-        shuffleTime += (System.nanoTime() - start) / 1.e6;
         var3 = tmp.iterator();
 
-        start = System.nanoTime();
         while(var3.hasNext()) {
             centroid = (Centroid)var3.next();
             this.add(centroid.mean(), centroid.count(), centroid);
         }
-        mergeTime += (System.nanoTime() - start) / 1.e6;
     }
 
     protected Centroid createCentroid(double mean, int id) {

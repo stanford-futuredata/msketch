@@ -49,8 +49,8 @@ public class TDigestSketch implements QuantileSketch {
 
     @Override
     public void initialize() {
-//        this.td = TDigest.createDigest(compression);
-        this.td = TDigest.createAvlTreeDigest(compression);
+        this.td = TDigest.createDigest(compression);
+//        this.td = TDigest.createAvlTreeDigest(compression);
     }
 
     @Override
