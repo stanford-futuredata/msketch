@@ -1,7 +1,10 @@
 package sketches;
 
-import com.tdunning.math.stats.Centroid;
-import com.tdunning.math.stats.TDigest;
+//import com.tdunning.math.stats.Centroid;
+//import com.tdunning.math.stats.TDigest;
+
+import tdigest.Centroid;
+import tdigest.TDigest;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,8 +53,8 @@ public class TDigestSketch implements QuantileSketch {
 
     @Override
     public void initialize() {
-        this.td = TDigest.createDigest(compression);
-//        this.td = TDigest.createAvlTreeDigest(compression);
+//        this.td = TDigest.createDigest(compression);
+        this.td = TDigest.createAvlTreeDigest(compression);
     }
 
     @Override
