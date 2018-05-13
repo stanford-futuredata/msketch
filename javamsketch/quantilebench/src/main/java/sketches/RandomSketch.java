@@ -7,6 +7,7 @@ import msolver.SimpleBoundSolver;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static java.lang.Integer.MAX_VALUE;
 
@@ -27,9 +28,9 @@ public class RandomSketch implements QuantileSketch{
     private ArrayList<ArrayList<Double>> freeBuffers;
     private HashMap<Integer, ArrayList<ArrayList<Double>>> usedBuffers;
     private ArrayList<Double> curBuffer;
+    private ArrayList<Double> tmpBuffer;  // for merging
     private HashMap<Integer, ArrayList<Double>> orphanBuffers;
 
-    private Random rand;
     private int nextToSample;
     private int sampleBlockLength;
     private int sampleBlockSeen;
@@ -98,10 +99,10 @@ public class RandomSketch implements QuantileSketch{
         this.usedBuffers = new HashMap<>();
         this.orphanBuffers = new HashMap<>();
         for (int i = 0; i < b; i++) {
-            freeBuffers.add(new ArrayList<>());
+            freeBuffers.add(new ArrayList<>(s));
         }
-        this.rand = new Random();
         this.curBuffer = freeBuffers.remove(freeBuffers.size() - 1);
+        this.tmpBuffer = new ArrayList<>(s);
         this.quantileEntriesUpdated = false;
     }
 
@@ -121,10 +122,10 @@ public class RandomSketch implements QuantileSketch{
 
             curBuffer.add(x);
             if (curBuffer.size() == s) {
-//                Collections.sort(curBuffer);
+                Collections.sort(curBuffer);
                 insertBuffer(curBuffer, activeLevel);
                 if (freeBuffers.size() == 0) {
-                    collapse();
+                    collapseForAdding();
                 }
                 curBuffer = freeBuffers.remove(freeBuffers.size() - 1);
             }
@@ -142,7 +143,7 @@ public class RandomSketch implements QuantileSketch{
         sampleBlockSeen++;
         if (sampleBlockSeen == sampleBlockLength) {
             sampleBlockSeen = 0;
-            nextToSample = rand.nextInt(sampleBlockLength);
+            nextToSample = ThreadLocalRandom.current().nextInt(sampleBlockLength);
         }
 
         return shouldSampleNext;
@@ -158,37 +159,47 @@ public class RandomSketch implements QuantileSketch{
         }
     }
 
-    // TODO: better merging
-    private void collapse() {
-        ArrayList<ArrayList<Double>> usedBuffersInLevel = usedBuffers.get(activeLevel);
-        ArrayList<Double> bufferOne = usedBuffersInLevel.remove(usedBuffersInLevel.size() - 1);
-        ArrayList<Double> bufferTwo = usedBuffersInLevel.remove(usedBuffersInLevel.size() - 1);
-
-        // Merge the buffers: bufferOne becomes the merged buffer, bufferTwo becomes free
-        ArrayList<Double> mergedBuffer = bufferOne;
-        mergedBuffer.addAll(bufferTwo);
-        Collections.sort(mergedBuffer);
-        int offset = rand.nextInt(2);
-        for (int i = 0; i < s; i++) {
-            mergedBuffer.set(i, mergedBuffer.get(2*i + offset));
-        }
-        mergedBuffer.subList(s, 2*s).clear();
-        insertBuffer(mergedBuffer,activeLevel + 1);
-
-        bufferTwo.clear();
-        freeBuffers.add(bufferTwo);
-
-        // If all buffers in the active level have been merged, then the active level increases
-        if (usedBuffersInLevel.size() == 0) {
-            usedBuffers.remove(activeLevel);
-            activeLevel++;
-            sampleBlockLength = (int) Math.pow(2, activeLevel);
+    // Assumes buffers one and two are sorted
+    private void mergeBuffers(ArrayList<Double> bufferOne, ArrayList<Double> bufferTwo, ArrayList<Double> target) {
+        boolean use = ThreadLocalRandom.current().nextBoolean();
+        int i = 0;
+        int j = 0;
+        while (true) {
+            if (bufferOne.get(i) < bufferTwo.get(j)) {
+                if ((use = !use)) {
+                    target.add(bufferOne.get(i));
+                }
+                i++;
+                if (i == bufferOne.size()) {
+                    while (j != bufferTwo.size()) {
+                        if ((use = !use)) {
+                            target.add(bufferTwo.get(j));
+                        }
+                        j++;
+                    }
+                    break;
+                }
+            } else {
+                if ((use = !use)) {
+                    target.add(bufferTwo.get(j));
+                }
+                j++;
+                if (j == bufferTwo.size()) {
+                    while (i != bufferOne.size()) {
+                        if ((use = !use)) {
+                            target.add(bufferOne.get(i));
+                        }
+                        i++;
+                    }
+                    break;
+                }
+            }
         }
     }
 
-    private void collapseForMerge() {
+    private void collapse(boolean merging) {
         ArrayList<ArrayList<Double>> usedBuffersInLevel = usedBuffers.get(activeLevel);
-        if (usedBuffersInLevel.size() == 1) {
+        if (usedBuffersInLevel.size() == 1) {  // should only hit for merging
             orphanBuffers.put(activeLevel, usedBuffersInLevel.get(0));
             usedBuffers.remove(activeLevel);
             activeLevel = Collections.min(this.usedBuffers.keySet());
@@ -197,22 +208,28 @@ public class RandomSketch implements QuantileSketch{
             ArrayList<Double> bufferOne = usedBuffersInLevel.remove(usedBuffersInLevel.size() - 1);
             ArrayList<Double> bufferTwo = usedBuffersInLevel.remove(usedBuffersInLevel.size() - 1);
 
-            if (bufferOne.size() != s || bufferTwo.size() != s) {
-                System.out.println("buffer not full!");
-            }
-
             // Merge the buffers: bufferOne becomes the merged buffer, bufferTwo becomes free
-            ArrayList<Double> mergedBuffer = bufferOne;
-            mergedBuffer.addAll(bufferTwo);
-            Collections.sort(mergedBuffer);
-            int offset = rand.nextInt(2);
-            for (int i = 0; i < s; i++) {
-                mergedBuffer.set(i, mergedBuffer.get(2 * i + offset));
-            }
-            mergedBuffer.subList(s, 2 * s).clear();
-            insertBuffer(mergedBuffer, activeLevel + 1);
+//        ArrayList<Double> mergedBuffer = bufferOne;
+//        mergedBuffer.addAll(bufferTwo);
+//        Collections.sort(mergedBuffer);
+//        int offset = rand.nextInt(2);
+//        for (int i = 0; i < s; i++) {
+//            mergedBuffer.set(i, mergedBuffer.get(2*i + offset));
+//        }
+//        mergedBuffer.subList(s, 2*s).clear();
+//        insertBuffer(mergedBuffer,activeLevel + 1);
+//        bufferTwo.clear();
+//        freeBuffers.add(bufferTwo);
 
-            bufferTwo.clear();
+            mergeBuffers(bufferOne, bufferTwo, tmpBuffer);
+            insertBuffer(tmpBuffer, activeLevel + 1);
+            bufferOne.clear();
+            tmpBuffer = bufferOne;
+
+            if (!merging) {
+                bufferTwo.clear();
+                freeBuffers.add(bufferTwo);
+            }
 
             // If all buffers in the active level have been merged, then the active level increases
             if (usedBuffersInLevel.size() == 0) {
@@ -221,6 +238,14 @@ public class RandomSketch implements QuantileSketch{
                 sampleBlockLength = (int) Math.pow(2, activeLevel);
             }
         }
+    }
+
+    private void collapseForMerging() {
+        collapse(true);
+    }
+
+    private void collapseForAdding() {
+        collapse(false);
     }
 
     private void constructQuantileEntries() {
@@ -281,7 +306,7 @@ public class RandomSketch implements QuantileSketch{
 
         // Merge until b buffers remain
         for (; numBuffers > b; numBuffers--) {
-            collapseForMerge();
+            collapseForMerging();
         }
 
         // Edge case: no full buffers were inserted into the hierarchy
@@ -305,10 +330,11 @@ public class RandomSketch implements QuantileSketch{
             RandomSketch rs = (RandomSketch) sketches.get(i);
             // TODO: better sampling?
             for (double value : rs.curBuffer) {
-                if (rand.nextDouble() < Math.pow(2, rs.activeLevel - activeLevel)) {
+                if (ThreadLocalRandom.current().nextDouble() < Math.pow(2, rs.activeLevel - activeLevel)) {
                     newBuffer.add(value);
                     if (newBuffer.size() == s) {
 //                        usedBuffers.get(activeLevel).add(newBuffer);
+                        Collections.sort(newBuffer);
                         insertBuffer(newBuffer, activeLevel);
                         numNewBuffers++;
                         newBuffer = new ArrayList<>();
@@ -318,10 +344,11 @@ public class RandomSketch implements QuantileSketch{
         }
         for (Map.Entry<Integer, ArrayList<Double>> entry : orphanBuffers.entrySet()) {
             for (double value : entry.getValue()) {
-                if (rand.nextDouble() < Math.pow(2, entry.getKey() - activeLevel)) {
+                if (ThreadLocalRandom.current().nextDouble() < Math.pow(2, entry.getKey() - activeLevel)) {
                     newBuffer.add(value);
                     if (newBuffer.size() == s) {
 //                        usedBuffers.get(activeLevel).add(newBuffer);
+                        Collections.sort(newBuffer);
                         insertBuffer(newBuffer, activeLevel);
                         numNewBuffers++;
                         newBuffer = new ArrayList<>();
@@ -333,7 +360,7 @@ public class RandomSketch implements QuantileSketch{
         numBuffers += numNewBuffers;
 
         for (; numBuffers > b; numBuffers--) {
-            collapseForMerge();
+            collapseForMerging();
         }
 
         // New buffer becomes the curBuffer
