@@ -70,7 +70,7 @@ public class ParallelMergeBench {
             if (perturbDuplications) {
                 Random rand = new Random();
                 for (int j = data.length; j < data.length * numDuplications; j++) {
-                    data[j] *= 0.95 + rand.nextDouble() / 10.;
+                    dupData[j] *= 0.95 + rand.nextDouble() / 10.;
                 }
             }
             data = dupData;
