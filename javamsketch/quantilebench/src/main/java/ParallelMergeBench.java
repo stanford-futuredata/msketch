@@ -16,6 +16,7 @@ public class ParallelMergeBench {
     private List<Double> cellFractions;
     private List<Integer> numMergeThreads;
     private int numDuplications;
+    private boolean perturbDuplications;
 
     private Map<String, List<Double>> methods;
     private List<Double> quantiles;
@@ -36,6 +37,7 @@ public class ParallelMergeBench {
         cellFractions = conf.get("cellFractions", defaultCellFractions);
         numMergeThreads = conf.get("numMergeThreads");
         numDuplications = conf.get("numDuplications", 1);
+        perturbDuplications = conf.get("perturbDuplications", true);
 
         methods = conf.get("methods");
         quantiles = conf.get("quantiles");
@@ -64,6 +66,12 @@ public class ParallelMergeBench {
             double[] dupData = new double[data.length * numDuplications];
             for (int i = 0; i < numDuplications; i++) {
                 System.arraycopy(data, 0, dupData, data.length * i, data.length);
+            }
+            if (perturbDuplications) {
+                Random rand = new Random();
+                for (int j = data.length; j < data.length * numDuplications; j++) {
+                    data[j] *= 0.95 + rand.nextDouble() / 10.;
+                }
             }
             data = dupData;
         }
