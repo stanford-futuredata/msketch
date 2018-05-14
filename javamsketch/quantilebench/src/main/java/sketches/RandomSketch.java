@@ -280,6 +280,52 @@ public class RandomSketch implements QuantileSketch{
         }
     }
 
+    // Returns number of new buffers
+    private int collapsePartialBuffer(ArrayList<Double> buffer, int level) {
+        int numNewBuffers = 0;
+        int blockLength = (int) Math.pow(2, activeLevel - level);
+        if (blockLength <= 1) {
+            if (buffer.size() < s - curBuffer.size()) {
+                curBuffer.addAll(buffer);
+            } else {
+                int j = 0;
+                for (; j < s - curBuffer.size(); j++) {
+                    curBuffer.add(buffer.get(j));
+                }
+                Collections.sort(curBuffer);
+                insertBuffer(curBuffer, activeLevel);
+                numNewBuffers++;
+                curBuffer = new ArrayList<>();
+                for (; j < buffer.size(); j++) {
+                    curBuffer.add(buffer.get(j));
+                }
+            }
+        } else {
+            int numSamples = buffer.size() / blockLength;
+            for (int j = 0; j < numSamples; j++) {
+                int toSample = ThreadLocalRandom.current().nextInt(blockLength);
+                curBuffer.add(buffer.get(j * blockLength + toSample));
+                if (curBuffer.size() == s) {
+                    Collections.sort(curBuffer);
+                    insertBuffer(curBuffer, activeLevel);
+                    numNewBuffers++;
+                    curBuffer = new ArrayList<>();
+                }
+            }
+            int toSample = ThreadLocalRandom.current().nextInt(blockLength);
+            if (numSamples * blockLength + toSample < buffer.size()) {
+                curBuffer.add(buffer.get(numSamples * blockLength + toSample));
+                if (curBuffer.size() == s) {
+                    Collections.sort(curBuffer);
+                    insertBuffer(curBuffer, activeLevel);
+                    numNewBuffers++;
+                    curBuffer = new ArrayList<>();
+                }
+            }
+        }
+        return numNewBuffers;
+    }
+
     @Override
     public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
         orphanBuffers.clear();
@@ -313,8 +359,8 @@ public class RandomSketch implements QuantileSketch{
         // TODO: how to choose active level? This works for our benchmarks because
         // activeLevel will be similar across merged sketches, but might not work
         // in practice.
-        activeLevel = -1;
         if (numBuffers == 0) {
+            activeLevel = -1;
             for (int i = startIndex; i < endIndex; i++) {
                 RandomSketch rs = (RandomSketch) sketches.get(i);
                 if (rs.activeLevel > activeLevel) {
@@ -325,52 +371,24 @@ public class RandomSketch implements QuantileSketch{
 
         // Incorporate curBuffer and orphan buffers
         int numNewBuffers = 0;
-        ArrayList<Double> newBuffer = new ArrayList<>();
         for (int i = startIndex; i < endIndex; i++) {
             RandomSketch rs = (RandomSketch) sketches.get(i);
-            // TODO: better sampling?
-            for (double value : rs.curBuffer) {
-                if (ThreadLocalRandom.current().nextDouble() < Math.pow(2, rs.activeLevel - activeLevel)) {
-                    newBuffer.add(value);
-                    if (newBuffer.size() == s) {
-//                        usedBuffers.get(activeLevel).add(newBuffer);
-                        Collections.sort(newBuffer);
-                        insertBuffer(newBuffer, activeLevel);
-                        numNewBuffers++;
-                        newBuffer = new ArrayList<>();
-                    }
-                }
-            }
+            numNewBuffers += collapsePartialBuffer(rs.curBuffer, rs.activeLevel);
         }
         for (Map.Entry<Integer, ArrayList<Double>> entry : orphanBuffers.entrySet()) {
-            for (double value : entry.getValue()) {
-                if (ThreadLocalRandom.current().nextDouble() < Math.pow(2, entry.getKey() - activeLevel)) {
-                    newBuffer.add(value);
-                    if (newBuffer.size() == s) {
-//                        usedBuffers.get(activeLevel).add(newBuffer);
-                        Collections.sort(newBuffer);
-                        insertBuffer(newBuffer, activeLevel);
-                        numNewBuffers++;
-                        newBuffer = new ArrayList<>();
-                    }
-                }
-            }
+            numNewBuffers += collapsePartialBuffer(entry.getValue(), entry.getKey());
         }
-
         numBuffers += numNewBuffers;
 
         for (; numBuffers > b; numBuffers--) {
             collapseForMerging();
         }
 
-        // New buffer becomes the curBuffer
-        freeBuffers.clear();
-        curBuffer = newBuffer;
-
         // Fill up freeBuffers
+        numBuffers += freeBuffers.size();
         if (numBuffers < b) {
             for (; numBuffers < b; numBuffers++) {
-                freeBuffers.add(new ArrayList<>());
+                freeBuffers.add(new ArrayList<>(s));
             }
         }
 
