@@ -73,7 +73,11 @@ public class RandomSketch implements QuantileSketch{
 
     @Override
     public int getSize() {
-        return (Double.BYTES) * (b * s);
+        int numUsedBuffers = 0;
+        for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> level : usedBuffers.entrySet()) {
+            numUsedBuffers += level.getValue().size();
+        }
+        return (Double.BYTES) * (numUsedBuffers * s + curBuffer.size());
     }
 
     @Override
@@ -205,12 +209,13 @@ public class RandomSketch implements QuantileSketch{
 
     private void collapse(boolean merging) {
         ArrayList<ArrayList<Double>> usedBuffersInLevel = usedBuffers.get(activeLevel);
-        if (usedBuffersInLevel.size() == 1) {  // should only hit for merging
+        if (usedBuffersInLevel.size() == 1) {  // should not hit
 //            System.out.println("orphan");
-            if (!orphanBuffers.containsKey(activeLevel)) {
-                orphanBuffers.put(activeLevel, new ArrayList<>());
-            }
-            orphanBuffers.get(activeLevel).add(usedBuffersInLevel.get(0));
+//            if (!orphanBuffers.containsKey(activeLevel)) {
+//                orphanBuffers.put(activeLevel, new ArrayList<>());
+//            }
+//            orphanBuffers.get(activeLevel).add(usedBuffersInLevel.get(0));
+            collapsePartialBuffer(usedBuffersInLevel.get(0), activeLevel);
             usedBuffers.remove(activeLevel);
             activeLevel = Collections.min(this.usedBuffers.keySet());
             sampleBlockLength = (int) Math.pow(2, activeLevel);
@@ -290,7 +295,7 @@ public class RandomSketch implements QuantileSketch{
         }
     }
 
-    // Returns number of new buffers
+    // Collapses a partially-filled buffer into curBuffer. Returns number of new buffers
     private int collapsePartialBuffer(ArrayList<Double> buffer, int level) {
         int numNewBuffers = 0;
         int blockLength = (int) Math.pow(2, activeLevel - level);
@@ -339,7 +344,6 @@ public class RandomSketch implements QuantileSketch{
     @Override
     public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
         orphanBuffers.clear();
-        int numBuffers = 0;
 
         // Compute active level
         long totalNumProcessed = 0;
@@ -350,6 +354,8 @@ public class RandomSketch implements QuantileSketch{
         activeLevel = (int) (Math.log((double) totalNumProcessed / ((b-1) * s)) / Math.log(2));
 
         // Insert all buffers into the tree
+        int numBuffers = 0;
+//        int numNewBuffers = 0;
         for (int i = startIndex; i < endIndex; i++) {
             RandomSketch rs = (RandomSketch) sketches.get(i);
             for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> entry : rs.usedBuffers.entrySet()) {
@@ -364,14 +370,18 @@ public class RandomSketch implements QuantileSketch{
                         usedBuffers.get(level).add(new ArrayList<>(buffer));
                     }
                 } else {
-                    if (!orphanBuffers.containsKey(level)) {
-                        orphanBuffers.put(level, new ArrayList<>());
-                    }
+//                    if (!orphanBuffers.containsKey(level)) {
+//                        orphanBuffers.put(level, new ArrayList<>());
+//                    }
+//                    for (ArrayList<Double> buffer : entry.getValue()) {
+//                        orphanBuffers.get(level).add(new ArrayList<>(buffer));
+//                    }
                     for (ArrayList<Double> buffer : entry.getValue()) {
-                        orphanBuffers.get(level).add(new ArrayList<>(buffer));
+                        numBuffers += collapsePartialBuffer(buffer, level);
                     }
                 }
             }
+            numBuffers += collapsePartialBuffer(rs.curBuffer, rs.activeLevel);
         }
 
 //        System.out.println(numBuffers);
@@ -400,21 +410,20 @@ public class RandomSketch implements QuantileSketch{
 
 //        System.out.println("active level " + activeLevel);
 
-        // Incorporate curBuffer and orphan buffers
-        int numNewBuffers = 0;
-        for (int i = startIndex; i < endIndex; i++) {
-            RandomSketch rs = (RandomSketch) sketches.get(i);
-            numNewBuffers += collapsePartialBuffer(rs.curBuffer, rs.activeLevel);
-        }
+//        // Incorporate curBuffer and orphan buffers
+//        for (int i = startIndex; i < endIndex; i++) {
+//            RandomSketch rs = (RandomSketch) sketches.get(i);
+//            numNewBuffers += collapsePartialBuffer(rs.curBuffer, rs.activeLevel);
+//        }
 //        System.out.println(numNewBuffers);
-        for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> entry : orphanBuffers.entrySet()) {
-//            System.out.println("orphan " + entry.getKey());
-            for (ArrayList<Double> orphan : entry.getValue()) {
-                numNewBuffers += collapsePartialBuffer(orphan, entry.getKey());
-            }
-        }
+//        for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> entry : orphanBuffers.entrySet()) {
+////            System.out.println("orphan " + entry.getKey());
+//            for (ArrayList<Double> orphan : entry.getValue()) {
+//                numNewBuffers += collapsePartialBuffer(orphan, entry.getKey());
+//            }
+//        }
 //        System.out.println(numNewBuffers);
-        numBuffers += numNewBuffers;
+//        numBuffers += numNewBuffers;
 
 //        for (int level : usedBuffers.keySet()) {
 //            System.out.println(level + ": " + usedBuffers.get(level).size());
