@@ -206,6 +206,7 @@ public class RandomSketch implements QuantileSketch{
     private void collapse(boolean merging) {
         ArrayList<ArrayList<Double>> usedBuffersInLevel = usedBuffers.get(activeLevel);
         if (usedBuffersInLevel.size() == 1) {  // should only hit for merging
+//            System.out.println("orphan");
             if (!orphanBuffers.containsKey(activeLevel)) {
                 orphanBuffers.put(activeLevel, new ArrayList<>());
             }
@@ -346,7 +347,7 @@ public class RandomSketch implements QuantileSketch{
             RandomSketch rs = (RandomSketch) sketches.get(i);
             totalNumProcessed += rs.numProcessed;
         }
-        activeLevel = (int) (Math.log((double) totalNumProcessed / (b * s)) / Math.log(2));
+        activeLevel = (int) (Math.log((double) totalNumProcessed / ((b-1) * s)) / Math.log(2));
 
         // Insert all buffers into the tree
         for (int i = startIndex; i < endIndex; i++) {
@@ -415,10 +416,13 @@ public class RandomSketch implements QuantileSketch{
 //        System.out.println(numNewBuffers);
         numBuffers += numNewBuffers;
 
-        // TODO: do this
-//        for (; numBuffers > b - 1; numBuffers--) {
-//            collapseForMerging();
+//        for (int level : usedBuffers.keySet()) {
+//            System.out.println(level + ": " + usedBuffers.get(level).size());
 //        }
+
+        for (; numBuffers > b - 1; numBuffers--) {
+            collapseForMerging();
+        }
 
 //        System.out.println("active level " + activeLevel);
 //        System.out.println(orphanBuffers.size());
