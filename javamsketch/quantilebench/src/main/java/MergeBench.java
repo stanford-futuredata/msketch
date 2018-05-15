@@ -54,8 +54,18 @@ public class MergeBench {
     }
 
     private ArrayList<double[]> getCells() throws IOException {
-        DataSource source = new SimpleCSVDataSource(fileName, columnIdx);
-        double[] data = source.get();
+        double[] data;
+        if (fileName.equals("gauss")) {
+            int n = 1000000000;
+            Random r = new Random(0);
+            data = new double[n];
+            for (int i = 0; i < n; i++) {
+                data[i] = r.nextGaussian();
+            }
+        } else {
+            DataSource source = new SimpleCSVDataSource(fileName, columnIdx);
+            data = source.get();
+        }
         SeqDataGrouper grouper = new SeqDataGrouper(cellSize);
         return grouper.group(data);
     }

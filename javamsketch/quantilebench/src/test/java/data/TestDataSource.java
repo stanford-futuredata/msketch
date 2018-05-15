@@ -1,5 +1,7 @@
 package data;
 
+import java.util.Random;
+
 public class TestDataSource {
     public static double[] getUniform(double start, double end, int length) {
         double[] vals = new double[length];
@@ -14,6 +16,14 @@ public class TestDataSource {
         double[] vals = new double[n];
         for (int i = 0; i < n; i++) {
             vals[i] = i;
+        }
+        return vals;
+    }
+
+    public static double[] getGaussian(Random r, int n) {
+        double[] vals = new double[n];
+        for (int i = 0; i < n; i++) {
+            vals[i] = r.nextGaussian();
         }
         return vals;
     }
