@@ -18,7 +18,7 @@ public class RandomSketchTest {
         int numTrials = 1;
         int n = 20000;
         double[] data = TestDataSource.getUniform(n + 1);
-        TestDataSource.shuffleArray(data);
+//        TestDataSource.shuffleArray(data);
         List<Double> ps = Arrays.asList(.1, .5, .9);
         double[] expectedQs = QuantileUtil.getTrueQuantiles(ps, data);
 //        double sizeParam = 50.0;
@@ -44,7 +44,7 @@ public class RandomSketchTest {
                 averageError[j] /= numTrials;
             }
             assertArrayEquals(expectedQs, averageQs, n / sizeParam);
-//            System.out.println(sizeParam + " " + Arrays.toString(average) + " " + Arrays.toString(average_error));
+//            System.out.println(sizeParam + " " + Arrays.toString(averageQs) + " " + Arrays.toString(averageError));
         }
 //        System.out.println();
     }
@@ -57,7 +57,7 @@ public class RandomSketchTest {
         double[] sizeParams = {5.0, 10.0, 20.0, 50.0, 100.0};
         int n = 20000;
         double[] data = TestDataSource.getUniform(n+1);
-        TestDataSource.shuffleArray(data);
+//        TestDataSource.shuffleArray(data);
 
         List<Double> ps = Arrays.asList(.1, .5, .9);
         double[] expectedQs = QuantileUtil.getTrueQuantiles(ps, data);
@@ -87,7 +87,7 @@ public class RandomSketchTest {
                 averageError[j] /= numTrials;
             }
             assertArrayEquals(expectedQs, averageQs, n / sizeParam);
-//            System.out.println(sizeParam + " " + Arrays.toString(average) + " " + Arrays.toString(average_error));
+//            System.out.println(sizeParam + " " + Arrays.toString(averageQs) + " " + Arrays.toString(averageError));
         }
     }
 
