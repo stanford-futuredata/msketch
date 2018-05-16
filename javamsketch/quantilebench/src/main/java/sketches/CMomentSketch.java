@@ -166,32 +166,6 @@ public class CMomentSketch implements QuantileSketch{
         return this;
     }
 
-    @Override
-    public QuantileSketch parallelMerge(ArrayList<QuantileSketch> sketches, int numThreads) {
-        int numSketches = sketches.size();
-        final CountDownLatch doneSignal = new CountDownLatch(numThreads);
-        QuantileSketch[] mergedSketches = new QuantileSketch[numThreads];
-        for (int threadNum = 0; threadNum < numThreads; threadNum++) {
-            final int curThreadNum = threadNum;
-            final int startIndex = (numSketches * threadNum) / numThreads;
-            final int endIndex = (numSketches * (threadNum + 1)) / numThreads;
-            Runnable ParallelMergeRunnable = () -> {
-                CMomentSketch ms = new CMomentSketch(this.tolerance);
-                ms.setSizeParam(this.getSizeParam());
-                ms.initialize();
-                mergedSketches[curThreadNum] = ms.merge(sketches, startIndex, endIndex);
-                doneSignal.countDown();
-            };
-            Thread ParallelMergeThread = new Thread(ParallelMergeRunnable);
-            ParallelMergeThread.start();
-        }
-        try {
-            doneSignal.await();
-        } catch (InterruptedException ex) {ex.printStackTrace();}
-
-        return merge(Arrays.asList(mergedSketches), 0, mergedSketches.length);
-    }
-
 
     @Override
     public double[] getQuantiles(List<Double> pList) throws Exception {

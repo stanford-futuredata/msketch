@@ -134,7 +134,7 @@ public class ParallelMergeBench {
                     }
 
                     for (int numThreads : numMergeThreads) {
-                        ArrayList<ArrayList<QuantileSketch>> groupedSketches = groupSketches(cellSketches, numThreads);
+//                        ArrayList<ArrayList<QuantileSketch>> groupedSketches = groupSketches(cellSketches, numThreads);
                         for (int curTrial = 0; curTrial < numTrials; curTrial++) {
                             System.gc();
                             System.out.println(sketchName + ":" + (int) sParam + "@" + numThreads + "#" + curTrial);
@@ -145,8 +145,8 @@ public class ParallelMergeBench {
                             mergedSketch.setSizeParam(sParam);
                             mergedSketch.setVerbose(verbose);
                             mergedSketch.initialize();
-//                            QuantileSketch dummy = mergedSketch.parallelMerge(cellSketchesToMerge, numThreads);
-                            QuantileSketch dummy = mergedSketch.parallelMerge(groupedSketches);
+                            QuantileSketch dummy = mergedSketch.parallelMerge(cellSketchesToMerge, numThreads);
+//                            QuantileSketch dummy = mergedSketch.parallelMerge(groupedSketches);
                             endTime = System.nanoTime();
                             long mergeTime = endTime - startTime;
                             if (dummy == null) {

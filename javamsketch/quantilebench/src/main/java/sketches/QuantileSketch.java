@@ -48,33 +48,33 @@ public interface QuantileSketch {
 
         return merge(Arrays.asList(mergedSketches), 0, mergedSketches.length);
     }
-    default QuantileSketch parallelMerge(ArrayList<ArrayList<QuantileSketch>> groupedSketches) {
-        int numThreads = groupedSketches.size();
-        final CountDownLatch doneSignal = new CountDownLatch(numThreads);
-        QuantileSketch[] mergedSketches = new QuantileSketch[numThreads];
-        for (int threadNum = 0; threadNum < numThreads; threadNum++) {
-            final int curThreadNum = threadNum;
-            Runnable ParallelMergeRunnable = () -> {
-                QuantileSketch mergedSketch;
-                try {
-                    mergedSketch = SketchLoader.load(this.getName());
-                } catch (IOException e) {
-                    mergedSketch = null;
-                }
-                mergedSketch.setSizeParam(this.getSizeParam());
-                mergedSketch.initialize();
-                mergedSketches[curThreadNum] = mergedSketch.merge(groupedSketches.get(curThreadNum));
-                doneSignal.countDown();
-            };
-            Thread ParallelMergeThread = new Thread(ParallelMergeRunnable);
-            ParallelMergeThread.start();
-        }
-        try {
-            doneSignal.await();
-        } catch (InterruptedException ex) {ex.printStackTrace();}
-
-        return merge(Arrays.asList(mergedSketches), 0, mergedSketches.length);
-    }
+//    default QuantileSketch parallelMerge(ArrayList<ArrayList<QuantileSketch>> groupedSketches) {
+//        int numThreads = groupedSketches.size();
+//        final CountDownLatch doneSignal = new CountDownLatch(numThreads);
+//        QuantileSketch[] mergedSketches = new QuantileSketch[numThreads];
+//        for (int threadNum = 0; threadNum < numThreads; threadNum++) {
+//            final int curThreadNum = threadNum;
+//            Runnable ParallelMergeRunnable = () -> {
+//                QuantileSketch mergedSketch;
+//                try {
+//                    mergedSketch = SketchLoader.load(this.getName());
+//                } catch (IOException e) {
+//                    mergedSketch = null;
+//                }
+//                mergedSketch.setSizeParam(this.getSizeParam());
+//                mergedSketch.initialize();
+//                mergedSketches[curThreadNum] = mergedSketch.merge(groupedSketches.get(curThreadNum));
+//                doneSignal.countDown();
+//            };
+//            Thread ParallelMergeThread = new Thread(ParallelMergeRunnable);
+//            ParallelMergeThread.start();
+//        }
+//        try {
+//            doneSignal.await();
+//        } catch (InterruptedException ex) {ex.printStackTrace();}
+//
+//        return merge(Arrays.asList(mergedSketches), 0, mergedSketches.length);
+//    }
 
     double[] getQuantiles(List<Double> ps) throws Exception;
     double[] getErrors();
