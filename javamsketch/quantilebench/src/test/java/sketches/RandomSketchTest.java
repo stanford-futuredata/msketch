@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -23,8 +24,8 @@ public class RandomSketchTest {
 //        double sizeParam = 50.0;
         double[] sizeParams = {5.0, 10.0, 20.0, 50.0, 100.0};
         for (double sizeParam : sizeParams) {
-            double[] average = new double[ps.size()];
-            double[] average_error = new double[ps.size()];
+            double[] averageQs = new double[ps.size()];
+            double[] averageError = new double[ps.size()];
             for (int i = 0; i < numTrials; i++) {
                 RandomSketch sketch = new RandomSketch();
                 sketch.setSizeParam(sizeParam);
@@ -34,22 +35,23 @@ public class RandomSketchTest {
                 double[] qs = sketch.getQuantiles(ps);
 
                 for (int j = 0; j < qs.length; j++) {
-                    average[j] += qs[j];
-                    average_error[j] += Math.abs(qs[j] - expectedQs[j]);
+                    averageQs[j] += qs[j];
+                    averageError[j] += Math.abs(qs[j] - expectedQs[j]);
                 }
             }
-            for (int j = 0; j < average.length; j++) {
-                average[j] /= numTrials;
-                average_error[j] /= numTrials;
+            for (int j = 0; j < averageQs.length; j++) {
+                averageQs[j] /= numTrials;
+                averageError[j] /= numTrials;
             }
-            System.out.println(sizeParam + " " + Arrays.toString(average) + " " + Arrays.toString(average_error));
+            assertArrayEquals(expectedQs, averageQs, n / sizeParam);
+//            System.out.println(sizeParam + " " + Arrays.toString(average) + " " + Arrays.toString(average_error));
         }
-        System.out.println();
+//        System.out.println();
     }
 
     @Test
     public void testUniformWithMerge() throws Exception {
-        int numTrials = 100;
+        int numTrials = 1;
 //        double sizeParam = 50.0;
 //        double[] sizeParams = {5.0};
         double[] sizeParams = {5.0, 10.0, 20.0, 50.0, 100.0};
@@ -63,8 +65,8 @@ public class RandomSketchTest {
         DataGrouper grouper = new SeqDataGrouper(200);
         ArrayList<double[]> cellData = grouper.group(data);
         for (double sizeParam : sizeParams) {
-            double[] average = new double[ps.size()];
-            double[] average_error = new double[ps.size()];
+            double[] averageQs = new double[ps.size()];
+            double[] averageError = new double[ps.size()];
             for (int i = 0; i < numTrials; i++) {
                 QuantileSketch mergedSketch = QuantileUtil.trainAndMerge(
                         () -> {
@@ -76,15 +78,16 @@ public class RandomSketchTest {
                 );
                 double[] qs2 = mergedSketch.getQuantiles(ps);
                 for (int j = 0; j < qs2.length; j++) {
-                    average[j] += qs2[j];
-                    average_error[j] += Math.abs(qs2[j] - expectedQs[j]);
+                    averageQs[j] += qs2[j];
+                    averageError[j] += Math.abs(qs2[j] - expectedQs[j]);
                 }
             }
-            for (int j = 0; j < average.length; j++) {
-                average[j] /= numTrials;
-                average_error[j] /= numTrials;
+            for (int j = 0; j < averageQs.length; j++) {
+                averageQs[j] /= numTrials;
+                averageError[j] /= numTrials;
             }
-            System.out.println(sizeParam + " " + Arrays.toString(average) + " " + Arrays.toString(average_error));
+            assertArrayEquals(expectedQs, averageQs, n / sizeParam);
+//            System.out.println(sizeParam + " " + Arrays.toString(average) + " " + Arrays.toString(average_error));
         }
     }
 
@@ -92,19 +95,10 @@ public class RandomSketchTest {
 //    public void testFunctions() throws Exception {
 //        RandomSketch sketch = new RandomSketch();
 //
-//        ArrayList<Double> bufferOne = new ArrayList<>();
-//        ArrayList<Double> bufferTwo = new ArrayList<>();
-//        ArrayList<Double> target = new ArrayList<>();
+//        sketch.usedBuffers = new HashMap<>();
+//        sketch
 //
-//        for (int i = 0; i < 10; i++) {
-//            bufferOne.add((double)i);
-//        }
-//        for (int i = 10; i < 20; i++) {
-//            bufferTwo.add((double)i);
-//        }
-//
-//        sketch.mergeBuffers(bufferOne, bufferTwo, target);
-//        System.out.println(target);
+//        sketch.collapsePartialBuffers();
 //    }
 
 //    @Test

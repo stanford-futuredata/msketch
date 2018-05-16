@@ -29,7 +29,7 @@ public class RandomSketch implements QuantileSketch{
     public HashMap<Integer, ArrayList<ArrayList<Double>>> usedBuffers;
     public ArrayList<Double> curBuffer;
     private ArrayList<Double> tmpBuffer;  // for merging
-    private HashMap<Integer, ArrayList<ArrayList<Double>>> orphanBuffers;
+    private HashMap<Integer, ArrayList<ArrayList<Double>>> partialBuffers;
     private long numProcessed;
     private double totalWeight;
 
@@ -112,7 +112,7 @@ public class RandomSketch implements QuantileSketch{
         this.activeLevel = 0;
         this.freeBuffers = new ArrayList<>();
         this.usedBuffers = new HashMap<>();
-        this.orphanBuffers = new HashMap<>();
+        this.partialBuffers = new HashMap<>();
         for (int i = 0; i < b; i++) {
             freeBuffers.add(new ArrayList<>(s));
         }
@@ -315,7 +315,7 @@ public class RandomSketch implements QuantileSketch{
         }
         totalWeight += curBuffer.size() * curWeight;
 
-        System.out.println("compute quantile entries " + totalWeight + " " + this.totalWeight);
+//        System.out.println("compute quantile entries " + totalWeight + " " + this.totalWeight);
 
         Collections.sort(quantileEntries, new CompareByValue());
 
@@ -377,9 +377,61 @@ public class RandomSketch implements QuantileSketch{
         return numNewBuffers;
     }
 
+    // Collapses a partially-filled buffers. Returns number of new buffers
+    public int collapsePartialBuffers() {
+        int numNewBuffers = 0;
+        for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> entry : partialBuffers.entrySet()) {
+            int numElements = 0;
+            for (ArrayList<Double> buffer : entry.getValue()) {
+                numElements += buffer.size();
+            }
+            double expectedSampled = numElements / Math.pow(2, activeLevel - entry.getKey());
+            int numSampled = 0;
+
+            int level = entry.getKey();
+            int blockLength = (int) Math.pow(2, activeLevel - level);
+            if (blockLength <= 1) {
+                System.out.println("should not happen");
+            } else {
+                int toSample = ThreadLocalRandom.current().nextInt(blockLength);
+                int seenSoFar = 0;
+                for (ArrayList<Double> buffer : entry.getValue()) {
+//                    System.out.println("toSample " + toSample + " seenSoFar " + seenSoFar);
+                    int curIdx = 0;
+                    while (true) {
+                        if (toSample >= seenSoFar && toSample - seenSoFar < buffer.size() - curIdx) {
+                            curBuffer.add(buffer.get(toSample - seenSoFar + curIdx));
+//                            System.out.println("add " + (toSample - seenSoFar + curIdx));
+                            numSampled++;
+                            if (curBuffer.size() == s) {
+                                Collections.sort(curBuffer);
+                                insertBuffer(curBuffer, activeLevel);
+                                numNewBuffers++;
+                                curBuffer = new ArrayList<>();
+                            }
+                        }
+                        if (blockLength - seenSoFar < buffer.size() - curIdx) {
+                            toSample = ThreadLocalRandom.current().nextInt(blockLength);
+                            curIdx += (blockLength - seenSoFar);
+                            seenSoFar = 0;
+//                            System.out.println("stay in buffer: curIdx is " + curIdx);
+                        } else {
+//                            System.out.println("end buffer: " + buffer.size() + "-" + curIdx);
+                            seenSoFar += buffer.size() - curIdx;
+                            break;
+                        }
+                    }
+                }
+            }
+//            System.out.println("Level " + level + ": " + expectedSampled + " " + numSampled  + " block length " + blockLength + " bufs " + entry.getValue().size());
+        }
+//        System.out.println("num new buffers " + numNewBuffers);
+        return numNewBuffers;
+    }
+
     @Override
     public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
-        orphanBuffers.clear();
+        partialBuffers.clear();
 
         // Compute active level
 //        double actualTotalWeight = 0;
@@ -396,7 +448,7 @@ public class RandomSketch implements QuantileSketch{
 
         // Insert all buffers into the tree
         int numBuffers = 0;
-//        int numNewBuffers = 0;
+        int numNewBuffers = 0;
         for (int i = startIndex; i < endIndex; i++) {
             RandomSketch rs = (RandomSketch) sketches.get(i);
             for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> entry : rs.usedBuffers.entrySet()) {
@@ -411,19 +463,28 @@ public class RandomSketch implements QuantileSketch{
                         usedBuffers.get(level).add(new ArrayList<>(buffer));
                     }
                 } else {
-//                    if (!orphanBuffers.containsKey(level)) {
-//                        orphanBuffers.put(level, new ArrayList<>());
-//                    }
-//                    for (ArrayList<Double> buffer : entry.getValue()) {
-//                        orphanBuffers.get(level).add(new ArrayList<>(buffer));
-//                    }
-                    for (ArrayList<Double> buffer : entry.getValue()) {
-                        numBuffers += collapsePartialBuffer(buffer, level);
+                    if (!partialBuffers.containsKey(level)) {
+                        partialBuffers.put(level, new ArrayList<>());
                     }
+                    for (ArrayList<Double> buffer : entry.getValue()) {
+                        partialBuffers.get(level).add(new ArrayList<>(buffer));
+                    }
+//                    for (ArrayList<Double> buffer : entry.getValue()) {
+//                        numNewBuffers += collapsePartialBuffer(buffer, level);
+//                    }
                 }
             }
-            numBuffers += collapsePartialBuffer(rs.curBuffer, rs.activeLevel);
+            if (!partialBuffers.containsKey(rs.activeLevel)) {
+                partialBuffers.put(rs.activeLevel, new ArrayList<>());
+            }
+            partialBuffers.get(rs.activeLevel).add(new ArrayList<>(rs.curBuffer));
+//            numNewBuffers += collapsePartialBuffer(rs.curBuffer, rs.activeLevel);
         }
+
+//        numBuffers += numNewBuffers;
+//        System.out.println(numNewBuffers);
+
+        numBuffers += collapsePartialBuffers();
 
 //        System.out.println(numBuffers);
 //        System.out.println(b);
