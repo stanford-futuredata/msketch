@@ -17,7 +17,7 @@ import java.util.concurrent.CountDownLatch;
 public class CMomentSketch implements QuantileSketch{
     private int ka = 5;
     private int kb = 5;
-    private double tolerance = 1e-10;
+    private double tolerance = 1e-9;
     private boolean verbose = false;
 
     private double min;

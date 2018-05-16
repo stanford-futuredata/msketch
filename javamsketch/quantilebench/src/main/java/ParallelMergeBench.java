@@ -79,6 +79,21 @@ public class ParallelMergeBench {
         return grouper.group(data);
     }
 
+    private ArrayList<ArrayList<QuantileSketch>> groupSketches(ArrayList<QuantileSketch> cellSketches, int numGroups) {
+        ArrayList<ArrayList<QuantileSketch>> groupedSketches = new ArrayList<>();
+        int numSketches = cellSketches.size();
+        for (int i = 0; i < numGroups; i++) {
+            int startIndex = (numSketches * i) / numGroups;
+            int endIndex = (numSketches * (i + 1)) / numGroups;
+            ArrayList<QuantileSketch> group = new ArrayList<>();
+            for (int j = startIndex; j < endIndex; j++) {
+                group.add(cellSketches.get(j));
+            }
+            groupedSketches.add(group);
+        }
+        return groupedSketches;
+    }
+
     public List<Map<String, String>> run() throws Exception {
         System.out.println("Loading Data");
         long startTime = System.currentTimeMillis();
@@ -119,6 +134,7 @@ public class ParallelMergeBench {
                     }
 
                     for (int numThreads : numMergeThreads) {
+                        ArrayList<ArrayList<QuantileSketch>> groupedSketches = groupSketches(cellSketches, numThreads);
                         for (int curTrial = 0; curTrial < numTrials; curTrial++) {
                             System.gc();
                             System.out.println(sketchName + ":" + (int) sParam + "@" + numThreads + "#" + curTrial);
@@ -129,7 +145,8 @@ public class ParallelMergeBench {
                             mergedSketch.setSizeParam(sParam);
                             mergedSketch.setVerbose(verbose);
                             mergedSketch.initialize();
-                            QuantileSketch dummy = mergedSketch.parallelMerge(cellSketchesToMerge, numThreads);
+//                            QuantileSketch dummy = mergedSketch.parallelMerge(cellSketchesToMerge, numThreads);
+                            QuantileSketch dummy = mergedSketch.parallelMerge(groupedSketches);
                             endTime = System.nanoTime();
                             long mergeTime = endTime - startTime;
                             if (dummy == null) {
