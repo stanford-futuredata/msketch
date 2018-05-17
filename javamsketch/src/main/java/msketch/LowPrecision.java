@@ -19,6 +19,8 @@ public class LowPrecision {
     public double[] logSums;
     public double[] totalSums;
 
+    private static int maxItersWithoutImprovement = 10;
+
     public LowPrecision(int bits) {
         this.bits = bits;
         this.rand = new Random();
@@ -71,6 +73,7 @@ public class LowPrecision {
         double encodedMinval = encodeValue(minVal, numExponentBits, numSignificandBits, minPower2, false);
         double minvalError = Math.abs(encodedMinval - minVal);
         int bestMinPower2 = minPower2;
+        int numItersWithoutImprovement = 0;
         while (true) {
             minPower2--;
             numExponentBits = numExponentBitsForRange(minPower2, maxPower2);
@@ -82,7 +85,13 @@ public class LowPrecision {
             double newMinvalError = Math.abs(encodedMinval - minVal);
             if (newMinvalError < minvalError) {
                 bestMinPower2 = minPower2;
-            } else if (newMinvalError > minvalError) {
+                numItersWithoutImprovement = 0;
+            } else if (newMinvalError == minvalError) {
+                numItersWithoutImprovement++;
+                if (numItersWithoutImprovement == maxItersWithoutImprovement) {
+                    break;
+                }
+            } else {
                 break;
             }
             minvalError = newMinvalError;
