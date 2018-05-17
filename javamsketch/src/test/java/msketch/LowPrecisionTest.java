@@ -3,6 +3,7 @@ package msketch;
 import msketch.data.MilanData;
 import msketch.data.MomentData;
 import org.junit.Test;
+import sketches.CMomentSketch;
 
 import java.util.Arrays;
 
@@ -10,13 +11,74 @@ import static org.junit.Assert.*;
 
 public class LowPrecisionTest {
     @Test
+    public void testCorrect() {
+        LowPrecision lp;
+        MilanData data = new MilanData();
+
+        lp = new LowPrecision(16);
+        lp.encode(data.getMin(), data.getMax(), data.getLogMin(), data.getLogMax(), data.getPowerSums(), data.getLogSums());
+        checkCorrect(lp);
+
+        lp = new LowPrecision(24);
+        lp.encode(data.getMin(), data.getMax(), data.getLogMin(), data.getLogMax(), data.getPowerSums(), data.getLogSums());
+        checkCorrect(lp);
+    }
+
+    private void checkCorrect(LowPrecision lp) {
+        int numUsedBits = 1 + 11 + lp.bitsForSignificand;
+
+        assertTrue(checkUnused(bits(lp.min), numUsedBits));
+        assertTrue(checkUnused(bits(lp.max), numUsedBits));
+        assertTrue(checkUnused(bits(lp.logMin), numUsedBits));
+        assertTrue(checkUnused(bits(lp.logMax), numUsedBits));
+        for (double val : lp.powerSums) {
+            assertTrue(checkUnused(bits(val), numUsedBits));
+        }
+        for (double val : lp.logSums) {
+            assertTrue(checkUnused(bits(val), numUsedBits));
+        }
+
+        int exponentRange = (int) Math.ceil(Math.log(getMax(lp)) / Math.log(2)) - lp.minExponent;
+        int expectedExponentBits = (int) Math.ceil(Math.log(exponentRange) / Math.log(2));
+        assertEquals(expectedExponentBits, lp.bitsForExponent);
+    }
+
+    private String bits(double value) {
+        return String.format("%64s", Long.toBinaryString(Double.doubleToRawLongBits(value))).replace(' ', '0');
+    }
+
+    private boolean checkUnused(String bits, int numUsedBits) {
+        String zeros = new String(new char[64-numUsedBits]).replace("\0", "0");
+        String unusedBits = bits.substring(numUsedBits);
+        return zeros.equals(unusedBits);
+    }
+
+    private double getMax(LowPrecision lp) {
+        double maxVal = Double.MIN_VALUE;
+        for (double val : new double[]{lp.min, lp.max, lp.logMin, lp.logMax}) {
+            double absVal = Math.abs(val);
+            if (absVal > maxVal) maxVal = absVal;
+        }
+        for (double val : lp.powerSums) {
+            double absVal = Math.abs(val);
+            if (absVal > maxVal) maxVal = absVal;
+        }
+        for (double val : lp.logSums) {
+            double absVal = Math.abs(val);
+            if (absVal > maxVal) maxVal = absVal;
+        }
+
+        return maxVal;
+    }
+
+    @Test
     public void testMilan() {
         LowPrecision lp;
         double relError;
         MilanData data = new MilanData();
 
         lp = new LowPrecision(16);
-        relError = 2.e-2;
+        relError = 3.e-2;
         lp.encode(data.getMin(), data.getMax(), data.getLogMin(), data.getLogMax(), data.getPowerSums(), data.getLogSums());
         checkRelativeError(data, lp, relError);
 
@@ -27,17 +89,17 @@ public class LowPrecisionTest {
     }
 
     private void checkRelativeError(MomentData data, LowPrecision lp, double relError) {
-        assertEquals(lp.min, data.getMin(), Math.abs(data.getMin()) * relError);
-        assertEquals(lp.max, data.getMax(), Math.abs(data.getMax()) * relError);
-        assertEquals(lp.logMin, data.getLogMin(), Math.abs(data.getLogMin()) * relError);
-        assertEquals(lp.logMax, data.getLogMax(), Math.abs(data.getLogMax()) * relError);
+        assertEquals(data.getMin(), lp.min, Math.abs(data.getMin()) * relError);
+        assertEquals(data.getMax(), lp.max, Math.abs(data.getMax()) * relError);
+        assertEquals(data.getLogMin(), lp.logMin, Math.abs(data.getLogMin()) * relError);
+        assertEquals(data.getLogMax(), lp.logMax, Math.abs(data.getLogMax()) * relError);
         double[] powerSums = data.getPowerSums();
         for (int i = 0; i < powerSums.length; i++) {
-            assertEquals(lp.powerSums[i], powerSums[i], Math.abs(powerSums[i]) * relError);
+            assertEquals(powerSums[i], lp.powerSums[i], Math.abs(powerSums[i]) * relError);
         }
         double[] logSums = data.getLogSums();
         for (int i = 0; i < logSums.length; i++) {
-            assertEquals(lp.logSums[i], logSums[i], Math.abs(logSums[i]) * relError);
+            assertEquals(logSums[i], lp.logSums[i], Math.abs(logSums[i]) * relError);
         }
     }
 

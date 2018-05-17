@@ -4,10 +4,10 @@ import java.util.Random;
 
 public class LowPrecision {
     private int bits;
-    private int bitsForExponent;
-    private int bitsForSignificand;
+    public int bitsForExponent;
+    public int bitsForSignificand;
     private int bitsForSign = 1;
-    private int minExponent; // base power of 2
+    public int minExponent; // base power of 2
 
     private Random rand;
 
@@ -37,17 +37,17 @@ public class LowPrecision {
 
         setParameters(minVal, maxVal);
 
-        this.min = encodeValue(min);
-        this.max = encodeValue(max);
-        this.logMin = encodeValue(logMin);
-        this.logMax = encodeValue(logMax);
+        this.min = encodeValueRandomized(min);
+        this.max = encodeValueRandomized(max);
+        this.logMin = encodeValueRandomized(logMin);
+        this.logMax = encodeValueRandomized(logMax);
         this.powerSums = new double[powerSums.length];
         for (int i = 0; i < powerSums.length; i++) {
-            this.powerSums[i] = encodeValue(powerSums[i]);
+            this.powerSums[i] = encodeValueRandomized(powerSums[i]);
         }
         this.logSums = new double[logSums.length];
         for (int i = 0; i < logSums.length; i++) {
-            this.logSums[i] = encodeValue(logSums[i]);
+            this.logSums[i] = encodeValueRandomized(logSums[i]);
         }
     }
 
@@ -68,8 +68,9 @@ public class LowPrecision {
         }
 
         int numSignificandBits = bits - numExponentBits - bitsForSign;
-        double encodedMinval = encodeValue(minVal, numExponentBits, numSignificandBits, minPower2);
+        double encodedMinval = encodeValue(minVal, numExponentBits, numSignificandBits, minPower2, false);
         double minvalError = Math.abs(encodedMinval - minVal);
+        int bestMinPower2 = minPower2;
         while (true) {
             minPower2--;
             numExponentBits = numExponentBitsForRange(minPower2, maxPower2);
@@ -77,38 +78,46 @@ public class LowPrecision {
                 break;
             }
             numSignificandBits = bits - numExponentBits - bitsForSign;
-            encodedMinval = encodeValue(minVal, numExponentBits, numSignificandBits, minPower2);
+            encodedMinval = encodeValue(minVal, numExponentBits, numSignificandBits, minPower2, false);
             double newMinvalError = Math.abs(encodedMinval - minVal);
-            if (newMinvalError > minvalError) {
+            if (newMinvalError < minvalError) {
+                bestMinPower2 = minPower2;
+            } else if (newMinvalError > minvalError) {
                 break;
             }
             minvalError = newMinvalError;
         }
-        minPower2++;
 
-        bitsForExponent = numExponentBitsForRange(minPower2, maxPower2);
+        bitsForExponent = numExponentBitsForRange(bestMinPower2, maxPower2);
         bitsForSignificand = bits - bitsForExponent - bitsForSign;
-        minExponent = minPower2;
+        minExponent = bestMinPower2;
     }
 
-    private double encodeValue(double val) {
-        return encodeValue(val, bitsForExponent, bitsForSignificand, minExponent);
+    private double encodeValueDeterministic(double val) {
+        return encodeValue(val, bitsForExponent, bitsForSignificand, minExponent, false);
     }
 
-    private double encodeValue(double val, int numExponentBits, int numSignificandBits, int minPower2) {
-        int exponent = (int)Math.ceil(log(Math.abs(val) / (int)Math.pow(2, numSignificandBits), 2));
+    private double encodeValueRandomized(double val) {
+        return encodeValue(val, bitsForExponent, bitsForSignificand, minExponent, true);
+    }
+
+    private double encodeValue(double val, int numExponentBits, int numSignificandBits, int minPower2, boolean randomized) {
+        int exponent = (int)Math.ceil(log(Math.abs(val) / (int)Math.pow(2, numSignificandBits+1), 2));
         if (exponent < minPower2) {
             // shouldn't happen
             exponent = minPower2;
         }
         double eps = Math.pow(2, exponent);
-//        return Math.round(val / eps) * eps; // TODO: randomized rounding
 
-        double probability = val / eps - (int)(val / eps);
-        if (rand.nextDouble() < probability) {
-            return Math.floor(val / eps) * eps;
+        if (randomized) {
+            double probability = val / eps - (int) (val / eps);
+            if (rand.nextDouble() < probability) {
+                return Math.ceil(val / eps) * eps;
+            } else {
+                return Math.floor(val / eps) * eps;
+            }
         } else {
-            return Math.ceil(val / eps) * eps;
+            return Math.round(val / eps) * eps;
         }
     }
 
