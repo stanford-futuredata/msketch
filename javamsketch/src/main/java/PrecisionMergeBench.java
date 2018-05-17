@@ -78,24 +78,24 @@ public class PrecisionMergeBench {
             for (String sketchName : methods.keySet()) {
                 List<Double> sizeParams = methods.get(sketchName);
                 for (double sParam : sizeParams) {
-                    startTime = System.nanoTime();
-                    int numCells = cells.size();
-                    ArrayList<QuantileSketch> cellSketches = new ArrayList<>(numCells);
-                    for (int i = 0; i < numCells; i++) {
-                        double[] cellData = cells.get(i);
-                        CMomentSketch curSketch = new CMomentSketch(1e-9);
-                        curSketch.setVerbose(verbose);
-                        curSketch.setCalcError(calcError);
-                        curSketch.setSizeParam(sParam);
-                        curSketch.initialize();
-                        curSketch.add(cellData);
-                        curSketch.convertToLowPrecision(precision);
-                        cellSketches.add(curSketch);
-                    }
-                    endTime = System.nanoTime();
-                    long trainTime = endTime - startTime;
-
                     for (int curTrial = 0; curTrial < numTrials; curTrial++) {
+                        startTime = System.nanoTime();
+                        int numCells = cells.size();
+                        ArrayList<QuantileSketch> cellSketches = new ArrayList<>(numCells);
+                        for (int i = 0; i < numCells; i++) {
+                            double[] cellData = cells.get(i);
+                            CMomentSketch curSketch = new CMomentSketch(1e-9);
+                            curSketch.setVerbose(verbose);
+                            curSketch.setCalcError(calcError);
+                            curSketch.setSizeParam(sParam);
+                            curSketch.initialize();
+                            curSketch.add(cellData);
+                            curSketch.convertToLowPrecision(precision);
+                            cellSketches.add(curSketch);
+                        }
+                        endTime = System.nanoTime();
+                        long trainTime = endTime - startTime;
+
                         System.gc();
                         System.out.println(sketchName + ":" + (int) sParam + "#" + curTrial);
 
