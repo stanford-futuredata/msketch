@@ -10,6 +10,17 @@ import java.util.Arrays;
 import static org.junit.Assert.*;
 
 public class LowPrecisionTest {
+//    @Test
+//    public void testWeird() {
+//        LowPrecision lp;
+//
+//        lp = new LowPrecision(12);
+//        lp.encode(-1.960339, 3.715409, -11.349560, 1.312489,
+//                new double[]{105000.0, 2048.625055727497, 106147.48176223612},
+//                new double[]{51224.0, -29264.60717153238, 81804.1521212234});
+//        System.out.println(lp.min);
+//    }
+
     @Test
     public void testCorrect() {
         LowPrecision lp;
@@ -38,7 +49,7 @@ public class LowPrecisionTest {
             assertTrue(checkUnused(bits(val), numUsedBits));
         }
 
-        int exponentRange = (int) Math.ceil(Math.log(getMax(lp)) / Math.log(2)) - lp.minExponent;
+        int exponentRange = (int) Math.ceil(Math.log(getMax(lp)) / Math.log(2)) - lp.minExponent + 1;
         int expectedExponentBits = (int) Math.ceil(Math.log(exponentRange) / Math.log(2));
         assertEquals(expectedExponentBits, lp.bitsForExponent);
     }

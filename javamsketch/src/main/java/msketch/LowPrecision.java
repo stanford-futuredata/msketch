@@ -19,7 +19,7 @@ public class LowPrecision {
     public double[] logSums;
     public double[] totalSums;
 
-    private static int maxItersWithoutImprovement = 20;
+    private static int maxItersWithoutImprovement = 50;
 
     public LowPrecision(int bits) {
         this.bits = bits;
@@ -99,7 +99,7 @@ public class LowPrecision {
 
         bitsForExponent = numExponentBitsForRange(bestMinPower2, maxPower2);
         bitsForSignificand = bits - bitsForExponent - bitsForSign;
-        minExponent = bestMinPower2;
+        minExponent = lowestExponent(maxPower2, bitsForExponent);
     }
 
     private double encodeValueDeterministic(double val) {
@@ -131,7 +131,11 @@ public class LowPrecision {
     }
 
     private int numExponentBitsForRange(int minPower2, int maxPower2) {
-        return (int)Math.ceil(log(maxPower2 - minPower2, 2));
+        return (int)Math.ceil(log(maxPower2 - minPower2 + 1, 2));
+    }
+
+    private int lowestExponent(int maxPower2, int numBitsForExponent) {
+        return maxPower2 - (int) Math.pow(2, numBitsForExponent) + 1;
     }
 
     /* Returns the minimum and maximum magnitude of all the statistics. */
