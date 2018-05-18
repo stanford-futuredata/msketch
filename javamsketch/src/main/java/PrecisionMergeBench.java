@@ -88,7 +88,6 @@ public class PrecisionMergeBench {
                             curSketch.initialize();
                             curSketch.add(cellData);
                             curSketch.convertToLowPrecision(precision);
-                            System.out.format("%d %f %f %f %f %s\n", i, curSketch.min, curSketch.max, curSketch.logMin, curSketch.logMax, Arrays.toString(curSketch.totalSums));
                             cellSketches.add(curSketch);
                         }
                         endTime = System.nanoTime();

@@ -19,7 +19,7 @@ public class LowPrecision {
     public double[] logSums;
     public double[] totalSums;
 
-    private static int maxItersWithoutImprovement = 10;
+    private static int maxItersWithoutImprovement = 20;
 
     public LowPrecision(int bits) {
         this.bits = bits;
