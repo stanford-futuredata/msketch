@@ -19,12 +19,12 @@ public class CMomentSketch implements QuantileSketch{
     private double tolerance = 1e-10;
     private boolean verbose = false;
 
-    private double min;
-    private double max;
-    private double logMin;
-    private double logMax;
+    public double min;
+    public double max;
+    public double logMin;
+    public double logMax;
     // Stores the normal moments and the log moments
-    private double[] totalSums;
+    public double[] totalSums;
 
     private boolean errorBounds = false;
     private double[] errors;

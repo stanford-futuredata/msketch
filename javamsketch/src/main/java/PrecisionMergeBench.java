@@ -7,10 +7,7 @@ import sketches.QuantileSketch;
 import sketches.SketchLoader;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class PrecisionMergeBench {
     private String testName;
@@ -91,6 +88,7 @@ public class PrecisionMergeBench {
                             curSketch.initialize();
                             curSketch.add(cellData);
                             curSketch.convertToLowPrecision(precision);
+                            System.out.format("%d %f %f %f %f %s\n", i, curSketch.min, curSketch.max, curSketch.logMin, curSketch.logMax, Arrays.toString(curSketch.totalSums));
                             cellSketches.add(curSketch);
                         }
                         endTime = System.nanoTime();
