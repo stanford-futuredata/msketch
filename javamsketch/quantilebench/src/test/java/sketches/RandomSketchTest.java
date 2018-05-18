@@ -10,11 +10,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.*;
 
 public class RandomSketchTest {
     @Test
-    public void testUniformNoMergeNew() throws Exception {
+    public void testUniformNoMerge() throws Exception {
         int numTrials = 1;
         int n = 20000;
         double[] data = TestDataSource.getUniform(n + 1);
@@ -82,6 +82,24 @@ public class RandomSketchTest {
                 averageError[j] /= numTrials;
             }
             assertArrayEquals(expectedQs, averageQs, n / sizeParam);
+        }
+    }
+
+    @Test
+    public void testMergeBuffers() throws Exception {
+        ArrayList<Double> bufferOne = new ArrayList<>(Arrays.asList(1., 2., 4., 6., 9.));
+        ArrayList<Double> bufferTwo = new ArrayList<>(Arrays.asList(0., 3., 5., 7., 8.));
+        ArrayList<Double> target = new ArrayList<>();
+
+        RandomSketch sketch = new RandomSketch();
+        sketch.mergeBuffers(bufferOne, bufferTwo, target);
+
+        assertTrue(target.get(0) == 0 || target.get(0) == 1);
+
+        if (target.get(0) == 0) {
+            assertEquals(new ArrayList<>(Arrays.asList(0., 2., 4., 6., 8.)), target);
+        } else {
+            assertEquals(new ArrayList<>(Arrays.asList(1., 3., 5., 7., 9.)), target);
         }
     }
 }

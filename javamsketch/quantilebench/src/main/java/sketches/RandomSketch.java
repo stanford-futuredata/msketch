@@ -182,7 +182,7 @@ public class RandomSketch implements QuantileSketch{
     }
 
     // Assumes buffers one and two are sorted
-    private void mergeBuffers(ArrayList<Double> bufferOne, ArrayList<Double> bufferTwo, ArrayList<Double> target) {
+    public void mergeBuffers(ArrayList<Double> bufferOne, ArrayList<Double> bufferTwo, ArrayList<Double> target) {
         boolean use = ThreadLocalRandom.current().nextBoolean();
         int i = 0;
         int j = 0;
