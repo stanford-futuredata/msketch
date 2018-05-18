@@ -62,19 +62,19 @@ public class ParallelMergeBench {
     private ArrayList<double[]> getCells() throws IOException {
         DataSource source = new SimpleCSVDataSource(fileName, columnIdx);
         double[] data = source.get();
-        if (numDuplications > 1) {
-            double[] dupData = new double[data.length * numDuplications];
-            for (int i = 0; i < numDuplications; i++) {
-                System.arraycopy(data, 0, dupData, data.length * i, data.length);
-            }
-            if (perturbDuplications) {
-                Random rand = new Random();
-                for (int j = data.length; j < data.length * numDuplications; j++) {
-                    dupData[j] *= 0.95 + rand.nextDouble() / 10.;
-                }
-            }
-            data = dupData;
-        }
+//        if (numDuplications > 1) {
+//            double[] dupData = new double[data.length * numDuplications];
+//            for (int i = 0; i < numDuplications; i++) {
+//                System.arraycopy(data, 0, dupData, data.length * i, data.length);
+//            }
+//            if (perturbDuplications) {
+//                Random rand = new Random();
+//                for (int j = data.length; j < data.length * numDuplications; j++) {
+//                    dupData[j] *= 0.95 + rand.nextDouble() / 10.;
+//                }
+//            }
+//            data = dupData;
+//        }
         SeqDataGrouper grouper = new SeqDataGrouper(cellSize);
         return grouper.group(data);
     }
@@ -145,7 +145,7 @@ public class ParallelMergeBench {
                             mergedSketch.setSizeParam(sParam);
                             mergedSketch.setVerbose(verbose);
                             mergedSketch.initialize();
-                            QuantileSketch dummy = mergedSketch.parallelMerge(cellSketchesToMerge, numThreads);
+                            QuantileSketch dummy = mergedSketch.parallelMerge(cellSketchesToMerge, numThreads, numDuplications);
 //                            QuantileSketch dummy = mergedSketch.parallelMerge(groupedSketches);
                             endTime = System.nanoTime();
                             long mergeTime = endTime - startTime;

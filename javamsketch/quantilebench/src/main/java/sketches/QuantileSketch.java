@@ -18,11 +18,12 @@ public interface QuantileSketch {
 
     void add(double[] data);
     QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex);
-    default QuantileSketch merge(List<QuantileSketch> sketches) { return merge(sketches, 0, sketches.size()); };
-    default QuantileSketch parallelMerge(ArrayList<QuantileSketch> sketches, int numThreads) {
+    default QuantileSketch merge(List<QuantileSketch> sketches) { return merge(sketches, 0, sketches.size()); }
+    default QuantileSketch parallelMerge(ArrayList<QuantileSketch> sketches, int numThreads) { return parallelMerge(sketches, numThreads, 1); }
+    default QuantileSketch parallelMerge(ArrayList<QuantileSketch> sketches, int numThreads, int numDuplications) {
         int numSketches = sketches.size();
         final CountDownLatch doneSignal = new CountDownLatch(numThreads);
-        QuantileSketch[] mergedSketches = new QuantileSketch[numThreads];
+        QuantileSketch[] mergedSketches = new QuantileSketch[numThreads * numDuplications];
         for (int threadNum = 0; threadNum < numThreads; threadNum++) {
             final int curThreadNum = threadNum;
             final int startIndex = (numSketches * threadNum) / numThreads;
@@ -36,7 +37,9 @@ public interface QuantileSketch {
                 }
                 mergedSketch.setSizeParam(this.getSizeParam());
                 mergedSketch.initialize();
-                mergedSketches[curThreadNum] = mergedSketch.merge(sketches, startIndex, endIndex);
+                for (int i = 0; i < numDuplications; i++) {
+                    mergedSketches[curThreadNum * numDuplications + i] = mergedSketch.merge(sketches, startIndex, endIndex);
+                }
                 doneSignal.countDown();
             };
             Thread ParallelMergeThread = new Thread(ParallelMergeRunnable);
