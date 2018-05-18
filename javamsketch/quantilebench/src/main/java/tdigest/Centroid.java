@@ -1,7 +1,19 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by Fernflower decompiler)
-//
+/*
+ * Licensed to Ted Dunning under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package tdigest;
 
@@ -9,106 +21,113 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * A single centroid which represents a number of data points.
+ */
 public class Centroid implements Comparable<Centroid>, Serializable {
     private static final AtomicInteger uniqueCount = new AtomicInteger(1);
-    private double centroid;
-    private int count;
+
+    private double centroid = 0;
+    private int count = 0;
+
+    // The ID is transient because it must be unique within a given JVM. A new
+    // ID should be generated from uniqueCount when a Centroid is deserialized.
     private transient int id;
-    private List<Double> actualData;
+
+    private List<Double> actualData = null;
 
     private Centroid(boolean record) {
-        this.centroid = 0.0D;
-        this.count = 0;
-        this.actualData = null;
-        this.id = uniqueCount.getAndIncrement();
+        id = uniqueCount.getAndIncrement();
         if (record) {
-            this.actualData = new ArrayList();
+            actualData = new ArrayList<>();
         }
-
     }
 
     public Centroid(double x) {
         this(false);
-        this.start(x, 1, uniqueCount.getAndIncrement());
+        start(x, 1, uniqueCount.getAndIncrement());
     }
 
     public Centroid(double x, int w) {
         this(false);
-        this.start(x, w, uniqueCount.getAndIncrement());
+        start(x, w, uniqueCount.getAndIncrement());
     }
 
     public Centroid(double x, int w, int id) {
         this(false);
-        this.start(x, w, id);
+        start(x, w, id);
     }
 
     public Centroid(double x, int id, boolean record) {
         this(record);
-        this.start(x, 1, id);
+        start(x, 1, id);
     }
 
     Centroid(double x, int w, List<Double> data) {
         this(x, w);
-        this.actualData = data;
+        actualData = data;
     }
 
     private void start(double x, int w, int id) {
         this.id = id;
-        this.add(x, w);
+        add(x, w);
     }
 
     public void add(double x, int w) {
-        if (this.actualData != null) {
-            this.actualData.add(x);
+        if (actualData != null) {
+            actualData.add(x);
         }
-
-        this.count += w;
-        this.centroid += (double)w * (x - this.centroid) / (double)this.count;
+        count += w;
+        centroid += w * (x - centroid) / count;
     }
 
     public double mean() {
-        return this.centroid;
+        return centroid;
     }
 
     public int count() {
-        return this.count;
+        return count;
     }
 
     public int id() {
-        return this.id;
+        return id;
     }
 
+    @Override
     public String toString() {
-        return "Centroid{centroid=" + this.centroid + ", count=" + this.count + '}';
+        return "Centroid{" +
+                "centroid=" + centroid +
+                ", count=" + count +
+                '}';
     }
 
+    @Override
     public int hashCode() {
-        return this.id;
+        return id;
     }
 
-    public int compareTo(Centroid o) {
-        int r = Double.compare(this.centroid, o.centroid);
+    @Override
+    public int compareTo(@SuppressWarnings("NullableProblems") Centroid o) {
+        int r = Double.compare(centroid, o.centroid);
         if (r == 0) {
-            r = this.id - o.id;
+            r = id - o.id;
         }
-
         return r;
     }
 
     public List<Double> data() {
-        return this.actualData;
+        return actualData;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public void insertData(double x) {
-        if (this.actualData == null) {
-            this.actualData = new ArrayList();
+        if (actualData == null) {
+            actualData = new ArrayList<>();
         }
-
-        this.actualData.add(x);
+        actualData.add(x);
     }
 
     public static Centroid createWeighted(double x, int w, Iterable<? extends Double> data) {
@@ -118,25 +137,21 @@ public class Centroid implements Comparable<Centroid>, Serializable {
     }
 
     public void add(double x, int w, Iterable<? extends Double> data) {
-        if (this.actualData != null) {
+        if (actualData != null) {
             if (data != null) {
-                Iterator var5 = data.iterator();
-
-                while(var5.hasNext()) {
-                    Double old = (Double)var5.next();
-                    this.actualData.add(old);
+                for (Double old : data) {
+                    actualData.add(old);
                 }
             } else {
-                this.actualData.add(x);
+                actualData.add(x);
             }
         }
-
-        this.centroid = AbstractTDigest.weightedAverage(this.centroid, (double)this.count, x, (double)w);
-        this.count += w;
+        centroid = AbstractTDigest.weightedAverage(centroid, count, x, w);
+        count += w;
     }
 
     private void readObject(ObjectInputStream in) throws ClassNotFoundException, IOException {
         in.defaultReadObject();
-        this.id = uniqueCount.getAndIncrement();
+        id = uniqueCount.getAndIncrement();
     }
 }

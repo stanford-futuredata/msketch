@@ -1,7 +1,19 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by Fernflower decompiler)
-//
+/*
+ * Licensed to Ted Dunning under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package tdigest;
 
@@ -12,10 +24,16 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * A tree of t-digest centroids.
+ */
 final class AVLGroupTree extends AbstractCollection<Centroid> implements Serializable {
+
+    /* For insertions into the tree */
     private double centroid;
     private int count;
     private List<Double> data;
+
     private double[] centroids;
     private int[] counts;
     private List<Double>[] datas;
@@ -26,213 +44,258 @@ final class AVLGroupTree extends AbstractCollection<Centroid> implements Seriali
         this(false);
     }
 
-    AVLGroupTree(boolean record) {
-        this.tree = new IntAVLTree() {
+    AVLGroupTree(final boolean record) {
+        tree = new IntAVLTree() {
+
+            @Override
             protected void resize(int newCapacity) {
                 super.resize(newCapacity);
-                AVLGroupTree.this.centroids = Arrays.copyOf(AVLGroupTree.this.centroids, newCapacity);
-                AVLGroupTree.this.counts = Arrays.copyOf(AVLGroupTree.this.counts, newCapacity);
-                AVLGroupTree.this.aggregatedCounts = Arrays.copyOf(AVLGroupTree.this.aggregatedCounts, newCapacity);
-                if (AVLGroupTree.this.datas != null) {
-                    AVLGroupTree.this.datas = (List[])Arrays.copyOf(AVLGroupTree.this.datas, newCapacity);
+                centroids = Arrays.copyOf(centroids, newCapacity);
+                counts = Arrays.copyOf(counts, newCapacity);
+                aggregatedCounts = Arrays.copyOf(aggregatedCounts, newCapacity);
+                if (datas != null) {
+                    datas = Arrays.copyOf(datas, newCapacity);
                 }
-
             }
 
+            @Override
             protected void merge(int node) {
+                // two nodes are never considered equal
                 throw new UnsupportedOperationException();
             }
 
+            @Override
             protected void copy(int node) {
-                AVLGroupTree.this.centroids[node] = AVLGroupTree.this.centroid;
-                AVLGroupTree.this.counts[node] = AVLGroupTree.this.count;
-                if (AVLGroupTree.this.datas != null) {
-                    if (AVLGroupTree.this.data == null) {
-                        if (AVLGroupTree.this.count != 1) {
+                centroids[node] = centroid;
+                counts[node] = count;
+                if (datas != null) {
+                    if (data == null) {
+                        if (count != 1) {
                             throw new IllegalStateException();
                         }
-
-                        AVLGroupTree.this.data = new ArrayList();
-                        AVLGroupTree.this.data.add(AVLGroupTree.this.centroid);
+                        data = new ArrayList<>();
+                        data.add(centroid);
                     }
-
-                    AVLGroupTree.this.datas[node] = AVLGroupTree.this.data;
+                    datas[node] = data;
                 }
-
             }
 
+            @Override
             protected int compare(int node) {
-                return AVLGroupTree.this.centroid < AVLGroupTree.this.centroids[node] ? -1 : 1;
+                if (centroid < centroids[node]) {
+                    return -1;
+                } else {
+                    // upon equality, the newly added node is considered greater
+                    return 1;
+                }
             }
 
+            @Override
             protected void fixAggregates(int node) {
                 super.fixAggregates(node);
-                AVLGroupTree.this.aggregatedCounts[node] = AVLGroupTree.this.counts[node] + AVLGroupTree.this.aggregatedCounts[this.left(node)] + AVLGroupTree.this.aggregatedCounts[this.right(node)];
+                aggregatedCounts[node] = counts[node] + aggregatedCounts[left(node)] + aggregatedCounts[right(node)];
             }
+
         };
-        this.centroids = new double[this.tree.capacity()];
-        this.counts = new int[this.tree.capacity()];
-        this.aggregatedCounts = new int[this.tree.capacity()];
+        centroids = new double[tree.capacity()];
+        counts = new int[tree.capacity()];
+        aggregatedCounts = new int[tree.capacity()];
         if (record) {
-            List<Double>[] datas = new List[this.tree.capacity()];
+            @SuppressWarnings("unchecked")
+            final List<Double>[] datas = new List[tree.capacity()];
             this.datas = datas;
         }
-
     }
 
+    /**
+     * Return the number of centroids in the tree.
+     */
     public int size() {
-        return this.tree.size();
+        return tree.size();
     }
 
+    /**
+     * Return the previous node.
+     */
     public int prev(int node) {
-        return this.tree.prev(node);
+        return tree.prev(node);
     }
 
+    /**
+     * Return the next node.
+     */
     public int next(int node) {
-        return this.tree.next(node);
+        return tree.next(node);
     }
 
+    /**
+     * Return the mean for the provided node.
+     */
     public double mean(int node) {
-        return this.centroids[node];
+        return centroids[node];
     }
 
+    /**
+     * Return the count for the provided node.
+     */
     public int count(int node) {
-        return this.counts[node];
+        return counts[node];
     }
 
+    /**
+     * Return the data for the provided node.
+     */
     public List<Double> data(int node) {
-        return this.datas == null ? null : this.datas[node];
+        return datas == null ? null : datas[node];
     }
 
+    /**
+     * Add the provided centroid to the tree.
+     */
     public void add(double centroid, int count, List<Double> data) {
         this.centroid = centroid;
         this.count = count;
         this.data = data;
-        this.tree.add();
+        tree.add();
     }
 
+    @Override
     public boolean add(Centroid centroid) {
-        this.add(centroid.mean(), centroid.count(), centroid.data());
+        add(centroid.mean(), centroid.count(), centroid.data());
         return true;
     }
 
+    /**
+     * Update values associated with a node, readjusting the tree if necessary.
+     */
+    @SuppressWarnings("WeakerAccess")
     public void update(int node, double centroid, int count, List<Double> data) {
         this.centroid = centroid;
         this.count = count;
         this.data = data;
-        this.tree.update(node);
+        tree.update(node);
     }
 
+    /**
+     * Return the last node whose centroid is less than <code>centroid</code>.
+     */
+    @SuppressWarnings("WeakerAccess")
     public int floor(double centroid) {
-        int floor = 0;
-        int node = this.tree.root();
-
-        while(node != 0) {
-            int cmp = Double.compare(centroid, this.mean(node));
+        int floor = IntAVLTree.NIL;
+        for (int node = tree.root(); node != IntAVLTree.NIL; ) {
+            final int cmp = Double.compare(centroid, mean(node));
             if (cmp <= 0) {
-                node = this.tree.left(node);
+                node = tree.left(node);
             } else {
                 floor = node;
-                node = this.tree.right(node);
+                node = tree.right(node);
             }
         }
-
         return floor;
     }
 
+    /**
+     * Return the last node so that the sum of counts of nodes that are before
+     * it is less than or equal to <code>sum</code>.
+     */
+    @SuppressWarnings("WeakerAccess")
     public int floorSum(long sum) {
-        int floor = 0;
-        int node = this.tree.root();
-
-        while(node != 0) {
-            int left = this.tree.left(node);
-            long leftCount = (long)this.aggregatedCounts[left];
+        int floor = IntAVLTree.NIL;
+        for (int node = tree.root(); node != IntAVLTree.NIL; ) {
+            final int left = tree.left(node);
+            final long leftCount = aggregatedCounts[left];
             if (leftCount <= sum) {
                 floor = node;
-                sum -= leftCount + (long)this.count(node);
-                node = this.tree.right(node);
+                sum -= leftCount + count(node);
+                node = tree.right(node);
             } else {
-                node = this.tree.left(node);
+                node = tree.left(node);
             }
         }
-
         return floor;
     }
 
+    /**
+     * Return the least node in the tree.
+     */
     public int first() {
-        return this.tree.first(this.tree.root());
+        return tree.first(tree.root());
     }
 
+    /**
+     * Compute the number of elements and sum of counts for every entry that
+     * is strictly before <code>node</code>.
+     */
+    @SuppressWarnings("WeakerAccess")
     public long headSum(int node) {
-        int left = this.tree.left(node);
-        long sum = (long)this.aggregatedCounts[left];
-        int n = node;
-
-        for(int p = this.tree.parent(node); p != 0; p = this.tree.parent(p)) {
-            if (n == this.tree.right(p)) {
-                int leftP = this.tree.left(p);
-                sum += (long)(this.counts[p] + this.aggregatedCounts[leftP]);
+        final int left = tree.left(node);
+        long sum = aggregatedCounts[left];
+        for (int n = node, p = tree.parent(node); p != IntAVLTree.NIL; n = p, p = tree.parent(n)) {
+            if (n == tree.right(p)) {
+                final int leftP = tree.left(p);
+                sum += counts[p] + aggregatedCounts[leftP];
             }
-
-            n = p;
         }
-
         return sum;
     }
 
+    @Override
     public Iterator<Centroid> iterator() {
-        return this.iterator(this.first());
+        return iterator(first());
     }
 
     private Iterator<Centroid> iterator(final int startNode) {
         return new Iterator<Centroid>() {
+
             int nextNode = startNode;
 
+            @Override
             public boolean hasNext() {
-                return this.nextNode != 0;
+                return nextNode != IntAVLTree.NIL;
             }
 
+            @Override
             public Centroid next() {
-                Centroid next = new Centroid(AVLGroupTree.this.mean(this.nextNode), AVLGroupTree.this.count(this.nextNode));
-                List<Double> data = AVLGroupTree.this.data(this.nextNode);
+                final Centroid next = new Centroid(mean(nextNode), count(nextNode));
+                final List<Double> data = data(nextNode);
                 if (data != null) {
-                    Iterator var3 = data.iterator();
-
-                    while(var3.hasNext()) {
-                        Double x = (Double)var3.next();
-                        next.insertData(x.doubleValue());
+                    for (Double x : data) {
+                        next.insertData(x);
                     }
                 }
-
-                this.nextNode = AVLGroupTree.this.tree.next(this.nextNode);
+                nextNode = tree.next(nextNode);
                 return next;
             }
 
+            @Override
             public void remove() {
                 throw new UnsupportedOperationException("Read-only iterator");
             }
+
         };
     }
 
+    /**
+     * Return the total count of points that have been added to the tree.
+     */
     public int sum() {
-        return this.aggregatedCounts[this.tree.root()];
+        return aggregatedCounts[tree.root()];
     }
 
     void checkBalance() {
-        this.tree.checkBalance(this.tree.root());
+        tree.checkBalance(tree.root());
     }
 
     void checkAggregates() {
-        this.checkAggregates(this.tree.root());
+        checkAggregates(tree.root());
     }
 
     private void checkAggregates(int node) {
-        assert this.aggregatedCounts[node] == this.counts[node] + this.aggregatedCounts[this.tree.left(node)] + this.aggregatedCounts[this.tree.right(node)];
-
-        if (node != 0) {
-            this.checkAggregates(this.tree.left(node));
-            this.checkAggregates(this.tree.right(node));
+        assert aggregatedCounts[node] == counts[node] + aggregatedCounts[tree.left(node)] + aggregatedCounts[tree.right(node)];
+        if (node != IntAVLTree.NIL) {
+            checkAggregates(tree.left(node));
+            checkAggregates(tree.right(node));
         }
-
     }
+
 }

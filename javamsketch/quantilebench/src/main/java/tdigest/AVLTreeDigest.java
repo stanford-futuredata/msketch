@@ -1,7 +1,19 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by Fernflower decompiler)
-//
+/*
+ * Licensed to Ted Dunning under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package tdigest;
 
@@ -15,117 +27,118 @@ import java.util.concurrent.ThreadLocalRandom;
 public class AVLTreeDigest extends AbstractTDigest {
     private final double compression;
     private AVLGroupTree summary;
-    private long count = 0L;
-    private static final int VERBOSE_ENCODING = 1;
-    private static final int SMALL_ENCODING = 2;
 
+    private long count = 0; // package private for testing
+
+    /**
+     * A histogram structure that will record a sketch of a distribution.
+     *
+     * @param compression How should accuracy be traded for size?  A value of N here will give quantile errors
+     *                    almost always less than 3/N with considerably smaller errors expected for extreme
+     *                    quantiles.  Conversely, you should expect to track about 5 N centroids for this
+     *                    accuracy.
+     */
+    @SuppressWarnings("WeakerAccess")
     public AVLTreeDigest(double compression) {
         this.compression = compression;
-        this.summary = new AVLGroupTree(false);
+        summary = new AVLGroupTree(false);
     }
 
+    @Override
     public TDigest recordAllData() {
-        if (this.summary.size() != 0) {
+        if (summary.size() != 0) {
             throw new IllegalStateException("Can only ask to record added data on an empty summary");
-        } else {
-            this.summary = new AVLGroupTree(true);
-            return super.recordAllData();
         }
+        summary = new AVLGroupTree(true);
+        return super.recordAllData();
     }
 
+    @Override
     public int centroidCount() {
-        return this.summary.size();
+        return summary.size();
     }
 
+    @Override
     void add(double x, int w, Centroid base) {
-        if (x == base.mean() && w == base.count()) {
-            this.add(x, w, base.data());
-        } else {
+        if (x != base.mean() || w != base.count()) {
             throw new IllegalArgumentException();
         }
+        add(x, w, base.data());
     }
 
+    @Override
     public void add(double x, int w) {
-        this.add(x, w, (List)null);
+        add(x, w, (List<Double>) null);
     }
 
+    @Override
     public void add(List<? extends TDigest> others) {
-        Iterator var2 = others.iterator();
-
-        while(var2.hasNext()) {
-            TDigest other = (TDigest)var2.next();
-            this.setMinMax(Math.min(this.min, other.getMin()), Math.max(this.max, other.getMax()));
-            Iterator var4 = other.centroids().iterator();
-
-            while(var4.hasNext()) {
-                Centroid centroid = (Centroid)var4.next();
-                this.add(centroid.mean(), centroid.count(), this.recordAllData ? centroid.data() : null);
+        for (TDigest other : others) {
+            setMinMax(Math.min(min, other.getMin()), Math.max(max, other.getMax()));
+            for (Centroid centroid : other.centroids()) {
+                add(centroid.mean(), centroid.count(), recordAllData ? centroid.data() : null);
             }
         }
-
     }
 
     public void add(double x, int w, List<Double> data) {
-        this.checkValue(x);
-        if (x < this.min) {
-            this.min = x;
+        checkValue(x);
+        if (x < min) {
+            min = x;
+        }
+        if (x > max) {
+            max = x;
+        }
+        int start = summary.floor(x);
+        if (start == IntAVLTree.NIL) {
+            start = summary.first();
         }
 
-        if (x > this.max) {
-            this.max = x;
-        }
-
-        int start = this.summary.floor(x);
-        if (start == 0) {
-            start = this.summary.first();
-        }
-
-        if (start == 0) {
-            assert this.summary.size() == 0;
-
-            this.summary.add(x, w, data);
-            this.count = (long)w;
+        if (start == IntAVLTree.NIL) { // empty summary
+            assert summary.size() == 0;
+            summary.add(x, w, data);
+            count = w;
         } else {
-            double minDistance = 1.7976931348623157E308D;
-            int lastNeighbor = 0;
-
-            int closest;
-            for(closest = start; closest != 0; closest = this.summary.next(closest)) {
-                double z = Math.abs(this.summary.mean(closest) - x);
+            double minDistance = Double.MAX_VALUE;
+            int lastNeighbor = IntAVLTree.NIL;
+            for (int neighbor = start; neighbor != IntAVLTree.NIL; neighbor = summary.next(neighbor)) {
+                double z = Math.abs(summary.mean(neighbor) - x);
                 if (z < minDistance) {
-                    start = closest;
+                    start = neighbor;
                     minDistance = z;
                 } else if (z > minDistance) {
-                    lastNeighbor = closest;
+                    // as soon as z increases, we have passed the nearest neighbor and can quit
+                    lastNeighbor = neighbor;
                     break;
                 }
             }
 
-            closest = 0;
-            long sum = this.summary.headSum(start);
-            double n = 0.0D;
+            int closest = IntAVLTree.NIL;
+            long sum = summary.headSum(start);
+            double n = 0;
+            for (int neighbor = start; neighbor != lastNeighbor; neighbor = summary.next(neighbor)) {
+                assert minDistance == Math.abs(summary.mean(neighbor) - x);
+                double q = count == 1 ? 0.5 : (sum + (summary.count(neighbor) - 1) / 2.0) / (count - 1);
+                double k = 4 * count * q * (1 - q) / compression;
 
-            for(int neighbor = start; neighbor != lastNeighbor; neighbor = this.summary.next(neighbor)) {
-                assert minDistance == Math.abs(this.summary.mean(neighbor) - x);
-
-                double q = this.count == 1L ? 0.5D : ((double)sum + (double)(this.summary.count(neighbor) - 1) / 2.0D) / (double)(this.count - 1L);
-                double k = (double)(4L * this.count) * q * (1.0D - q) / this.compression;
-                if ((double)(this.summary.count(neighbor) + w) <= k) {
-                    ++n;
-                    if (ThreadLocalRandom.current().nextDouble() < 1.0D / n) {
+                // this slightly clever selection method improves accuracy with lots of repeated points
+                if (summary.count(neighbor) + w <= k) {
+                    n++;
+                    if (ThreadLocalRandom.current().nextDouble() < 1 / n) {
                         closest = neighbor;
                     }
                 }
-
-                sum += (long)this.summary.count(neighbor);
+                sum += summary.count(neighbor);
             }
 
-            if (closest == 0) {
-                this.summary.add(x, w, data);
+            if (closest == IntAVLTree.NIL) {
+                summary.add(x, w, data);
             } else {
-                double centroid = this.summary.mean(closest);
-                int count = this.summary.count(closest);
-                List<Double> d = this.summary.data(closest);
+                // if the nearest point was not unique, then we may not be modifying the first copy
+                // which means that ordering can change
+                double centroid = summary.mean(closest);
+                int count = summary.count(closest);
+                List<Double> d = summary.data(closest);
                 if (d != null) {
                     if (w == 1) {
                         d.add(x);
@@ -133,255 +146,280 @@ public class AVLTreeDigest extends AbstractTDigest {
                         d.addAll(data);
                     }
                 }
-
-                centroid = weightedAverage(centroid, (double)count, x, (double)w);
+                centroid = weightedAverage(centroid, count, x, w);
                 count += w;
-                this.summary.update(closest, centroid, count, d);
+                summary.update(closest, centroid, count, d);
             }
+            count += w;
 
-            this.count += (long)w;
-            if ((double)this.summary.size() > 20.0D * this.compression) {
-                this.compress();
+            if (summary.size() > 20 * compression) {
+                // may happen in case of sequential points
+                compress();
             }
         }
-
     }
 
+    @Override
     public void compress() {
-        if (this.summary.size() > 1) {
-            AVLGroupTree centroids = this.summary;
-            this.summary = new AVLGroupTree(this.recordAllData);
-            int[] nodes = new int[centroids.size()];
-            nodes[0] = centroids.first();
+        if (summary.size() <= 1) {
+            return;
+        }
 
-            int i;
-            for(i = 1; i < nodes.length; ++i) {
-                nodes[i] = centroids.next(nodes[i - 1]);
+        AVLGroupTree centroids = summary;
+        this.summary = new AVLGroupTree(recordAllData);
 
-                assert nodes[i] != 0;
-            }
+        final int[] nodes = new int[centroids.size()];
+        nodes[0] = centroids.first();
+        for (int i = 1; i < nodes.length; ++i) {
+            nodes[i] = centroids.next(nodes[i - 1]);
+            assert nodes[i] != IntAVLTree.NIL;
+        }
+        assert centroids.next(nodes[nodes.length - 1]) == IntAVLTree.NIL;
 
-            assert centroids.next(nodes[nodes.length - 1]) == 0;
+        for (int i = centroids.size() - 1; i > 0; --i) {
+            final int other = ThreadLocalRandom.current().nextInt(i + 1);
+            final int tmp = nodes[other];
+            nodes[other] = nodes[i];
+            nodes[i] = tmp;
+        }
 
-            int other;
-            int tmp;
-            for(i = centroids.size() - 1; i > 0; --i) {
-                other = ThreadLocalRandom.current().nextInt(i + 1);
-                tmp = nodes[other];
-                nodes[other] = nodes[i];
-                nodes[i] = tmp;
-            }
-
-            int[] var7 = nodes;
-            other = nodes.length;
-
-            for(tmp = 0; tmp < other; ++tmp) {
-                int node = var7[tmp];
-                this.add(centroids.mean(node), centroids.count(node), centroids.data(node));
-            }
-
+        for (int node : nodes) {
+            add(centroids.mean(node), centroids.count(node), centroids.data(node));
         }
     }
 
+    /**
+     * Returns the number of samples represented in this histogram.  If you want to know how many
+     * centroids are being used, try centroids().size().
+     *
+     * @return the number of samples that have been added.
+     */
+    @Override
     public long size() {
-        return this.count;
+        return count;
     }
 
+    /**
+     * @param x the value at which the CDF should be evaluated
+     * @return the approximate fraction of all samples that were less than or equal to x.
+     */
+    @Override
     public double cdf(double x) {
-        AVLGroupTree values = this.summary;
+        AVLGroupTree values = summary;
         if (values.size() == 0) {
-            return 0.0D / 0.0;
+            return Double.NaN;
         } else if (values.size() == 1) {
-            return x < values.mean(values.first()) ? 0.0D : 1.0D;
+            return x < values.mean(values.first()) ? 0 : 1;
         } else {
-            double r = 0.0D;
-            Iterator<Centroid> it = values.iterator();
-            Centroid a = (Centroid)it.next();
-            Centroid b = (Centroid)it.next();
-            double left = (b.mean() - a.mean()) / 2.0D;
+            double r = 0;
 
-            double right;
-            for(right = left; it.hasNext(); right = (b.mean() - a.mean()) / 2.0D) {
+            // we scan a across the centroids
+            Iterator<Centroid> it = values.iterator();
+            Centroid a = it.next();
+
+            // b is the look-ahead to the next centroid
+            Centroid b = it.next();
+
+            // initially, we set left width equal to right width
+            double left = (b.mean() - a.mean()) / 2;
+            double right = left;
+
+            // scan to next to last element
+            while (it.hasNext()) {
                 if (x < a.mean() + right) {
-                    double value = (r + (double)a.count() * interpolate(x, a.mean() - left, a.mean() + right)) / (double)this.count;
-                    return value > 0.0D ? value : 0.0D;
+                    double value = (r + a.count() * interpolate(x, a.mean() - left, a.mean() + right)) / count;
+                    return value > 0.0 ? value : 0.0;
                 }
 
-                r += (double)a.count();
+                r += a.count();
+
                 a = b;
                 left = right;
-                b = (Centroid)it.next();
+
+                b = it.next();
+                right = (b.mean() - a.mean()) / 2;
             }
 
+            // for the last element, assume right width is same as left
             if (x < a.mean() + right) {
-                return (r + (double)a.count() * interpolate(x, a.mean() - left, a.mean() + right)) / (double)this.count;
+                return (r + a.count() * interpolate(x, a.mean() - left, a.mean() + right)) / count;
             } else {
-                return 1.0D;
+                return 1;
             }
         }
     }
 
+    /**
+     * @param q The quantile desired.  Can be in the range [0,1].
+     * @return The minimum value x such that we think that the proportion of samples is <= x is q.
+     */
+    @Override
     public double quantile(double q) {
-        if (q >= 0.0D && q <= 1.0D) {
-            AVLGroupTree values = this.summary;
-            if (values.size() == 0) {
-                return 0.0D / 0.0;
-            } else if (values.size() == 1) {
-                return ((Centroid)values.iterator().next()).mean();
-            } else {
-                double index = q * (double)this.count;
-                int currentNode = values.first();
-                int currentWeight = values.count(currentNode);
-                double weightSoFar = (double)currentWeight / 2.0D;
-                if (index < weightSoFar) {
-                    return (this.min * index + values.mean(currentNode) * (weightSoFar - index)) / weightSoFar;
-                } else {
-                    for(int i = 0; i < values.size() - 1; ++i) {
-                        int nextNode = values.next(currentNode);
-                        int nextWeight = values.count(nextNode);
-                        double dw = (double)(currentWeight + nextWeight) / 2.0D;
-                        if (weightSoFar + dw > index) {
-                            double z1 = index - weightSoFar;
-                            double z2 = weightSoFar + dw - index;
-                            return weightedAverage(values.mean(currentNode), z2, values.mean(nextNode), z1);
-                        }
-
-                        weightSoFar += dw;
-                        currentNode = nextNode;
-                        currentWeight = nextWeight;
-                    }
-
-                    double z1 = index - weightSoFar;
-                    double z2 = (double)currentWeight / 2.0D - z1;
-                    return weightedAverage(values.mean(currentNode), z2, this.max, z1);
-                }
-            }
-        } else {
+        if (q < 0 || q > 1) {
             throw new IllegalArgumentException("q should be in [0,1], got " + q);
         }
+
+        AVLGroupTree values = summary;
+        if (values.size() == 0) {
+            // no centroids means no data, no way to get a quantile
+            return Double.NaN;
+        } else if (values.size() == 1) {
+            // with one data point, all quantiles lead to Rome
+            return values.iterator().next().mean();
+        }
+
+        // if values were stored in a sorted array, index would be the offset we are interested in
+        final double index = q * count;
+        int currentNode = values.first();
+        int currentWeight = values.count(currentNode);
+
+        // weightSoFar represents the total mass to the left of the center of the current node
+        double weightSoFar = currentWeight / 2.0;
+
+        // at left boundary, we interpolate between min and first mean
+        if (index < weightSoFar) {
+            return (min * index + values.mean(currentNode) * (weightSoFar - index)) / weightSoFar;
+        }
+        for (int i = 0; i < values.size() - 1; i++) {
+            int nextNode = values.next(currentNode);
+            int nextWeight = values.count(nextNode);
+            // this is the mass between current center and next center
+            double dw = (currentWeight + nextWeight) / 2.0;
+            if (weightSoFar + dw > index) {
+                // centroids i and i+1 bracket our current point
+                double z1 = index - weightSoFar;
+                double z2 = weightSoFar + dw - index;
+                return weightedAverage(values.mean(currentNode), z2, values.mean(nextNode), z1);
+            }
+            weightSoFar += dw;
+            currentNode = nextNode;
+            currentWeight = nextWeight;
+        }
+        // index is in the right hand side of the last node, interpolate to max
+        double z1 = index - weightSoFar;
+        double z2 = currentWeight / 2.0 - z1;
+        return weightedAverage(values.mean(currentNode), z2, max, z1);
     }
 
+    @Override
     public Collection<Centroid> centroids() {
-        return Collections.unmodifiableCollection(this.summary);
+        return Collections.unmodifiableCollection(summary);
     }
 
+    @Override
     public double compression() {
-        return this.compression;
+        return compression;
     }
 
+    /**
+     * Returns an upper bound on the number bytes that will be required to represent this histogram.
+     */
+    @Override
     public int byteSize() {
-        return 32 + this.summary.size() * 12;
+        return 32 + summary.size() * 12;
     }
 
+    /**
+     * Returns an upper bound on the number of bytes that will be required to represent this histogram in
+     * the tighter representation.
+     */
+    @Override
     public int smallByteSize() {
-        int bound = this.byteSize();
+        int bound = byteSize();
         ByteBuffer buf = ByteBuffer.allocate(bound);
-        this.asSmallBytes(buf);
+        asSmallBytes(buf);
         return buf.position();
     }
 
-    public void asBytes(ByteBuffer buf) {
-        buf.putInt(1);
-        buf.putDouble(this.min);
-        buf.putDouble(this.max);
-        buf.putDouble((double)((float)this.compression()));
-        buf.putInt(this.summary.size());
-        Iterator var2 = this.summary.iterator();
+    private final static int VERBOSE_ENCODING = 1;
+    private final static int SMALL_ENCODING = 2;
 
-        Centroid centroid;
-        while(var2.hasNext()) {
-            centroid = (Centroid)var2.next();
+    /**
+     * Outputs a histogram as bytes using a particularly cheesy encoding.
+     */
+    @Override
+    public void asBytes(ByteBuffer buf) {
+        buf.putInt(VERBOSE_ENCODING);
+        buf.putDouble(min);
+        buf.putDouble(max);
+        buf.putDouble((float) compression());
+        buf.putInt(summary.size());
+        for (Centroid centroid : summary) {
             buf.putDouble(centroid.mean());
         }
 
-        var2 = this.summary.iterator();
-
-        while(var2.hasNext()) {
-            centroid = (Centroid)var2.next();
+        for (Centroid centroid : summary) {
             buf.putInt(centroid.count());
         }
-
     }
 
+    @Override
     public void asSmallBytes(ByteBuffer buf) {
-        buf.putInt(2);
-        buf.putDouble(this.min);
-        buf.putDouble(this.max);
-        buf.putDouble(this.compression());
-        buf.putInt(this.summary.size());
-        double x = 0.0D;
-        Iterator var4 = this.summary.iterator();
+        buf.putInt(SMALL_ENCODING);
+        buf.putDouble(min);
+        buf.putDouble(max);
+        buf.putDouble(compression());
+        buf.putInt(summary.size());
 
-        Centroid centroid;
-        while(var4.hasNext()) {
-            centroid = (Centroid)var4.next();
+        double x = 0;
+        for (Centroid centroid : summary) {
             double delta = centroid.mean() - x;
             x = centroid.mean();
-            buf.putFloat((float)delta);
+            buf.putFloat((float) delta);
         }
 
-        var4 = this.summary.iterator();
-
-        while(var4.hasNext()) {
-            centroid = (Centroid)var4.next();
+        for (Centroid centroid : summary) {
             int n = centroid.count();
             encode(buf, n);
         }
-
     }
 
+    /**
+     * Reads a histogram from a byte buffer
+     *
+     * @return The new histogram structure
+     */
+    @SuppressWarnings("WeakerAccess")
     public static AVLTreeDigest fromBytes(ByteBuffer buf) {
         int encoding = buf.getInt();
-        double min;
-        double max;
-        double compression;
-        AVLTreeDigest r;
-        int n;
-        double[] means;
-        if (encoding == 1) {
-            min = buf.getDouble();
-            max = buf.getDouble();
-            compression = buf.getDouble();
-            r = new AVLTreeDigest(compression);
+        if (encoding == VERBOSE_ENCODING) {
+            double min = buf.getDouble();
+            double max = buf.getDouble();
+            double compression = buf.getDouble();
+            AVLTreeDigest r = new AVLTreeDigest(compression);
             r.setMinMax(min, max);
-            n = buf.getInt();
-            means = new double[n];
-
-            int i;
-            for(i = 0; i < n; ++i) {
+            int n = buf.getInt();
+            double[] means = new double[n];
+            for (int i = 0; i < n; i++) {
                 means[i] = buf.getDouble();
             }
-
-            for(i = 0; i < n; ++i) {
+            for (int i = 0; i < n; i++) {
                 r.add(means[i], buf.getInt());
             }
-
             return r;
-        } else if (encoding != 2) {
-            throw new IllegalStateException("Invalid format for serialized histogram");
-        } else {
-            min = buf.getDouble();
-            max = buf.getDouble();
-            compression = buf.getDouble();
-            r = new AVLTreeDigest(compression);
+        } else if (encoding == SMALL_ENCODING) {
+            double min = buf.getDouble();
+            double max = buf.getDouble();
+            double compression = buf.getDouble();
+            AVLTreeDigest r = new AVLTreeDigest(compression);
             r.setMinMax(min, max);
-            n = buf.getInt();
-            means = new double[n];
-            double x = 0.0D;
-
-            int i;
-            for(i = 0; i < n; ++i) {
-                double delta = (double)buf.getFloat();
+            int n = buf.getInt();
+            double[] means = new double[n];
+            double x = 0;
+            for (int i = 0; i < n; i++) {
+                double delta = buf.getFloat();
                 x += delta;
                 means[i] = x;
             }
 
-            for(i = 0; i < n; ++i) {
+            for (int i = 0; i < n; i++) {
                 int z = decode(buf);
                 r.add(means[i], z);
             }
-
             return r;
+        } else {
+            throw new IllegalStateException("Invalid format for serialized histogram");
         }
     }
+
 }
