@@ -19,7 +19,7 @@ public class LowPrecision {
     public double[] logSums;
     public double[] totalSums;
 
-    private static int maxItersWithoutImprovement = 50;
+    private static int maxItersWithoutImprovement = 10;
 
     public LowPrecision(int bits) {
         this.bits = bits;
@@ -72,7 +72,7 @@ public class LowPrecision {
         int numSignificandBits = bits - numExponentBits - bitsForSign;
         double encodedMinval = encodeValue(minVal, numExponentBits, numSignificandBits, minPower2, false);
         double minvalError = Math.abs(encodedMinval - minVal);
-        int bestMinPower2 = minPower2;
+//        int bestMinPower2 = minPower2;
         int numItersWithoutImprovement = 0;
         while (true) {
             minPower2--;
@@ -82,9 +82,10 @@ public class LowPrecision {
             }
             numSignificandBits = bits - numExponentBits - bitsForSign;
             encodedMinval = encodeValue(minVal, numExponentBits, numSignificandBits, minPower2, false);
+            System.out.println(encodedMinval + " " + minPower2 + " " + numExponentBits + " " + numSignificandBits);
             double newMinvalError = Math.abs(encodedMinval - minVal);
             if (newMinvalError < minvalError) {
-                bestMinPower2 = minPower2;
+//                bestMinPower2 = minPower2;
                 numItersWithoutImprovement = 0;
             } else if (newMinvalError == minvalError) {
                 numItersWithoutImprovement++;
@@ -96,8 +97,9 @@ public class LowPrecision {
             }
             minvalError = newMinvalError;
         }
+        minPower2++;
 
-        bitsForExponent = numExponentBitsForRange(bestMinPower2, maxPower2);
+        bitsForExponent = numExponentBitsForRange(minPower2, maxPower2);
         bitsForSignificand = bits - bitsForExponent - bitsForSign;
         minExponent = lowestExponent(maxPower2, bitsForExponent);
     }
