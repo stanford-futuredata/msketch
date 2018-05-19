@@ -4,7 +4,7 @@
   "columnIdx": 0,
   "numTrials": 1,
   "methods": {
-    "cmoments": [3.0, 7.0, 11.0, 15.0]
+    "cmoments": [3.0, 7.0, 11.0, 15.0, 19.0, 23.0]
   },
   "precisions": [64, 48, 32, 28, 24, 20, 16, 12, 8],
   "quantiles": [
@@ -17,5 +17,5 @@
 
   "verbose": false,
   "calcError": false,
-  "appendTimeStamp": false
+  "appendTimeStamp": true
 }
