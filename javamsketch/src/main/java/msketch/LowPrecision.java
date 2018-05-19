@@ -82,7 +82,6 @@ public class LowPrecision {
             }
             numSignificandBits = bits - numExponentBits - bitsForSign;
             encodedMinval = encodeValue(minVal, numExponentBits, numSignificandBits, minPower2, false);
-            System.out.println(encodedMinval + " " + minPower2 + " " + numExponentBits + " " + numSignificandBits);
             double newMinvalError = Math.abs(encodedMinval - minVal);
             if (newMinvalError < minvalError) {
 //                bestMinPower2 = minPower2;
