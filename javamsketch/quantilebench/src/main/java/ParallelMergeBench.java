@@ -183,7 +183,7 @@ public class ParallelMergeBench {
                                 curResults.put("train_time", String.format("%d", trainTime));
                                 curResults.put("merge_time", String.format("%d", mergeTime));
                                 curResults.put("query_time", String.format("%d", queryTime));
-                                curResults.put("n", String.format("%d", cellSketchesToMerge.size()));
+                                curResults.put("n", String.format("%d", cellSketchesToMerge.size() * numDuplications));
                                 curResults.put("num_threads", String.format("%d", numThreads));
                                 results.add(curResults);
                             }
