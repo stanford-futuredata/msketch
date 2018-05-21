@@ -1,8 +1,12 @@
 package sketches;
 
-import com.yahoo.sketches.quantiles.DoublesSketch;
-import com.yahoo.sketches.quantiles.DoublesUnion;
-import com.yahoo.sketches.quantiles.UpdateDoublesSketch;
+//import com.yahoo.sketches.quantiles.DoublesSketch;
+//import com.yahoo.sketches.quantiles.DoublesUnion;
+//import com.yahoo.sketches.quantiles.UpdateDoublesSketch;
+
+import yahoo.DoublesSketch;
+import yahoo.DoublesUnion;
+import yahoo.UpdateDoublesSketch;
 
 import java.util.ArrayList;
 import java.util.Arrays;
