@@ -18,22 +18,24 @@ import static java.lang.Integer.MAX_VALUE;
 public class RandomSketch implements QuantileSketch{
     private double sizeParam;  // inverse of epsilon
     private int h;  // height
-    private int b;  // num buffers
-    private int s;  // buffer size
+    public int b;  // num buffers
+    public int s;  // buffer size
     private boolean verbose = false;
 
     static double delta = 0.1;
 
-    private int activeLevel;
+    public int activeLevel;
     private ArrayList<ArrayList<Double>> freeBuffers;
-    private HashMap<Integer, ArrayList<ArrayList<Double>>> usedBuffers;
-    private ArrayList<Double> curBuffer;
+    public HashMap<Integer, ArrayList<ArrayList<Double>>> usedBuffers;
+    public ArrayList<Double> curBuffer;
     private ArrayList<Double> tmpBuffer;  // for merging
     private HashMap<Integer, ArrayList<ArrayList<Double>>> orphanBuffers;
-    private int numProcessed;
+    private long numProcessed;
+    private double totalWeight;
 
     private int nextToSample;
     private int sampleBlockLength;
+    private int nextSampleBlockLength;
     private int sampleBlockSeen;
 
     private ArrayList<QuantileEntry> quantileEntries;
@@ -51,6 +53,11 @@ public class RandomSketch implements QuantileSketch{
             this.value = value;
             this.quantile = quantile;
             this.weight = weight;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%.4f: %s", quantile, value);
         }
     }
 
@@ -113,6 +120,9 @@ public class RandomSketch implements QuantileSketch{
         this.tmpBuffer = new ArrayList<>(s);
         this.quantileEntriesUpdated = false;
         this.numProcessed = 0;
+        this.totalWeight = 0;
+        this.nextToSample = ThreadLocalRandom.current().nextInt(2);  // will first be used when activeLevel = 1
+        this.sampleBlockLength = 2;  // will first be used when activeLevel = 1
     }
 
     @Override
@@ -130,16 +140,23 @@ public class RandomSketch implements QuantileSketch{
             }
 
             curBuffer.add(x);
+            if (activeLevel == 0) {
+                totalWeight++;
+            } else {
+                totalWeight += sampleBlockLength;
+            }
             if (curBuffer.size() == s) {
                 Collections.sort(curBuffer);
                 insertBuffer(curBuffer, activeLevel);
+//                System.out.println("insert Buffer");
                 if (freeBuffers.size() == 0) {
                     collapseForAdding();
                 }
                 curBuffer = freeBuffers.remove(freeBuffers.size() - 1);
             }
-            numProcessed++;
         }
+
+        numProcessed += data.length;
 
         quantileEntriesUpdated = false;
     }
@@ -153,6 +170,7 @@ public class RandomSketch implements QuantileSketch{
         sampleBlockSeen++;
         if (sampleBlockSeen == sampleBlockLength) {
             sampleBlockSeen = 0;
+            sampleBlockLength = nextSampleBlockLength;
             nextToSample = ThreadLocalRandom.current().nextInt(sampleBlockLength);
         }
 
@@ -209,8 +227,16 @@ public class RandomSketch implements QuantileSketch{
 
     private void collapse(boolean merging) {
         ArrayList<ArrayList<Double>> usedBuffersInLevel = usedBuffers.get(activeLevel);
-        if (usedBuffersInLevel.size() == 1) {  // should not hit
-//            System.out.println("orphan");
+//        System.out.println("collapse " + activeLevel + " " + usedBuffersInLevel.size());
+        if (usedBuffersInLevel.size() == 1) {  // should only happen rarely, when merging small sketches
+            if (!merging) {
+                System.out.println("error");
+            }
+            // Combine with curBuffer and subsample to increase activeLevel by 1
+            System.out.println("orphan " + merging + sizeParam + " " + activeLevel + " " + b + " " + s + " " + getTotalWeight());
+            for (int level : usedBuffers.keySet()) {
+                System.out.println("level " + level + ": " + usedBuffers.get(level).size());
+            }
 //            if (!orphanBuffers.containsKey(activeLevel)) {
 //                orphanBuffers.put(activeLevel, new ArrayList<>());
 //            }
@@ -218,23 +244,12 @@ public class RandomSketch implements QuantileSketch{
             collapsePartialBuffer(usedBuffersInLevel.get(0), activeLevel);
             usedBuffers.remove(activeLevel);
             activeLevel = Collections.min(this.usedBuffers.keySet());
-            sampleBlockLength = (int) Math.pow(2, activeLevel);
+            nextSampleBlockLength = (int) Math.pow(2, activeLevel);
         } else {
             ArrayList<Double> bufferOne = usedBuffersInLevel.remove(usedBuffersInLevel.size() - 1);
             ArrayList<Double> bufferTwo = usedBuffersInLevel.remove(usedBuffersInLevel.size() - 1);
-
-            // Merge the buffers: bufferOne becomes the merged buffer, bufferTwo becomes free
-//        ArrayList<Double> mergedBuffer = bufferOne;
-//        mergedBuffer.addAll(bufferTwo);
-//        Collections.sort(mergedBuffer);
-//        int offset = rand.nextInt(2);
-//        for (int i = 0; i < s; i++) {
-//            mergedBuffer.set(i, mergedBuffer.get(2*i + offset));
-//        }
-//        mergedBuffer.subList(s, 2*s).clear();
-//        insertBuffer(mergedBuffer,activeLevel + 1);
-//        bufferTwo.clear();
-//        freeBuffers.add(bufferTwo);
+//            ArrayList<Double> bufferOne = usedBuffersInLevel.remove(0);
+//            ArrayList<Double> bufferTwo = usedBuffersInLevel.remove(0);
 
             mergeBuffers(bufferOne, bufferTwo, tmpBuffer);
             insertBuffer(tmpBuffer, activeLevel + 1);
@@ -250,7 +265,7 @@ public class RandomSketch implements QuantileSketch{
             if (usedBuffersInLevel.size() == 0) {
                 usedBuffers.remove(activeLevel);
                 activeLevel++;
-                sampleBlockLength = (int) Math.pow(2, activeLevel);
+                nextSampleBlockLength = (int) Math.pow(2, activeLevel);
             }
         }
     }
@@ -263,9 +278,23 @@ public class RandomSketch implements QuantileSketch{
         collapse(false);
     }
 
+    public double getTotalWeight() {
+        double totalWeight = 0.0;
+        for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> level : usedBuffers.entrySet()) {
+            double weight = Math.pow(2, level.getKey());
+            totalWeight += level.getValue().size() * s * weight;
+        }
+
+        double curWeight = Math.pow(2, activeLevel);
+        totalWeight += curBuffer.size() * curWeight;
+
+        return totalWeight;
+    }
+
     private void constructQuantileEntries() {
         quantileEntries = new ArrayList<>();
 
+        // Process buffers in hierarchy
         double totalWeight = 0.0;
         for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> level : usedBuffers.entrySet()) {
             double weight = Math.pow(2, level.getKey());
@@ -278,6 +307,7 @@ public class RandomSketch implements QuantileSketch{
             totalWeight += level.getValue().size() * s * weight;
         }
 
+        // Process elements in curBuffer
         double curWeight = Math.pow(2, activeLevel);
         for (double value : curBuffer) {
             QuantileEntry entry = new QuantileEntry(value, 0.0, curWeight);
@@ -285,14 +315,19 @@ public class RandomSketch implements QuantileSketch{
         }
         totalWeight += curBuffer.size() * curWeight;
 
+        System.out.println("compute quantile entries " + totalWeight + " " + this.totalWeight);
+
         Collections.sort(quantileEntries, new CompareByValue());
 
         // Compute correct quantiles
         double curQuantile = 0.0;
         for (QuantileEntry entry : quantileEntries) {
+            curQuantile += 0.5 * entry.weight / totalWeight;
             entry.quantile = curQuantile;
-            curQuantile += entry.weight / totalWeight;
+            curQuantile += 0.5 * entry.weight / totalWeight;
         }
+
+//        System.out.println(quantileEntries);
     }
 
     // Collapses a partially-filled buffer into curBuffer. Returns number of new buffers
@@ -300,6 +335,7 @@ public class RandomSketch implements QuantileSketch{
         int numNewBuffers = 0;
         int blockLength = (int) Math.pow(2, activeLevel - level);
         if (blockLength <= 1) {
+            System.out.println("should not happen");
             if (buffer.size() < s - curBuffer.size()) {
                 curBuffer.addAll(buffer);
             } else {
@@ -346,12 +382,17 @@ public class RandomSketch implements QuantileSketch{
         orphanBuffers.clear();
 
         // Compute active level
-        long totalNumProcessed = 0;
+//        double actualTotalWeight = 0;
         for (int i = startIndex; i < endIndex; i++) {
             RandomSketch rs = (RandomSketch) sketches.get(i);
-            totalNumProcessed += rs.numProcessed;
+            numProcessed += rs.numProcessed;
+            totalWeight += rs.totalWeight;
+//            actualTotalWeight += rs.getTotalWeight();
         }
-        activeLevel = (int) (Math.log((double) totalNumProcessed / ((b-1) * s)) / Math.log(2));
+//        System.out.println("actual: " + actualTotalWeight + " total weight: " + totalWeight);
+
+//        activeLevel = (int) (Math.log((double) numProcessed / ((b-1) * s)) / Math.log(2));
+        activeLevel = (int) (Math.log(totalWeight / ((b-1) * s)) / Math.log(2));
 
         // Insert all buffers into the tree
         int numBuffers = 0;
