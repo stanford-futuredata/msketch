@@ -38,7 +38,6 @@ public class RandomSketch implements QuantileSketch{
     private int sampleBlockSeen;
 
     private ArrayList<QuantileEntry> quantileEntries;
-    private boolean quantileEntriesUpdated;
 
     private boolean errorBounds = false;
     private double[] errors;
@@ -116,7 +115,6 @@ public class RandomSketch implements QuantileSketch{
         }
         this.curBuffer = freeBuffers.remove(freeBuffers.size() - 1);
         this.tmpBuffer = new ArrayList<>(s);
-        this.quantileEntriesUpdated = false;
         this.totalWeight = 0;
         this.nextToSample = ThreadLocalRandom.current().nextInt(2);  // will first be used when activeLevel = 1
         this.sampleBlockLength = 2;  // will first be used when activeLevel = 1
@@ -151,8 +149,6 @@ public class RandomSketch implements QuantileSketch{
                 curBuffer = freeBuffers.remove(freeBuffers.size() - 1);
             }
         }
-
-        quantileEntriesUpdated = false;
     }
 
     private boolean shouldSampleNext() {
@@ -414,7 +410,6 @@ public class RandomSketch implements QuantileSketch{
             RandomSketch rs = (RandomSketch) sketches.get(i);
             update(rs);
         }
-        quantileEntriesUpdated = false;
         return this;
     }
 
@@ -512,10 +507,7 @@ public class RandomSketch implements QuantileSketch{
 
     @Override
     public double[] getQuantiles(List<Double> pList) {
-        if (!quantileEntriesUpdated) {
-            constructQuantileEntries();
-            quantileEntriesUpdated = true;
-        }
+        constructQuantileEntries();
 
         int m = pList.size();
         double[] quantiles = new double[m];
