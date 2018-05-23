@@ -221,8 +221,8 @@ public class RandomSketch implements QuantileSketch{
 
     private void collapse(boolean merging) {
         ArrayList<ArrayList<Double>> usedBuffersInLevel = usedBuffers.get(activeLevel);
-        if (usedBuffersInLevel.size() == 1) {
-            return;  // should not happen
+        if (usedBuffersInLevel.size() == 1) {  // should rarely happen
+            return;
         } else {
             ArrayList<Double> bufferOne = usedBuffersInLevel.remove(usedBuffersInLevel.size() - 1);
             ArrayList<Double> bufferTwo = usedBuffersInLevel.remove(usedBuffersInLevel.size() - 1);
@@ -323,6 +323,36 @@ public class RandomSketch implements QuantileSketch{
         return numNewBuffers;
     }
 
+    private int collapseLevel(ArrayList<ArrayList<Double>> buffers, int level) {
+        int numNewBuffers = 0;
+        int blockLength = (int) Math.pow(2, activeLevel - level);
+        int toSample = ThreadLocalRandom.current().nextInt(blockLength);
+        int seenSoFar = 0;
+        for (ArrayList<Double> buffer : buffers) {
+            int curIdx = 0;
+            while (true) {
+                if (toSample >= seenSoFar && toSample - seenSoFar < buffer.size() - curIdx) {
+                    curBuffer.add(buffer.get(toSample - seenSoFar + curIdx));
+                    if (curBuffer.size() == s) {
+                        Collections.sort(curBuffer);
+                        insertBuffer(curBuffer, activeLevel);
+                        numNewBuffers++;
+                        curBuffer = new ArrayList<>();
+                    }
+                }
+                if (blockLength - seenSoFar < buffer.size() - curIdx) {
+                    toSample = ThreadLocalRandom.current().nextInt(blockLength);
+                    curIdx += (blockLength - seenSoFar);
+                    seenSoFar = 0;
+                } else {
+                    seenSoFar += buffer.size() - curIdx;
+                    break;
+                }
+            }
+        }
+        return numNewBuffers;
+    }
+
 //    @Override
 //    public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
 //        partialBuffers.clear();
@@ -387,12 +417,43 @@ public class RandomSketch implements QuantileSketch{
         return this;
     }
 
+    public int numUsedBuffers() {
+        int numUsedBuffers = 0;
+        for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> entry : usedBuffers.entrySet()) {
+            numUsedBuffers += entry.getValue().size();
+        }
+        return numUsedBuffers;
+    }
+
     public void update(RandomSketch sketch) {
         totalWeight += sketch.totalWeight;
+        int curBufferLevel = activeLevel;
         activeLevel = (int) (Math.log(totalWeight / ((b-1) * s)) / Math.log(2));
+
+        if (curBufferLevel < activeLevel) {
+            if (!usedBuffers.containsKey(curBufferLevel)) {
+                usedBuffers.put(curBufferLevel, new ArrayList<>());
+            }
+            usedBuffers.get(curBufferLevel).add(curBuffer);
+            curBuffer = new ArrayList<>(s);
+        }
 
         // Insert all buffers into the tree
         int numBuffers = 0;
+
+        // Process current hierarchy
+        ArrayList<Integer> toRemove = new ArrayList<>();
+        for (int level : usedBuffers.keySet()) {
+            if (level >= activeLevel) {
+                numBuffers += usedBuffers.get(level).size();
+            } else {
+                toRemove.add(level);
+                numBuffers += collapseLevel(usedBuffers.get(level), level);
+            }
+        }
+        usedBuffers.keySet().removeAll(toRemove);
+
+        // Process new sketch
         for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> entry : sketch.usedBuffers.entrySet()) {
             int level = entry.getKey();
             if (level >= activeLevel) {
@@ -403,54 +464,26 @@ public class RandomSketch implements QuantileSketch{
                 for (ArrayList<Double> buffer : entry.getValue()) {
                     usedBuffers.get(level).add(new ArrayList<>(buffer));
                 }
-            } else {
-                int blockLength = (int) Math.pow(2, activeLevel - level);
-                int toSample = ThreadLocalRandom.current().nextInt(blockLength);
-                int seenSoFar = 0;
-                for (ArrayList<Double> buffer : entry.getValue()) {
-                    int curIdx = 0;
-                    while (true) {
-                        if (toSample >= seenSoFar && toSample - seenSoFar < buffer.size() - curIdx) {
-                            curBuffer.add(buffer.get(toSample - seenSoFar + curIdx));
-                            if (curBuffer.size() == s) {
-                                Collections.sort(curBuffer);
-                                insertBuffer(curBuffer, activeLevel);
-                                numBuffers++;
-                                curBuffer = new ArrayList<>();
-                            }
-                        }
-                        if (blockLength - seenSoFar < buffer.size() - curIdx) {
-                            toSample = ThreadLocalRandom.current().nextInt(blockLength);
-                            curIdx += (blockLength - seenSoFar);
-                            seenSoFar = 0;
-                        } else {
-                            seenSoFar += buffer.size() - curIdx;
-                            break;
+                if (level == sketch.activeLevel) {
+                    ArrayList<Double> buffer = sketch.curBuffer;
+                    for (int i = 0; i < buffer.size(); i++) {
+                        curBuffer.add(buffer.get(i));
+                        if (curBuffer.size() == s) {
+                            Collections.sort(curBuffer);
+                            insertBuffer(curBuffer, activeLevel);
+                            numBuffers++;
+                            curBuffer = new ArrayList<>();
                         }
                     }
                 }
+            } else {
+                ArrayList<ArrayList<Double>> buffers = entry.getValue();
                 if (level == sketch.activeLevel) {
-                    ArrayList<Double> buffer = sketch.curBuffer;
-                    int curIdx = 0;
-                    while (true) {
-                        if (toSample >= seenSoFar && toSample - seenSoFar < buffer.size() - curIdx) {
-                            curBuffer.add(buffer.get(toSample - seenSoFar + curIdx));
-                            if (curBuffer.size() == s) {
-                                Collections.sort(curBuffer);
-                                insertBuffer(curBuffer, activeLevel);
-                                numBuffers++;
-                                curBuffer = new ArrayList<>();
-                            }
-                        }
-                        if (blockLength - seenSoFar < buffer.size() - curIdx) {
-                            toSample = ThreadLocalRandom.current().nextInt(blockLength);
-                            curIdx += (blockLength - seenSoFar);
-                            seenSoFar = 0;
-                        } else {
-                            seenSoFar += buffer.size() - curIdx;
-                            break;
-                        }
-                    }
+                    buffers.add(sketch.curBuffer);
+                    numBuffers += collapseLevel(entry.getValue(), level);
+                    buffers.remove(buffers.size() - 1);
+                } else {
+                    numBuffers += collapseLevel(entry.getValue(), level);
                 }
             }
         }
