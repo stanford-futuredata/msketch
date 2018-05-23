@@ -414,6 +414,7 @@ public class RandomSketch implements QuantileSketch{
             RandomSketch rs = (RandomSketch) sketches.get(i);
             update(rs);
         }
+        quantileEntriesUpdated = false;
         return this;
     }
 
@@ -425,7 +426,7 @@ public class RandomSketch implements QuantileSketch{
         return numUsedBuffers;
     }
 
-    public void update(RandomSketch sketch) {
+    private void update(RandomSketch sketch) {
         totalWeight += sketch.totalWeight;
         int curBufferLevel = activeLevel;
         activeLevel = (int) (Math.log(totalWeight / ((b-1) * s)) / Math.log(2));
