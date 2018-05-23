@@ -429,7 +429,7 @@ public class RandomSketch implements QuantileSketch{
     private void update(RandomSketch sketch) {
         totalWeight += sketch.totalWeight;
         int curBufferLevel = activeLevel;
-        activeLevel = (int) (Math.log(totalWeight / ((b-1) * s)) / Math.log(2));
+        activeLevel = Math.max((int) (Math.log(totalWeight / ((b-1) * s)) / Math.log(2)), 0);
 
         if (curBufferLevel < activeLevel) {
             if (!usedBuffers.containsKey(curBufferLevel)) {
@@ -455,36 +455,43 @@ public class RandomSketch implements QuantileSketch{
         usedBuffers.keySet().removeAll(toRemove);
 
         // Process new sketch
-        for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> entry : sketch.usedBuffers.entrySet()) {
-            int level = entry.getKey();
-            if (level >= activeLevel) {
-                numBuffers += entry.getValue().size();
-                if (!usedBuffers.containsKey(level)) {
-                    usedBuffers.put(level, new ArrayList<>());
-                }
-                for (ArrayList<Double> buffer : entry.getValue()) {
-                    usedBuffers.get(level).add(new ArrayList<>(buffer));
-                }
-                if (level == sketch.activeLevel) {
-                    ArrayList<Double> buffer = sketch.curBuffer;
-                    for (int i = 0; i < buffer.size(); i++) {
-                        curBuffer.add(buffer.get(i));
-                        if (curBuffer.size() == s) {
-                            Collections.sort(curBuffer);
-                            insertBuffer(curBuffer, activeLevel);
-                            numBuffers++;
-                            curBuffer = new ArrayList<>();
+        if (sketch.usedBuffers.size() == 0) {
+            // Not very efficient, but this case should not happen in practice if sizeParam is reasonable.
+            ArrayList<ArrayList<Double>> level = new ArrayList<>();
+            level.add(sketch.curBuffer);
+            collapseLevel(level, sketch.activeLevel);
+        } else {
+            for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> entry : sketch.usedBuffers.entrySet()) {
+                int level = entry.getKey();
+                if (level >= activeLevel) {
+                    numBuffers += entry.getValue().size();
+                    if (!usedBuffers.containsKey(level)) {
+                        usedBuffers.put(level, new ArrayList<>());
+                    }
+                    for (ArrayList<Double> buffer : entry.getValue()) {
+                        usedBuffers.get(level).add(new ArrayList<>(buffer));
+                    }
+                    if (level == sketch.activeLevel) {
+                        ArrayList<Double> buffer = sketch.curBuffer;
+                        for (int i = 0; i < buffer.size(); i++) {
+                            curBuffer.add(buffer.get(i));
+                            if (curBuffer.size() == s) {
+                                Collections.sort(curBuffer);
+                                insertBuffer(curBuffer, activeLevel);
+                                numBuffers++;
+                                curBuffer = new ArrayList<>();
+                            }
                         }
                     }
-                }
-            } else {
-                ArrayList<ArrayList<Double>> buffers = entry.getValue();
-                if (level == sketch.activeLevel) {
-                    buffers.add(sketch.curBuffer);
-                    numBuffers += collapseLevel(entry.getValue(), level);
-                    buffers.remove(buffers.size() - 1);
                 } else {
-                    numBuffers += collapseLevel(entry.getValue(), level);
+                    ArrayList<ArrayList<Double>> buffers = entry.getValue();
+                    if (level == sketch.activeLevel) {
+                        buffers.add(sketch.curBuffer);
+                        numBuffers += collapseLevel(entry.getValue(), level);
+                        buffers.remove(buffers.size() - 1);
+                    } else {
+                        numBuffers += collapseLevel(entry.getValue(), level);
+                    }
                 }
             }
         }
