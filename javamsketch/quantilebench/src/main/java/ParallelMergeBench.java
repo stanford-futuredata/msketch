@@ -16,7 +16,6 @@ public class ParallelMergeBench {
     private List<Double> cellFractions;
     private List<Integer> numMergeThreads;
     private int numDuplications;
-    private boolean perturbDuplications;
 
     private Map<String, List<Double>> methods;
     private List<Double> quantiles;
@@ -37,7 +36,6 @@ public class ParallelMergeBench {
         cellFractions = conf.get("cellFractions", defaultCellFractions);
         numMergeThreads = conf.get("numMergeThreads");
         numDuplications = conf.get("numDuplications", 1);
-        perturbDuplications = conf.get("perturbDuplications", true);
 
         methods = conf.get("methods");
         quantiles = conf.get("quantiles");
@@ -62,36 +60,8 @@ public class ParallelMergeBench {
     private ArrayList<double[]> getCells() throws IOException {
         DataSource source = new SimpleCSVDataSource(fileName, columnIdx);
         double[] data = source.get();
-//        if (numDuplications > 1) {
-//            double[] dupData = new double[data.length * numDuplications];
-//            for (int i = 0; i < numDuplications; i++) {
-//                System.arraycopy(data, 0, dupData, data.length * i, data.length);
-//            }
-//            if (perturbDuplications) {
-//                Random rand = new Random();
-//                for (int j = data.length; j < data.length * numDuplications; j++) {
-//                    dupData[j] *= 0.95 + rand.nextDouble() / 10.;
-//                }
-//            }
-//            data = dupData;
-//        }
         SeqDataGrouper grouper = new SeqDataGrouper(cellSize);
         return grouper.group(data);
-    }
-
-    private ArrayList<ArrayList<QuantileSketch>> groupSketches(ArrayList<QuantileSketch> cellSketches, int numGroups) {
-        ArrayList<ArrayList<QuantileSketch>> groupedSketches = new ArrayList<>();
-        int numSketches = cellSketches.size();
-        for (int i = 0; i < numGroups; i++) {
-            int startIndex = (numSketches * i) / numGroups;
-            int endIndex = (numSketches * (i + 1)) / numGroups;
-            ArrayList<QuantileSketch> group = new ArrayList<>();
-            for (int j = startIndex; j < endIndex; j++) {
-                group.add(cellSketches.get(j));
-            }
-            groupedSketches.add(group);
-        }
-        return groupedSketches;
     }
 
     public List<Map<String, String>> run() throws Exception {
@@ -134,7 +104,6 @@ public class ParallelMergeBench {
                     }
 
                     for (int numThreads : numMergeThreads) {
-//                        ArrayList<ArrayList<QuantileSketch>> groupedSketches = groupSketches(cellSketches, numThreads);
                         for (int curTrial = 0; curTrial < numTrials; curTrial++) {
                             System.gc();
                             System.out.println(sketchName + ":" + (int) sParam + "@" + numThreads + "#" + curTrial);
@@ -146,7 +115,6 @@ public class ParallelMergeBench {
                             mergedSketch.setVerbose(verbose);
                             mergedSketch.initialize();
                             QuantileSketch dummy = mergedSketch.parallelMerge(cellSketchesToMerge, numThreads, numDuplications);
-//                            QuantileSketch dummy = mergedSketch.parallelMerge(groupedSketches);
                             endTime = System.nanoTime();
                             long mergeTime = endTime - startTime;
                             if (dummy == null) {
