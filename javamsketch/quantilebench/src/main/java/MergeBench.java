@@ -14,6 +14,7 @@ public class MergeBench {
     private int columnIdx;
     private int cellSize;
     private List<Double> cellFractions;
+    private int numDuplications;
 
     private Map<String, List<Double>> methods;
     private List<Double> quantiles;
@@ -32,6 +33,7 @@ public class MergeBench {
         cellSize = conf.get("cellSize");
         List<Double> defaultCellFractions = Arrays.asList(1.0);
         cellFractions = conf.get("cellFractions", defaultCellFractions);
+        numDuplications = conf.get("numDuplications", 1);
 
         methods = conf.get("methods");
         quantiles = conf.get("quantiles");
