@@ -23,7 +23,7 @@ public interface QuantileSketch {
     default QuantileSketch parallelMerge(ArrayList<QuantileSketch> sketches, int numThreads, int numDuplications) {
         int numSketches = sketches.size();
         final CountDownLatch doneSignal = new CountDownLatch(numThreads);
-        QuantileSketch[] mergedSketches = new QuantileSketch[numThreads * numDuplications];
+        QuantileSketch[] mergedSketches = new QuantileSketch[numThreads];
         for (int threadNum = 0; threadNum < numThreads; threadNum++) {
             final int curThreadNum = threadNum;
             final int startIndex = (numSketches * threadNum) / numThreads;
@@ -38,8 +38,9 @@ public interface QuantileSketch {
                 mergedSketch.setSizeParam(this.getSizeParam());
                 mergedSketch.initialize();
                 for (int i = 0; i < numDuplications; i++) {
-                    mergedSketches[curThreadNum * numDuplications + i] = mergedSketch.merge(sketches, startIndex, endIndex);
+                    mergedSketch = mergedSketch.merge(sketches, startIndex, endIndex);
                 }
+                mergedSketches[curThreadNum] = mergedSketch;
                 doneSignal.countDown();
             };
             Thread ParallelMergeThread = new Thread(ParallelMergeRunnable);
