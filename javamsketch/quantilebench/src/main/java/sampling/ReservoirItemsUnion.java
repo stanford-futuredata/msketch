@@ -30,7 +30,6 @@ import com.yahoo.sketches.SketchesArgumentException;
 import sampling.PreambleUtil;
 import sampling.ReservoirItemsSketch;
 import sampling.ReservoirSize;
-import sampling.SamplingUtil;
 
 /**
  * Class to union reservoir samples of generic items.
@@ -66,7 +65,7 @@ public final class ReservoirItemsUnion<T> {
      */
     private ReservoirItemsUnion(final int maxK) {
         maxK_ = maxK;
-        rand = new Random();
+        rand = ThreadLocalRandom.current();
     }
 
     /**

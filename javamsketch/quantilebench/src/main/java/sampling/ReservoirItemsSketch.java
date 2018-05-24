@@ -80,7 +80,7 @@ public final class ReservoirItemsSketch<T> {
 
         currItemsAlloc_ = SamplingUtil.getAdjustedSize(reservoirSize_, 1 << initialLgSize);
         data_ = new ArrayList<>(currItemsAlloc_);
-        rand = new Random();
+        rand = ThreadLocalRandom.current();
     }
 
     /**
@@ -118,7 +118,7 @@ public final class ReservoirItemsSketch<T> {
         itemsSeen_ = itemsSeen;
         rf_ = rf;
         data_ = data;
-        rand = new Random();
+        rand = ThreadLocalRandom.current();
     }
 
     /**
@@ -138,7 +138,7 @@ public final class ReservoirItemsSketch<T> {
         this.itemsSeen_ = itemsSeen;
         this.rf_ = rf;
         this.data_ = data;
-        rand = new Random();
+        rand = ThreadLocalRandom.current();
     }
 
     /**

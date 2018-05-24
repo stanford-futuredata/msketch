@@ -22,8 +22,6 @@ final class SamplingUtil {
      */
     private static final double DEFAULT_KAPPA = 2.0;
 
-    public static final Random rand = new Random();
-
     private SamplingUtil() {}
 
     /**
@@ -41,13 +39,13 @@ final class SamplingUtil {
         return resizeTarget;
     }
 
-    static double nextDoubleExcludeZero() {
-        double r = rand.nextDouble();
-        while (r == 0.0) {
-            r = rand.nextDouble();
-        }
-        return r;
-    }
+//    static double nextDoubleExcludeZero() {
+//        double r = rand.nextDouble();
+//        while (r == 0.0) {
+//            r = rand.nextDouble();
+//        }
+//        return r;
+//    }
 
     static int startingSubMultiple(final int lgTarget, final int lgRf, final int lgMin) {
         return (lgTarget <= lgMin)
