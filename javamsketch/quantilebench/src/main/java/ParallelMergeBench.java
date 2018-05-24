@@ -114,14 +114,9 @@ public class ParallelMergeBench {
                             mergedSketch.setSizeParam(sParam);
                             mergedSketch.setVerbose(verbose);
                             mergedSketch.initialize();
-                            QuantileSketch dummy = mergedSketch.parallelMerge(cellSketchesToMerge, numThreads, numDuplications);
+                            mergedSketch.parallelMerge(cellSketchesToMerge, numThreads, numDuplications);
                             endTime = System.nanoTime();
                             long mergeTime = endTime - startTime;
-                            if (dummy == null) {
-                                // for failures on TDigest
-                                curTrial--;
-                                continue;
-                            }
 
                             System.gc();
 
