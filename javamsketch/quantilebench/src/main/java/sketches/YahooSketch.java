@@ -1,11 +1,17 @@
 package sketches;
 
-import com.yahoo.sketches.quantiles.DoublesSketch;
-import com.yahoo.sketches.quantiles.DoublesUnion;
-import com.yahoo.sketches.quantiles.UpdateDoublesSketch;
+//import com.yahoo.sketches.quantiles.DoublesSketch;
+//import com.yahoo.sketches.quantiles.DoublesUnion;
+//import com.yahoo.sketches.quantiles.UpdateDoublesSketch;
+
+import yahoo.DoublesSketch;
+import yahoo.DoublesUnion;
+import yahoo.UpdateDoublesSketch;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class YahooSketch implements QuantileSketch {
     private int k;
@@ -59,11 +65,11 @@ public class YahooSketch implements QuantileSketch {
     }
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
+    public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
         DoublesUnion union = DoublesUnion.builder().setMaxK(k).build();
         union.update(this.sketch);
-        for (QuantileSketch s : sketches) {
-            YahooSketch ys = (YahooSketch)s;
+        for (int i = startIndex; i < endIndex; i++) {
+            YahooSketch ys = (YahooSketch) sketches.get(i);
             union.update(ys.sketch);
         }
         this.sketch = union.getResult();

@@ -1,10 +1,9 @@
 package sketches;
 
-import com.yahoo.sketches.sampling.ReservoirItemsSketch;
-import com.yahoo.sketches.sampling.ReservoirItemsUnion;
+import sampling.ReservoirItemsSketch;
+import sampling.ReservoirItemsUnion;
 import org.apache.commons.math3.util.FastMath;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class SamplingSketch implements QuantileSketch {
@@ -54,11 +53,11 @@ public class SamplingSketch implements QuantileSketch {
 
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
+    public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
         ReservoirItemsUnion<Double> newUnion = ReservoirItemsUnion.newInstance(this.size);
         newUnion.update(this.reservoir);
-        for (QuantileSketch s :sketches) {
-            SamplingSketch ss = (SamplingSketch)s;
+        for (int i = startIndex; i < endIndex; i++) {
+            SamplingSketch ss = (SamplingSketch) sketches.get(i);
             newUnion.update(ss.reservoir);
         }
         this.reservoir = newUnion.getResult();

@@ -85,12 +85,12 @@ public class HistogramSketch implements QuantileSketch{
     }
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
+    public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
         double min = Double.MAX_VALUE;
         double max = -Double.MAX_VALUE;
 
-        for (QuantileSketch rawSketch : sketches) {
-            HistogramSketch curSketch = (HistogramSketch)rawSketch;
+        for (int i = startIndex; i < endIndex; i++) {
+            HistogramSketch curSketch = (HistogramSketch) sketches.get(i);
             double curMin = curSketch.startLoc;
             double curMax = curSketch.startLoc + k*curSketch.bucketWidth;
             if (curMin < min) {
@@ -116,8 +116,8 @@ public class HistogramSketch implements QuantileSketch{
         long[] counts = this.counts;
         int l = counts.length;
 
-        for (QuantileSketch rawSketch : sketches) {
-            HistogramSketch curSketch = (HistogramSketch)rawSketch;
+        for (int i = startIndex; i < endIndex; i++) {
+            HistogramSketch curSketch = (HistogramSketch) sketches.get(i);
             double lStartLoc = curSketch.startLoc;
             double lBucketWidth = curSketch.bucketWidth;
             long[] lCounts = curSketch.counts;

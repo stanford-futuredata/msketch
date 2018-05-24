@@ -3,10 +3,12 @@ package sketches;
 import msolver.ChebyshevMomentSolver2;
 import msolver.MathUtil;
 import msolver.SimpleBoundSolver;
+import scala.xml.PrettyPrinter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Tracks both the moments and the log-moments and solves for both
@@ -15,7 +17,7 @@ import java.util.List;
 public class CMomentSketch implements QuantileSketch{
     private int ka = 5;
     private int kb = 5;
-    private double tolerance = 1e-10;
+    private double tolerance = 1e-9;
     private boolean verbose = false;
 
     private double min;
@@ -131,7 +133,7 @@ public class CMomentSketch implements QuantileSketch{
     }
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
+    public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
         double mMin = this.min;
         double mMax = this.max;
         double mLogMin = this.logMin;
@@ -139,8 +141,8 @@ public class CMomentSketch implements QuantileSketch{
         double[] mSums = this.totalSums;
         final int l = this.totalSums.length;
 
-        for (QuantileSketch s : sketches) {
-            CMomentSketch ms = (CMomentSketch) s;
+        for (int i = startIndex; i < endIndex; i++) {
+            CMomentSketch ms = (CMomentSketch) sketches.get(i);
             if (ms.min < mMin) {
                 mMin = ms.min;
             }
@@ -153,8 +155,8 @@ public class CMomentSketch implements QuantileSketch{
             if (ms.logMax > mLogMax) {
                 mLogMax = ms.logMax;
             }
-            for (int i = 0; i < l; i++) {
-                mSums[i] += ms.totalSums[i];
+            for (int j = 0; j < l; j++) {
+                mSums[j] += ms.totalSums[j];
             }
         }
         this.min = mMin;

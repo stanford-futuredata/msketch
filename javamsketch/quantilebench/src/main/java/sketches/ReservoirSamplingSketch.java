@@ -18,7 +18,7 @@ public class ReservoirSamplingSketch implements QuantileSketch {
 
     @Override
     public String getName() {
-        return "sampling";
+        return "reservoir_sampling";
     }
 
     @Override
@@ -67,7 +67,7 @@ public class ReservoirSamplingSketch implements QuantileSketch {
     }
 
     @Override
-    public QuantileSketch merge(ArrayList<QuantileSketch> sketches) {
+    public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
         double[] randomDoubles = new double[size];
         for (int i = 0; i < size; i++) {
             randomDoubles[i] = r.nextDouble();
@@ -87,8 +87,8 @@ public class ReservoirSamplingSketch implements QuantileSketch {
         int reservoirIdx = 0;
         double threshold = 0.0;
         int[] range = new int[maxNumProcessed];
-        for (QuantileSketch s : sketches) {
-            rss = (ReservoirSamplingSketch)s;
+        for (int sketchIndex = startIndex; sketchIndex < endIndex; sketchIndex++) {
+            rss = (ReservoirSamplingSketch) sketches.get(sketchIndex);
             threshold += (double)rss.numProcessed / totalNumProcessed;
             int sampleSize = 0;
             while (idx < size && randomDoubles[idx] < threshold) {
