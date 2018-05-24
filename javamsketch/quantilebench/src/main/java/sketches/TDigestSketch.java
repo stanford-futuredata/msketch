@@ -75,47 +75,6 @@ public class TDigestSketch implements QuantileSketch {
     }
 
     @Override
-    public QuantileSketch parallelMerge(ArrayList<QuantileSketch> sketches, int numThreads) {
-        int numSketches = sketches.size();
-        final CountDownLatch doneSignal = new CountDownLatch(numThreads);
-        QuantileSketch[] mergedSketches = new QuantileSketch[numThreads];
-        boolean fail = false;
-        for (int threadNum = 0; threadNum < numThreads; threadNum++) {
-            final int curThreadNum = threadNum;
-            final int startIndex = (numSketches * threadNum) / numThreads;
-            final int endIndex = (numSketches * (threadNum + 1)) / numThreads;
-            Runnable ParallelMergeRunnable = () -> {
-                QuantileSketch mergedSketch;
-                try {
-                    mergedSketch = SketchLoader.load(this.getName());
-                } catch (IOException e) {
-                    mergedSketch = null;
-                }
-                mergedSketch.setSizeParam(this.getSizeParam());
-                mergedSketch.initialize();
-                try {
-                    mergedSketches[curThreadNum] = mergedSketch.merge(sketches, startIndex, endIndex);
-                } catch (Exception e) {
-                    mergedSketches[curThreadNum] = null;
-                }
-                doneSignal.countDown();
-            };
-            Thread ParallelMergeThread = new Thread(ParallelMergeRunnable);
-            ParallelMergeThread.start();
-        }
-        try {
-            doneSignal.await();
-        } catch (InterruptedException ex) {ex.printStackTrace();}
-
-        for (QuantileSketch sketch : mergedSketches) {
-            if (sketch == null) {
-                return null;
-            }
-        }
-        return merge(Arrays.asList(mergedSketches), 0, mergedSketches.length);
-    }
-
-    @Override
     public double[] getQuantiles(List<Double> ps) throws Exception {
         this.td.compress();
         int m = ps.size();

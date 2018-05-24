@@ -1,15 +1,7 @@
 package sketches;
 
-import msolver.ChebyshevMomentSolver2;
-import msolver.MathUtil;
-import msolver.SimpleBoundSolver;
-
-import java.lang.reflect.Array;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
-
-import static java.lang.Integer.MAX_VALUE;
 
 /**
  * Tracks both the moments and the log-moments and solves for both
@@ -31,6 +23,7 @@ public class RandomSketch implements QuantileSketch{
     private ArrayList<Double> tmpBuffer;  // for merging
     private HashMap<Integer, ArrayList<ArrayList<Double>>> partialBuffers;
     private double totalWeight;
+    private Random rand;
 
     private int nextToSample;
     private int sampleBlockLength;
@@ -116,7 +109,8 @@ public class RandomSketch implements QuantileSketch{
         this.curBuffer = freeBuffers.remove(freeBuffers.size() - 1);
         this.tmpBuffer = new ArrayList<>(s);
         this.totalWeight = 0;
-        this.nextToSample = ThreadLocalRandom.current().nextInt(2);  // will first be used when activeLevel = 1
+        this.rand = ThreadLocalRandom.current();
+        this.nextToSample = rand.nextInt(2);  // will first be used when activeLevel = 1
         this.sampleBlockLength = 2;  // will first be used when activeLevel = 1
     }
 
@@ -161,7 +155,7 @@ public class RandomSketch implements QuantileSketch{
         if (sampleBlockSeen == sampleBlockLength) {
             sampleBlockSeen = 0;
             sampleBlockLength = nextSampleBlockLength;
-            nextToSample = ThreadLocalRandom.current().nextInt(sampleBlockLength);
+            nextToSample = rand.nextInt(sampleBlockLength);
         }
 
         return shouldSampleNext;
@@ -179,7 +173,7 @@ public class RandomSketch implements QuantileSketch{
 
     // Assumes buffers one and two are sorted
     public void mergeBuffers(ArrayList<Double> bufferOne, ArrayList<Double> bufferTwo, ArrayList<Double> target) {
-        boolean use = ThreadLocalRandom.current().nextBoolean();
+        boolean use = rand.nextBoolean();
         int i = 0;
         int j = 0;
         while (true) {
@@ -291,7 +285,7 @@ public class RandomSketch implements QuantileSketch{
         for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> entry : partialBuffers.entrySet()) {
             int level = entry.getKey();
             int blockLength = (int) Math.pow(2, activeLevel - level);
-            int toSample = ThreadLocalRandom.current().nextInt(blockLength);
+            int toSample = rand.nextInt(blockLength);
             int seenSoFar = 0;
             for (ArrayList<Double> buffer : entry.getValue()) {
                 int curIdx = 0;
@@ -306,7 +300,7 @@ public class RandomSketch implements QuantileSketch{
                         }
                     }
                     if (blockLength - seenSoFar < buffer.size() - curIdx) {
-                        toSample = ThreadLocalRandom.current().nextInt(blockLength);
+                        toSample = rand.nextInt(blockLength);
                         curIdx += (blockLength - seenSoFar);
                         seenSoFar = 0;
                     } else {
@@ -322,7 +316,7 @@ public class RandomSketch implements QuantileSketch{
     private int collapseLevel(ArrayList<ArrayList<Double>> buffers, int level) {
         int numNewBuffers = 0;
         int blockLength = (int) Math.pow(2, activeLevel - level);
-        int toSample = ThreadLocalRandom.current().nextInt(blockLength);
+        int toSample = rand.nextInt(blockLength);
         int seenSoFar = 0;
         for (ArrayList<Double> buffer : buffers) {
             int curIdx = 0;
@@ -337,7 +331,7 @@ public class RandomSketch implements QuantileSketch{
                     }
                 }
                 if (blockLength - seenSoFar < buffer.size() - curIdx) {
-                    toSample = ThreadLocalRandom.current().nextInt(blockLength);
+                    toSample = rand.nextInt(blockLength);
                     curIdx += (blockLength - seenSoFar);
                     seenSoFar = 0;
                 } else {
