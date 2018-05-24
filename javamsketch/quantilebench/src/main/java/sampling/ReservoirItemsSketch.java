@@ -13,6 +13,7 @@ import static sampling.SamplingUtil.pseudoHypergeometricUBonP;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
@@ -60,6 +61,8 @@ public final class ReservoirItemsSketch<T> {
     private final ResizeFactor rf_;        // resize factor
     private ArrayList<T> data_;            // stored sampled items
 
+    private Random rand;
+
     private ReservoirItemsSketch(final int k, final ResizeFactor rf) {
         // required due to a theorem about lightness during merging
         if (k < 2) {
@@ -77,6 +80,7 @@ public final class ReservoirItemsSketch<T> {
 
         currItemsAlloc_ = SamplingUtil.getAdjustedSize(reservoirSize_, 1 << initialLgSize);
         data_ = new ArrayList<>(currItemsAlloc_);
+        rand = new Random();
     }
 
     /**
@@ -114,6 +118,7 @@ public final class ReservoirItemsSketch<T> {
         itemsSeen_ = itemsSeen;
         rf_ = rf;
         data_ = data;
+        rand = new Random();
     }
 
     /**
@@ -133,6 +138,7 @@ public final class ReservoirItemsSketch<T> {
         this.itemsSeen_ = itemsSeen;
         this.rf_ = rf;
         this.data_ = data;
+        rand = new Random();
     }
 
     /**
@@ -303,14 +309,14 @@ public final class ReservoirItemsSketch<T> {
             ++itemsSeen_;
             // prob(keep_item) < k / n = reservoirSize_ / itemsSeen_
             // so multiply to get: keep if rand * itemsSeen_ < reservoirSize_
-//            if (SamplingUtil.rand.nextDouble() * itemsSeen_ < reservoirSize_) {
-//                final int newSlot = SamplingUtil.rand.nextInt(reservoirSize_);
-//                data_.set(newSlot, item);
-//            }
-            if (ThreadLocalRandom.current().nextDouble() * itemsSeen_ < reservoirSize_) {
-                final int newSlot = ThreadLocalRandom.current().nextInt(reservoirSize_);
+            if (rand.nextDouble() * itemsSeen_ < reservoirSize_) {
+                final int newSlot = rand.nextInt(reservoirSize_);
                 data_.set(newSlot, item);
             }
+//            if (ThreadLocalRandom.current().nextDouble() * itemsSeen_ < reservoirSize_) {
+//                final int newSlot = ThreadLocalRandom.current().nextInt(reservoirSize_);
+//                data_.set(newSlot, item);
+//            }
         }
     }
 
