@@ -119,7 +119,7 @@ public class ParallelMergeBench {
                             mergedSketch.setVerbose(verbose);
                             mergedSketch.initialize();
                             if (weakScaling) {
-                                mergedSketch.parallelMerge(cellSketchesToMerge, numThreads, numDuplications * numThreads);
+                                mergedSketch.parallelMerge(cellSketchesToMerge, numThreads,numDuplications * numThreads);
                             } else {
                                 mergedSketch.parallelMerge(cellSketchesToMerge, numThreads, numDuplications);
                             }
@@ -154,7 +154,11 @@ public class ParallelMergeBench {
                                 curResults.put("train_time", String.format("%d", trainTime));
                                 curResults.put("merge_time", String.format("%d", mergeTime));
                                 curResults.put("query_time", String.format("%d", queryTime));
-                                curResults.put("n", String.format("%d", cellSketchesToMerge.size() * numDuplications));
+                                if (weakScaling) {
+                                    curResults.put("n", String.format("%d", cellSketchesToMerge.size() * numDuplications * numThreads));
+                                } else {
+                                    curResults.put("n", String.format("%d", cellSketchesToMerge.size() * numDuplications));
+                                }
                                 curResults.put("num_threads", String.format("%d", numThreads));
                                 results.add(curResults);
                             }
