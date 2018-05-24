@@ -56,7 +56,7 @@ import sampling.ReservoirSize;
 public final class ReservoirItemsUnion<T> {
     private ReservoirItemsSketch<T> gadget_;
     private final int maxK_;
-    private Random rand;
+    private ThreadLocalRandom rand;
 
     /**
      * Empty constructor using ReservoirSize-encoded maxK value

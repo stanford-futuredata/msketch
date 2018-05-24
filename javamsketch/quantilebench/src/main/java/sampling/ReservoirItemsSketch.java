@@ -61,7 +61,7 @@ public final class ReservoirItemsSketch<T> {
     private final ResizeFactor rf_;        // resize factor
     private ArrayList<T> data_;            // stored sampled items
 
-    private Random rand;
+    private ThreadLocalRandom rand;
 
     private ReservoirItemsSketch(final int k, final ResizeFactor rf) {
         // required due to a theorem about lightness during merging

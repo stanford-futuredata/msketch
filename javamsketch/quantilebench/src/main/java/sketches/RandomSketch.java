@@ -279,40 +279,6 @@ public class RandomSketch implements QuantileSketch{
         }
     }
 
-    // Collapses a partially-filled buffers. Returns number of new buffers
-    private int collapsePartialBuffers() {
-        int numNewBuffers = 0;
-        for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> entry : partialBuffers.entrySet()) {
-            int level = entry.getKey();
-            int blockLength = (int) Math.pow(2, activeLevel - level);
-            int toSample = rand.nextInt(blockLength);
-            int seenSoFar = 0;
-            for (ArrayList<Double> buffer : entry.getValue()) {
-                int curIdx = 0;
-                while (true) {
-                    if (toSample >= seenSoFar && toSample - seenSoFar < buffer.size() - curIdx) {
-                        curBuffer.add(buffer.get(toSample - seenSoFar + curIdx));
-                        if (curBuffer.size() == s) {
-                            Collections.sort(curBuffer);
-                            insertBuffer(curBuffer, activeLevel);
-                            numNewBuffers++;
-                            curBuffer = new ArrayList<>();
-                        }
-                    }
-                    if (blockLength - seenSoFar < buffer.size() - curIdx) {
-                        toSample = rand.nextInt(blockLength);
-                        curIdx += (blockLength - seenSoFar);
-                        seenSoFar = 0;
-                    } else {
-                        seenSoFar += buffer.size() - curIdx;
-                        break;
-                    }
-                }
-            }
-        }
-        return numNewBuffers;
-    }
-
     private int collapseLevel(ArrayList<ArrayList<Double>> buffers, int level) {
         int numNewBuffers = 0;
         int blockLength = (int) Math.pow(2, activeLevel - level);
@@ -342,61 +308,6 @@ public class RandomSketch implements QuantileSketch{
         }
         return numNewBuffers;
     }
-
-//    @Override
-//    public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
-//        partialBuffers.clear();
-//
-//        for (int i = startIndex; i < endIndex; i++) {
-//            RandomSketch rs = (RandomSketch) sketches.get(i);
-//            totalWeight += rs.totalWeight;
-//        }
-//
-//        activeLevel = (int) (Math.log(totalWeight / ((b-1) * s)) / Math.log(2));
-//
-//        // Insert all buffers into the tree
-//        int numBuffers = 0;
-//        for (int i = startIndex; i < endIndex; i++) {
-//            RandomSketch rs = (RandomSketch) sketches.get(i);
-//            for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> entry : rs.usedBuffers.entrySet()) {
-//                int level = entry.getKey();
-//                if (level >= activeLevel) {
-//                    numBuffers += entry.getValue().size();
-//                    if (!usedBuffers.containsKey(level)) {
-//                        usedBuffers.put(level, new ArrayList<>());
-//                    }
-//                    for (ArrayList<Double> buffer : entry.getValue()) {
-//                        usedBuffers.get(level).add(new ArrayList<>(buffer));
-//                    }
-//                } else {
-//                    if (!partialBuffers.containsKey(level)) {
-//                        partialBuffers.put(level, new ArrayList<>());
-//                    }
-//                    for (ArrayList<Double> buffer : entry.getValue()) {
-//                        partialBuffers.get(level).add(new ArrayList<>(buffer));
-//                    }
-//                }
-//            }
-//            if (!partialBuffers.containsKey(rs.activeLevel)) {
-//                partialBuffers.put(rs.activeLevel, new ArrayList<>());
-//            }
-//            partialBuffers.get(rs.activeLevel).add(new ArrayList<>(rs.curBuffer));
-//        }
-//
-//        numBuffers += collapsePartialBuffers();
-//
-//        for (; numBuffers > b - 1; numBuffers--) {
-//            collapseForMerging();
-//        }
-//
-//        // Fill up freeBuffers
-//        freeBuffers.clear();
-//        for (; numBuffers < b - 1; numBuffers++) {
-//            freeBuffers.add(new ArrayList<>(s));
-//        }
-//
-//        return this;
-//    }
 
     @Override
     public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
@@ -541,4 +452,95 @@ public class RandomSketch implements QuantileSketch{
     public double[] getErrors() {
         return errors;
     }
+
+
+    /* Deprecated code: merging all sketches at once. */
+//    // Collapses a partially-filled buffers. Returns number of new buffers
+//    private int collapsePartialBuffers() {
+//        int numNewBuffers = 0;
+//        for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> entry : partialBuffers.entrySet()) {
+//            int level = entry.getKey();
+//            int blockLength = (int) Math.pow(2, activeLevel - level);
+//            int toSample = rand.nextInt(blockLength);
+//            int seenSoFar = 0;
+//            for (ArrayList<Double> buffer : entry.getValue()) {
+//                int curIdx = 0;
+//                while (true) {
+//                    if (toSample >= seenSoFar && toSample - seenSoFar < buffer.size() - curIdx) {
+//                        curBuffer.add(buffer.get(toSample - seenSoFar + curIdx));
+//                        if (curBuffer.size() == s) {
+//                            Collections.sort(curBuffer);
+//                            insertBuffer(curBuffer, activeLevel);
+//                            numNewBuffers++;
+//                            curBuffer = new ArrayList<>();
+//                        }
+//                    }
+//                    if (blockLength - seenSoFar < buffer.size() - curIdx) {
+//                        toSample = rand.nextInt(blockLength);
+//                        curIdx += (blockLength - seenSoFar);
+//                        seenSoFar = 0;
+//                    } else {
+//                        seenSoFar += buffer.size() - curIdx;
+//                        break;
+//                    }
+//                }
+//            }
+//        }
+//        return numNewBuffers;
+//    }
+
+//    @Override
+//    public QuantileSketch merge(List<QuantileSketch> sketches, int startIndex, int endIndex) {
+//        partialBuffers.clear();
+//
+//        for (int i = startIndex; i < endIndex; i++) {
+//            RandomSketch rs = (RandomSketch) sketches.get(i);
+//            totalWeight += rs.totalWeight;
+//        }
+//
+//        activeLevel = (int) (Math.log(totalWeight / ((b-1) * s)) / Math.log(2));
+//
+//        // Insert all buffers into the tree
+//        int numBuffers = 0;
+//        for (int i = startIndex; i < endIndex; i++) {
+//            RandomSketch rs = (RandomSketch) sketches.get(i);
+//            for (Map.Entry<Integer, ArrayList<ArrayList<Double>>> entry : rs.usedBuffers.entrySet()) {
+//                int level = entry.getKey();
+//                if (level >= activeLevel) {
+//                    numBuffers += entry.getValue().size();
+//                    if (!usedBuffers.containsKey(level)) {
+//                        usedBuffers.put(level, new ArrayList<>());
+//                    }
+//                    for (ArrayList<Double> buffer : entry.getValue()) {
+//                        usedBuffers.get(level).add(new ArrayList<>(buffer));
+//                    }
+//                } else {
+//                    if (!partialBuffers.containsKey(level)) {
+//                        partialBuffers.put(level, new ArrayList<>());
+//                    }
+//                    for (ArrayList<Double> buffer : entry.getValue()) {
+//                        partialBuffers.get(level).add(new ArrayList<>(buffer));
+//                    }
+//                }
+//            }
+//            if (!partialBuffers.containsKey(rs.activeLevel)) {
+//                partialBuffers.put(rs.activeLevel, new ArrayList<>());
+//            }
+//            partialBuffers.get(rs.activeLevel).add(new ArrayList<>(rs.curBuffer));
+//        }
+//
+//        numBuffers += collapsePartialBuffers();
+//
+//        for (; numBuffers > b - 1; numBuffers--) {
+//            collapseForMerging();
+//        }
+//
+//        // Fill up freeBuffers
+//        freeBuffers.clear();
+//        for (; numBuffers < b - 1; numBuffers++) {
+//            freeBuffers.add(new ArrayList<>(s));
+//        }
+//
+//        return this;
+//    }
 }
