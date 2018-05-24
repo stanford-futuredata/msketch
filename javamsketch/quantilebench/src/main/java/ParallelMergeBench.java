@@ -22,6 +22,8 @@ public class ParallelMergeBench {
     private int numTrials;
     private int numSolveTrials;
 
+    private boolean weakScaling;
+
     private boolean verbose;
     private boolean calcError;
     private boolean appendTimeStamp;
@@ -41,6 +43,8 @@ public class ParallelMergeBench {
         quantiles = conf.get("quantiles");
         numTrials = conf.get("numTrials");
         numSolveTrials = conf.get("numSolveTrials", 1);
+
+        weakScaling = conf.get("weakScaling", false);
 
         verbose = conf.get("verbose", false);
         calcError = conf.get("calcError", false);
@@ -114,7 +118,11 @@ public class ParallelMergeBench {
                             mergedSketch.setSizeParam(sParam);
                             mergedSketch.setVerbose(verbose);
                             mergedSketch.initialize();
-                            mergedSketch.parallelMerge(cellSketchesToMerge, numThreads, numDuplications);
+                            if (weakScaling) {
+                                mergedSketch.parallelMerge(cellSketchesToMerge, numThreads, numDuplications * numThreads);
+                            } else {
+                                mergedSketch.parallelMerge(cellSketchesToMerge, numThreads, numDuplications);
+                            }
                             endTime = System.nanoTime();
                             long mergeTime = endTime - startTime;
 
