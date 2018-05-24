@@ -22,13 +22,14 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+//import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A single centroid which represents a number of data points.
  */
 public class Centroid implements Comparable<Centroid>, Serializable {
-    private static final AtomicInteger uniqueCount = new AtomicInteger(1);
+//    private static final AtomicInteger uniqueCount = new AtomicInteger(1);
+    private int uniqueCount = 1;
 
     private double centroid = 0;
     private int count = 0;
@@ -40,7 +41,8 @@ public class Centroid implements Comparable<Centroid>, Serializable {
     private List<Double> actualData = null;
 
     private Centroid(boolean record) {
-        id = uniqueCount.getAndIncrement();
+//        id = uniqueCount.getAndIncrement();
+        id = uniqueCount++;
         if (record) {
             actualData = new ArrayList<>();
         }
@@ -48,12 +50,14 @@ public class Centroid implements Comparable<Centroid>, Serializable {
 
     public Centroid(double x) {
         this(false);
-        start(x, 1, uniqueCount.getAndIncrement());
+//        start(x, 1, uniqueCount.getAndIncrement());
+        start(x, 1, uniqueCount++);
     }
 
     public Centroid(double x, int w) {
         this(false);
-        start(x, w, uniqueCount.getAndIncrement());
+//        start(x, w, uniqueCount.getAndIncrement());
+        start(x, w, uniqueCount++);
     }
 
     public Centroid(double x, int w, int id) {
@@ -152,6 +156,7 @@ public class Centroid implements Comparable<Centroid>, Serializable {
 
     private void readObject(ObjectInputStream in) throws ClassNotFoundException, IOException {
         in.defaultReadObject();
-        id = uniqueCount.getAndIncrement();
+//        id = uniqueCount.getAndIncrement();
+        id = uniqueCount++;
     }
 }
