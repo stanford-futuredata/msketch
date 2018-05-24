@@ -131,6 +131,8 @@ public class RandomSketchTest {
         ArrayList<Double> target = new ArrayList<>();
 
         RandomSketch sketch = new RandomSketch();
+        sketch.setSizeParam(10.0);
+        sketch.initialize();
         sketch.mergeBuffers(bufferOne, bufferTwo, target);
 
         assertTrue(target.get(0) == 0 || target.get(0) == 1);

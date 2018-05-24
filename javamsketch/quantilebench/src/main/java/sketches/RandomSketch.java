@@ -23,7 +23,7 @@ public class RandomSketch implements QuantileSketch{
     private ArrayList<Double> tmpBuffer;  // for merging
     private HashMap<Integer, ArrayList<ArrayList<Double>>> partialBuffers;
     private double totalWeight;
-    private Random rand;
+    private ThreadLocalRandom rand;
 
     private int nextToSample;
     private int sampleBlockLength;
