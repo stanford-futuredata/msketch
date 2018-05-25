@@ -16,6 +16,7 @@ public class ParallelMergeBench {
     private List<Double> cellFractions;
     private List<Integer> numMergeThreads;
     private int numDuplications;
+    private Map<String, Integer> numDuplicationsByMethod;
 
     private Map<String, List<Double>> methods;
     private List<Double> quantiles;
@@ -38,6 +39,7 @@ public class ParallelMergeBench {
         cellFractions = conf.get("cellFractions", defaultCellFractions);
         numMergeThreads = conf.get("numMergeThreads");
         numDuplications = conf.get("numDuplications", 1);
+        numDuplicationsByMethod = conf.get("numDuplicationsByMethod",null);
 
         methods = conf.get("methods");
         quantiles = conf.get("quantiles");
@@ -108,6 +110,13 @@ public class ParallelMergeBench {
                     }
 
                     for (int numThreads : numMergeThreads) {
+                        int actualNumDuplications = numDuplications;
+                        if (numDuplicationsByMethod != null) {
+                            actualNumDuplications *= numDuplicationsByMethod.get(sketchName);
+                        }
+                        if (weakScaling) {
+                            actualNumDuplications *= numThreads;
+                        }
                         for (int curTrial = 0; curTrial < numTrials; curTrial++) {
                             System.gc();
                             System.out.println(sketchName + ":" + (int) sParam + "@" + numThreads + "#" + curTrial);
@@ -118,11 +127,7 @@ public class ParallelMergeBench {
                             mergedSketch.setSizeParam(sParam);
                             mergedSketch.setVerbose(verbose);
                             mergedSketch.initialize();
-                            if (weakScaling) {
-                                mergedSketch.parallelMerge(cellSketchesToMerge, numThreads,numDuplications * numThreads);
-                            } else {
-                                mergedSketch.parallelMerge(cellSketchesToMerge, numThreads, numDuplications);
-                            }
+                            mergedSketch.parallelMerge(cellSketchesToMerge, numThreads, actualNumDuplications);
                             endTime = System.nanoTime();
                             long mergeTime = endTime - startTime;
 
@@ -154,11 +159,7 @@ public class ParallelMergeBench {
                                 curResults.put("train_time", String.format("%d", trainTime));
                                 curResults.put("merge_time", String.format("%d", mergeTime));
                                 curResults.put("query_time", String.format("%d", queryTime));
-                                if (weakScaling) {
-                                    curResults.put("n", String.format("%d", cellSketchesToMerge.size() * numDuplications * numThreads));
-                                } else {
-                                    curResults.put("n", String.format("%d", cellSketchesToMerge.size() * numDuplications));
-                                }
+                                curResults.put("n", String.format("%d", cellSketchesToMerge.size() * actualNumDuplications));
                                 curResults.put("num_threads", String.format("%d", numThreads));
                                 results.add(curResults);
                             }
