@@ -8,7 +8,9 @@
   "numSolveTrials": 3000,
   "methods": {
     "cmoments": [11.0],
-    "yahoo": [32.0]
+    "yahoo": [32.0],
+    "random": [40.0],
+    "gk": [50.0]
   },
   "quantiles": [
     0.01, 0.05, 0.1, 0.15,
