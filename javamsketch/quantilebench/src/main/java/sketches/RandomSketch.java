@@ -425,17 +425,21 @@ public class RandomSketch implements QuantileSketch{
             } else {
                 if (quantileEntryIdx == -1) {
                     // less than smallest value
-                    quantiles[i] = quantileEntries.get(0).quantile;
+                    quantiles[i] = quantileEntries.get(0).value;
                 } else if (quantileEntryIdx == -quantileEntries.size()-1) {
                     // greater than largest value
-                    quantiles[i] = quantileEntries.get(quantileEntries.size()-1).quantile;
+                    quantiles[i] = quantileEntries.get(quantileEntries.size()-1).value;
                 } else {
                     // linearly interpolate between the closest quantile entries.
                     QuantileEntry lowerEntry = quantileEntries.get(-quantileEntryIdx - 2);
                     QuantileEntry higherEntry = quantileEntries.get(-quantileEntryIdx - 1);
-                    double quantileDiff = higherEntry.quantile - lowerEntry.quantile;
-                    quantiles[i] = (p - lowerEntry.quantile) / quantileDiff * lowerEntry.value
-                            + (higherEntry.quantile - p) / quantileDiff * higherEntry.value;
+                    if (lowerEntry.value == higherEntry.value) {
+                        quantiles[i] = lowerEntry.value;
+                    } else {
+                        double quantileDiff = higherEntry.quantile - lowerEntry.quantile;
+                        quantiles[i] = (p - lowerEntry.quantile) / quantileDiff * lowerEntry.value
+                                + (higherEntry.quantile - p) / quantileDiff * higherEntry.value;
+                    }
                 }
             }
         }
