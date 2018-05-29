@@ -1,18 +1,11 @@
 {
-  "testName": "strong_scaling_hepmass",
+  "testName": "weak_scaling_hepmass_gk",
   "fileName": "/lfs/1/egan1/datasets/hepmass_l.csv",
   "columnIdx": 0,
   "cellSize": 200,
   "numTrials": 20,
   "methods": {
-    "cmoments": [4.0],
-    "tdigest": [1.5],
-    "yahoo": [32.0],
-    "sampling": [1000.0],
-    "spark_gk": [50.0],
-    "histogram":  [15.0],
-    "approx_histogram": [100.0],
-    "random": [40.0]
+    "gk_adaptive": [40.0]
   },
   "quantiles": [
     0.01, 0.05, 0.1, 0.15,
@@ -24,8 +17,9 @@
   "numMergeThreads": [
       1, 2, 4, 8, 12, 16, 24, 32],
   "numDuplications": 8,
+  "weakScaling": true,
 
   "verbose": false,
   "calcError": false,
-  "appendTimeStamp": true
+  "appendTimeStamp": false
 }

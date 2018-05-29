@@ -1,18 +1,11 @@
 {
-  "testName": "strong_scaling_milan",
+  "testName": "strong_scaling_milan_gk",
   "fileName": "/lfs/1/egan1/datasets/internet-mi-2013-11.csv",
   "columnIdx": 0,
   "cellSize": 200,
   "numTrials": 10,
   "methods": {
-    "cmoments": [11.0],
-    "tdigest": [5.0],
-    "yahoo": [32.0],
-    "sampling": [1000.0],
-    "spark_gk": [50.0],
-    "histogram":  [100.0],
-    "approx_histogram": [100.0],
-    "random": [40.0]
+    "gk_adaptive": [60.0]
   },
   "quantiles": [
     0.01, 0.05, 0.1, 0.15,
@@ -27,5 +20,5 @@
 
   "verbose": false,
   "calcError": false,
-  "appendTimeStamp": true
+  "appendTimeStamp": false
 }

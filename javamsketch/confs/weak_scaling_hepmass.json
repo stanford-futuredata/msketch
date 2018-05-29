@@ -3,7 +3,7 @@
   "fileName": "/lfs/1/egan1/datasets/hepmass_l.csv",
   "columnIdx": 0,
   "cellSize": 200,
-  "numTrials": 5,
+  "numTrials": 20,
   "methods": {
     "cmoments": [4.0],
     "tdigest": [1.5],
