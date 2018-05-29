@@ -1,7 +1,4 @@
-import io.CSVOutput;
-import io.DataSource;
-import io.SeqDataGrouper;
-import io.SimpleCSVDataSource;
+import io.*;
 import sketches.QuantileSketch;
 import sketches.SketchLoader;
 
@@ -14,6 +11,7 @@ public class ParallelMergeBench {
     private int columnIdx;
     private int cellSize;
     private List<Double> cellFractions;
+    private boolean pregrouped;
     private List<Integer> numMergeThreads;
     private int numDuplications;
     private Map<String, Integer> numDuplicationsByMethod;
@@ -33,10 +31,11 @@ public class ParallelMergeBench {
         RunConfig conf = RunConfig.fromJsonFile(confFile);
         testName = conf.get("testName");
         fileName = conf.get("fileName");
-        columnIdx = conf.get("columnIdx");
-        cellSize = conf.get("cellSize");
+        columnIdx = conf.get("columnIdx", 0);
+        cellSize = conf.get("cellSize", 200);
         List<Double> defaultCellFractions = Arrays.asList(1.0);
         cellFractions = conf.get("cellFractions", defaultCellFractions);
+        pregrouped = conf.get("pregrouped", false);
         numMergeThreads = conf.get("numMergeThreads");
         numDuplications = conf.get("numDuplications", 1);
         numDuplicationsByMethod = conf.get("numDuplicationsByMethod", null);
@@ -64,10 +63,15 @@ public class ParallelMergeBench {
     }
 
     private ArrayList<double[]> getCells() throws IOException {
-        DataSource source = new SimpleCSVDataSource(fileName, columnIdx);
-        double[] data = source.get();
-        SeqDataGrouper grouper = new SeqDataGrouper(cellSize);
-        return grouper.group(data);
+        if (pregrouped) {
+            GroupedCSVDataSource source = new GroupedCSVDataSource(fileName);
+            return source.get();
+        } else {
+            DataSource source = new SimpleCSVDataSource(fileName, columnIdx);
+            double[] data = source.get();
+            SeqDataGrouper grouper = new SeqDataGrouper(cellSize);
+            return grouper.group(data);
+        }
     }
 
     public List<Map<String, String>> run() throws Exception {

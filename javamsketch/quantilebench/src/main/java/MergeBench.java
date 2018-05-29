@@ -1,7 +1,4 @@
-import io.CSVOutput;
-import io.DataSource;
-import io.SeqDataGrouper;
-import io.SimpleCSVDataSource;
+import io.*;
 import sketches.QuantileSketch;
 import sketches.SketchLoader;
 
@@ -14,6 +11,7 @@ public class MergeBench {
     private int columnIdx;
     private int cellSize;
     private List<Double> cellFractions;
+    private boolean pregrouped;
 
     private Map<String, List<Double>> methods;
     private List<Double> quantiles;
@@ -28,10 +26,11 @@ public class MergeBench {
         RunConfig conf = RunConfig.fromJsonFile(confFile);
         testName = conf.get("testName");
         fileName = conf.get("fileName");
-        columnIdx = conf.get("columnIdx");
-        cellSize = conf.get("cellSize");
+        columnIdx = conf.get("columnIdx", 0);
+        cellSize = conf.get("cellSize", 200);
         List<Double> defaultCellFractions = Arrays.asList(1.0);
         cellFractions = conf.get("cellFractions", defaultCellFractions);
+        pregrouped = conf.get("pregrouped", false);
 
         methods = conf.get("methods");
         quantiles = conf.get("quantiles");
@@ -54,20 +53,25 @@ public class MergeBench {
     }
 
     private ArrayList<double[]> getCells() throws IOException {
-        double[] data;
-        if (fileName.equals("gauss")) {
-            int n = 1000000000;
-            Random r = new Random(0);
-            data = new double[n];
-            for (int i = 0; i < n; i++) {
-                data[i] = r.nextGaussian();
-            }
+        if (pregrouped) {
+            GroupedCSVDataSource source = new GroupedCSVDataSource(fileName);
+            return source.get();
         } else {
-            DataSource source = new SimpleCSVDataSource(fileName, columnIdx);
-            data = source.get();
+            double[] data;
+            if (fileName.equals("gauss")) {
+                int n = 1000000000;
+                Random r = new Random(0);
+                data = new double[n];
+                for (int i = 0; i < n; i++) {
+                    data[i] = r.nextGaussian();
+                }
+            } else {
+                DataSource source = new SimpleCSVDataSource(fileName, columnIdx);
+                data = source.get();
+            }
+            SeqDataGrouper grouper = new SeqDataGrouper(cellSize);
+            return grouper.group(data);
         }
-        SeqDataGrouper grouper = new SeqDataGrouper(cellSize);
-        return grouper.group(data);
     }
 
     public List<Map<String, String>> run() throws Exception {
