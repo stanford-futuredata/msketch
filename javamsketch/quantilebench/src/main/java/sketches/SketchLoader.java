@@ -28,6 +28,8 @@ public class SketchLoader {
             return new ApproximateHistogramSketch();
         } else if (sketchName.startsWith("random")) {
             return new RandomSketch();
+        } else if (sketchName.startsWith("gk_adaptive")) {
+            return new GKAdaptiveSketch();
         }
         throw new IOException("Invalid Sketch");
     }

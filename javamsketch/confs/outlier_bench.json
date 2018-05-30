@@ -7,7 +7,9 @@
   "methods": {
     "cmoments": [11.0],
     "histogram": [20.0, 100.0],
-    "yahoo": [32.0]
+    "yahoo": [32.0],
+    "random": [40.0],
+    "spark_gk": [50.0]
   },
   "numSolveTrials": 1,
   "distances": [5.0, 10.0, 50.0, 100.0, 500.0, 1000.0],

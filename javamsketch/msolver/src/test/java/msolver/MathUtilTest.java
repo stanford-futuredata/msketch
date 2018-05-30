@@ -5,6 +5,8 @@ import msolver.data.MomentData;
 import msolver.data.OccupancyData;
 import org.junit.Test;
 
+import java.util.Arrays;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
@@ -37,8 +39,9 @@ public class MathUtilTest {
         MomentData data = new OccupancyData();
         double[] chebys = MathUtil.powerSumsToChebyMoments(
                 data.getMin(), data.getMax(),
-                data.getPowerSums(20)
+                data.getPowerSums(40)
         );
+        System.out.println(Arrays.toString(chebys));
 //        chebys = MathUtil.powerSumsToChebyMoments(
 //                data.getLogMin(), data.getLogMax(),
 //                data.getLogSums(20)
@@ -46,7 +49,8 @@ public class MathUtilTest {
         data = new HepData();
         chebys = MathUtil.powerSumsToChebyMoments(
                 data.getMin(), data.getMax(),
-                data.getPowerSums(20)
+                data.getPowerSums(40)
         );
+        System.out.println(Arrays.toString(chebys));
     }
 }
