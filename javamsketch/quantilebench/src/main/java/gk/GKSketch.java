@@ -17,6 +17,10 @@ public class GKSketch {
             this.del = del;
         }
 
+        public Tuple copy() {
+            return new Tuple(v, g, del);
+        }
+
         @Override
         public int compareTo(Tuple o) {
             int ret = Double.compare(v, o.v);
@@ -55,22 +59,22 @@ public class GKSketch {
             if (i1 == n1) {
                 Tuple t2 = addTuples.get(i2);
                 i2++;
-                tNext = t2;
+                tNext = t2.copy();
             } else if (i2 == n2) {
                 Tuple t1 = tuples.get(i1);
                 i1++;
-                tNext = t1;
+                tNext = t1.copy();
             } else {
                 Tuple t1 = tuples.get(i1);
                 Tuple t2 = addTuples.get(i2);
                 if (t1.v <= t2.v) {
-                    t1.del += (t2.g + t2.del - 1);
+                    tNext = t1.copy();
+                    tNext.del += (t2.g + t2.del - 1);
                     i1++;
-                    tNext = t1;
                 } else {
-                    t2.del += (t1.g + t1.del - 1);
+                    tNext = t2.copy();
+                    tNext.del += (t1.g + t1.del - 1);
                     i2++;
-                    tNext = t2;
                 }
             }
 
