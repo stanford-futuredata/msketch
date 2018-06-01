@@ -1,12 +1,11 @@
 {
-  "testName": "find_hepmass_rand",
-  "fileName": "../../datasets/hepmass_l.csv",
+  "testName": "find_milan_gk",
+  "fileName": "../../datasets/internet-mi-2013-11.csv",
   "columnIdx": 0,
-  "numTrials": 1,
+  "numTrials": 2,
   "numSolveTrials": 1,
   "methods": {
-    "gk_adaptive": [5.0, 10.0, 20.0, 50.0, 100.0],
-    "random": [5.0, 10.0, 20.0, 40.0, 100.0]
+    "gk_adaptive": [5.0, 10.0, 20.0, 40.0, 60.0, 100.0]
   },
   "quantiles": [
     0.01, 0.05, 0.1, 0.15,

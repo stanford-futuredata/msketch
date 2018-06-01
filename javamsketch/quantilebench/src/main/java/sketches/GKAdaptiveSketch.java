@@ -3,11 +3,14 @@ package sketches;
 import gk.GKSketch;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class GKAdaptiveSketch implements QuantileSketch{
     private GKSketch summary;
     private double sizeParam = 100.0;
+    private int bufferSize = 100;
+    private double[] buffer;
     private double[] errors;
 
     @Override
@@ -37,6 +40,7 @@ public class GKAdaptiveSketch implements QuantileSketch{
 
     @Override
     public void initialize() {
+        this.buffer = new double[bufferSize];
         this.summary = new GKSketch(
                 1.0/sizeParam
         );
@@ -44,7 +48,16 @@ public class GKAdaptiveSketch implements QuantileSketch{
 
     @Override
     public void add(double[] data) {
-        this.summary.add(data);
+        int iBuff = 0;
+        for (double x : data) {
+            buffer[iBuff] = x;
+            iBuff++;
+            if (iBuff == bufferSize) {
+                this.summary.add(buffer);
+                iBuff = 0;
+            }
+        }
+        this.summary.add(Arrays.copyOf(buffer, iBuff));
     }
 
     @Override

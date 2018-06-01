@@ -1,12 +1,11 @@
 {
-  "testName": "find_hepmass_rand",
-  "fileName": "../../datasets/hepmass_l.csv",
+  "testName": "merge_exp_gk",
+  "fileName": "../../datasets/exponential_100M.csv",
   "columnIdx": 0,
-  "numTrials": 1,
-  "numSolveTrials": 1,
+  "cellSize": 200,
+  "numTrials": 10,
   "methods": {
-    "gk_adaptive": [5.0, 10.0, 20.0, 50.0, 100.0],
-    "random": [5.0, 10.0, 20.0, 40.0, 100.0]
+    "gk_adaptive": [5.0, 10.0, 20.0, 40.0, 60.0, 100.0, 200.0]
   },
   "quantiles": [
     0.01, 0.05, 0.1, 0.15,
@@ -17,6 +16,6 @@
     0.99],
 
   "verbose": false,
-  "calcError": true,
+  "calcError": false,
   "appendTimeStamp": false
 }
