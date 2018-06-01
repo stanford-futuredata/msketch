@@ -13,6 +13,7 @@ public class SortBench {
     private String fileName;
     private int columnIdx;
     private List<String> methods;
+    private List<Double> sizeParams;
     private int numTrials;
 
     private boolean verbose = false;
@@ -24,6 +25,7 @@ public class SortBench {
         columnIdx = conf.get("columnIdx");
         numTrials = conf.get("numTrials");
         methods = conf.get("methods");
+        sizeParams = conf.get("sizeParams");
 
         verbose = conf.get("verbose", false);
     }
@@ -48,7 +50,9 @@ public class SortBench {
         System.out.println("Loaded Data in: "+loadTime);
         List<Map<String, String>> results = new ArrayList<>();
 
-        for (String sketchName: methods) {
+        for (int methodIdx = 0 ; methodIdx < methods.size(); methodIdx++) {
+            String sketchName = methods.get(methodIdx);
+            double sizeParam = sizeParams.get(methodIdx);
             for (int curTrial = 0; curTrial < numTrials; curTrial++) {
                 System.gc();
                 System.out.println(sketchName + ":" + curTrial);
@@ -61,6 +65,12 @@ public class SortBench {
                     Percentile p = new Percentile();
                     p.setData(data);
                     p.evaluate(50.0);
+                } else {
+                    QuantileSketch s = SketchLoader.load(sketchName);
+                    s.setSizeParam(sizeParam);
+                    s.initialize();
+                    s.add(data);
+                    double[] ps = s.getQuantiles(Arrays.asList(.5));
                 }
                 endTime = System.nanoTime();
                 long trainTime = endTime - startTime;

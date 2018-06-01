@@ -1,0 +1,10 @@
+{
+  "testName": "sort_milan",
+  "fileName": "../../datasets/internet-mi-2013-11.csv",
+  "columnIdx": 0,
+  "numTrials": 10,
+  "methods": ["sort", "select", "yahoo", "random"],
+  "sizeParams": [1.0, 1.0, 32.0, 40.0],
+
+  "verbose": true
+}
