@@ -10,7 +10,8 @@
     "cmoments": [11.0],
     "yahoo": [32.0],
     "random": [40.0],
-    "spark_gk": [50.0]
+    "spark_gk": [50.0],
+    "gk_adaptive": [40.0]
   },
   "quantiles": [
     0.01, 0.05, 0.1, 0.15,
