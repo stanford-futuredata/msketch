@@ -1,0 +1,7 @@
+,avg_querytime,markov_hit,maxent_hit,racz_throughput,simple,min_support,type,avg_mergetime,containment,racz,markov_time,simple_throughput,simple_time,markov_throughput,cube,avg_runtime,avg_apltime,min_globalratio,maxent_time,racz_hit,maxent_throughput,racz_time,simple_hit,markov,overall_throughput
+0,39.977365,10341.0,10341.0,Infinity,False,0.02,cascade,2.4685610000000002,True,False,0.0,2356385.740414,0.00011,Infinity,/lfs/0/jding/datasets/milan_1month_4H_cubed.csv,50.022214,43.875806,30.0,0.99989,10341.0,258.75527400000004,0.0,10341.0,False,258.726863
+1,3.905733,1448.0,1448.0,Infinity,True,0.02,cascade,2.359812,True,False,0.0,11651555.287143,0.000227,Infinity,/lfs/0/jding/datasets/milan_1month_4H_cubed.csv,15.000379999999998,7.6043449999999995,30.0,0.9997729999999999,1448.0,371.245134,0.0,10341.0,False,2650.671662
+2,0.369856,1448.0,192.0,Infinity,True,0.02,cascade,2.3185729999999998,True,False,0.008217,13946660.306909,0.002029,482136.075915,/lfs/0/jding/datasets/milan_1month_4H_cubed.csv,10.814832000000001,4.045584,30.0,0.9897540000000001,192.0,530.747296,0.0,10341.0,True,28292.838691
+3,0.156844,1448.0,72.0,36460.410672,True,0.02,cascade,2.309679,True,True,0.019204,14296267.247064002,0.00474,494114.475541,/lfs/0/jding/datasets/milan_1month_4H_cubed.csv,10.37232,3.7853019999999997,30.0,0.9415479999999999,192.0,501.11196900000004,0.034508,10341.0,True,67765.27547200001
+4,0.015715,,,,,,yahoo1,19.620108,,,,,,,,39.845493,20.310234,,,,,,,,
+5,3.19227,,,,,,yahoo2,6.107064,,,,,,,,31.05183,9.6342,,,,,,,,
