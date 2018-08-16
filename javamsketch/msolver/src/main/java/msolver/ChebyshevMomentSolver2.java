@@ -168,9 +168,11 @@ public class ChebyshevMomentSolver2 {
         cumFuncEvals = potential.getCumFuncEvals();
         if (verbose) {
             System.out.println("Using standard basis: "+ useStandardBasis);
-            System.out.println("Final Polynomial: " + Arrays.toString(lambdas));
             System.out.println("Total Function Evals: "+cumFuncEvals);
-            System.out.println(String.format("linscales: "+ aCenter +","+aScale+","+bCenter+","+bScale));
+            System.out.println("Final Polynomial Chebyshev Coefficients: ");
+            System.out.println(Arrays.toString(lambdas));
+            System.out.println("Scaling Factors f((x - c)/s) [c, x, logC, logS]:");
+            System.out.println(aCenter +","+aScale+","+bCenter+","+bScale);
         }
 
         approxCDF = ChebyshevPolynomial.fit(potential.getFunc(), tol).integralPoly();
