@@ -1,3 +1,7 @@
+cp.txt
+
+cmake-build-debug/
+.DS_Store
 .idea/
 CMakeFiles/
 *.cmake
